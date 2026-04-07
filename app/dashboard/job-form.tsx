@@ -10,9 +10,10 @@ type CVProfile = {
 }
 
 type JobFormProps = {
-  cvs?: CVProfile[]
   initialData?: any
 }
+
+export default function JobForm({ initialData }: JobFormProps) {
 
 function generateFeedback(role: string, company: string) {
   const text = `${role} ${company}`.toLowerCase()

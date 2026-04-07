@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
@@ -12,6 +12,23 @@ type CVProfile = {
   full_name?: string | null
   skills?: string | null
   experience?: string | null
+}
+
+type JobFormInitialData = {
+  id?: string
+  company?: string | null
+  role?: string | null
+  status?: string | null
+  notes?: string | null
+  interview_date?: string | null
+  follow_up_date?: string | null
+  cv_id?: string | null
+  job_description?: string | null
+  feedback?: string | null
+}
+
+type JobFormProps = {
+  initialData?: JobFormInitialData | null
 }
 
 type SkillRule = {
@@ -254,19 +271,25 @@ function formatScoreText(score: number | null) {
   return `CV match score: ${score}%`
 }
 
-export default function JobForm({ cvs = [], initialData }: JobFormProps) {
+function normaliseDateValue(value?: string | null) {
+  if (!value) return ""
+  return value.slice(0, 10)
+}
+
+export default function JobForm({ initialData }: JobFormProps) {
   const router = useRouter()
   const supabase = createClient()
+  const isEditing = Boolean(initialData?.id)
 
   const [mounted, setMounted] = useState(false)
-  const [company, setCompany] = useState("")
-  const [role, setRole] = useState("")
-  const [status, setStatus] = useState("applied")
-  const [notes, setNotes] = useState("")
-  const [interviewDate, setInterviewDate] = useState("")
-  const [followUpDate, setFollowUpDate] = useState("")
-  const [cvId, setCvId] = useState("")
-  const [jobDescription, setJobDescription] = useState("")
+  const [company, setCompany] = useState(initialData?.company ?? "")
+  const [role, setRole] = useState(initialData?.role ?? "")
+  const [status, setStatus] = useState(initialData?.status ?? "applied")
+  const [notes, setNotes] = useState(initialData?.notes ?? "")
+  const [interviewDate, setInterviewDate] = useState(normaliseDateValue(initialData?.interview_date))
+  const [followUpDate, setFollowUpDate] = useState(normaliseDateValue(initialData?.follow_up_date))
+  const [cvId, setCvId] = useState(initialData?.cv_id ?? "")
+  const [jobDescription, setJobDescription] = useState(initialData?.job_description ?? "")
   const [cvs, setCvs] = useState<CVProfile[]>([])
   const [loadingCvs, setLoadingCvs] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -275,6 +298,17 @@ export default function JobForm({ cvs = [], initialData }: JobFormProps) {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    setCompany(initialData?.company ?? "")
+    setRole(initialData?.role ?? "")
+    setStatus(initialData?.status ?? "applied")
+    setNotes(initialData?.notes ?? "")
+    setInterviewDate(normaliseDateValue(initialData?.interview_date))
+    setFollowUpDate(normaliseDateValue(initialData?.follow_up_date))
+    setCvId(initialData?.cv_id ?? "")
+    setJobDescription(initialData?.job_description ?? "")
+  }, [initialData])
 
   useEffect(() => {
     const loadCvs = async () => {
@@ -329,7 +363,7 @@ export default function JobForm({ cvs = [], initialData }: JobFormProps) {
     .filter(Boolean)
     .join(" ")
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setError("")
@@ -345,8 +379,7 @@ export default function JobForm({ cvs = [], initialData }: JobFormProps) {
       return
     }
 
-    const { error: insertError } = await supabase.from("job_applications").insert({
-      user_id: user.id,
+    const payload = {
       company,
       role,
       status,
@@ -356,16 +389,36 @@ export default function JobForm({ cvs = [], initialData }: JobFormProps) {
       cv_id: cvId || null,
       job_description: jobDescription || null,
       feedback,
-    })
-
-    setLoading(false)
-
-    if (insertError) {
-      setError(insertError.message)
-      return
     }
 
-    router.push("/dashboard")
+    if (isEditing && initialData?.id) {
+      const { error: updateError } = await supabase
+        .from("job_applications")
+        .update(payload)
+        .eq("id", initialData.id)
+        .eq("user_id", user.id)
+
+      setLoading(false)
+
+      if (updateError) {
+        setError(updateError.message)
+        return
+      }
+    } else {
+      const { error: insertError } = await supabase.from("job_applications").insert({
+        user_id: user.id,
+        ...payload,
+      })
+
+      setLoading(false)
+
+      if (insertError) {
+        setError(insertError.message)
+        return
+      }
+    }
+
+    router.push("/dashboard/applications")
     router.refresh()
   }
 
@@ -375,9 +428,13 @@ export default function JobForm({ cvs = [], initialData }: JobFormProps) {
       className="space-y-6 rounded-2xl border border-white/20 bg-white/5 p-6"
     >
       <div>
-        <h2 className="text-2xl font-semibold">Add Job Application</h2>
+        <h2 className="text-2xl font-semibold">
+          {isEditing ? "Edit Job Application" : "Add Job Application"}
+        </h2>
         <p className="mt-1 text-sm text-white/60">
-          Save a new application and compare your CV against the job.
+          {isEditing
+            ? "Update your application details and CV match preview."
+            : "Save a new application and compare your CV against the job."}
         </p>
       </div>
 
@@ -537,7 +594,7 @@ export default function JobForm({ cvs = [], initialData }: JobFormProps) {
           disabled={loading}
           className="rounded-xl bg-white px-5 py-3 font-medium text-black transition hover:opacity-90 disabled:opacity-50"
         >
-          {loading ? "Saving..." : "Save application"}
+          {loading ? "Saving..." : isEditing ? "Update application" : "Save application"}
         </button>
       </div>
     </form>
