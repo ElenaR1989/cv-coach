@@ -116,7 +116,12 @@ export default async function DashboardPage({
     console.error("Error fetching dashboard events:", eventsError.message)
   }
 
-  const safeJobs: JobApplication[] = jobs ?? []
+  const safeJobs: JobApplication[] = (jobs ?? []).map((job: any) => ({
+  ...job,
+  cv_profiles: Array.isArray(job.cv_profiles)
+    ? (job.cv_profiles[0] ?? null)
+    : (job.cv_profiles ?? null),
+}))
   const safeCvs: CVProfile[] = cvs ?? []
   const safeEvents: TimelineEvent[] = events ?? []
 
