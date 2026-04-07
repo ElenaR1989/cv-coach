@@ -1,4 +1,4 @@
-import Stripe from "stripe"
+iimport Stripe from "stripe"
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
@@ -21,16 +21,25 @@ export async function POST(req: Request) {
   const signature = (await headers()).get("stripe-signature")
 
   if (!signature) {
-    return NextResponse.json({ error: "Missing Stripe signature" }, { status: 400 })
+    return NextResponse.json(
+      { error: "Missing Stripe signature" },
+      { status: 400 }
+    )
   }
 
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret!)
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      stripeWebhookSecret!
+    )
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Webhook signature verification failed"
+      error instanceof Error
+        ? error.message
+        : "Webhook signature verification failed"
 
     return NextResponse.json({ error: message }, { status: 400 })
   }
@@ -47,7 +56,9 @@ export async function POST(req: Request) {
         null
 
       const customerId =
-        typeof session.customer === "string" ? session.customer : session.customer?.id
+        typeof session.customer === "string"
+          ? session.customer
+          : session.customer?.id
 
       const subscriptionId =
         typeof session.subscription === "string"
@@ -55,35 +66,39 @@ export async function POST(req: Request) {
           : session.subscription?.id
 
       if (userId) {
-   const { error } = await supabase
-  .from("profiles")
-  .update({
-    is_pro: true,
-    plan: "pro",
-    stripe_customer_id: customerId,
-    stripe_subscription_id: subscriptionId,
-  })
-  .eq("id", userId)
+        const { error } = await supabase
+          .from("profiles")
+          .update({
+            is_pro: true,
+            plan: "pro",
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId,
+          })
+          .eq("id", userId)
 
-if (error) {
-  console.error(
-    "Supabase update error on checkout.session.completed:",
-    error.message
-  )
-}
+        if (error) {
+          console.error(
+            "Supabase update error on checkout.session.completed:",
+            error.message
+          )
+        }
+      }
+    }
 
     if (
       event.type === "customer.subscription.deleted" ||
       event.type === "customer.subscription.updated"
     ) {
       const subscription = event.data.object as Stripe.Subscription
+
       const customerId =
         typeof subscription.customer === "string"
           ? subscription.customer
           : subscription.customer.id
 
       const isActive =
-        subscription.status === "active" || subscription.status === "trialing"
+        subscription.status === "active" ||
+        subscription.status === "trialing"
 
       const { error } = await supabase
         .from("profiles")
@@ -95,7 +110,10 @@ if (error) {
         .eq("stripe_customer_id", customerId)
 
       if (error) {
-        console.error("Supabase update error on subscription event:", error.message)
+        console.error(
+          "Supabase update error on subscription event:",
+          error.message
+        )
       }
     }
 
