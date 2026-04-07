@@ -346,7 +346,7 @@ export default async function ApplicationsPage() {
     )
   }
 
-  const safeApplications = (applications ?? []) as JobApplication[]
+  const safeApplications = (applications ?? []) as unknown as JobApplication[]
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
