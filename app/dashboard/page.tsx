@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import StatusChart from "@/components/status-chart"
 import ApplicationsOverTimeChart from "@/components/applications-over-time-chart"
-import DeleteJobButton from "@/components/delete-job-button"
+import DeleteApplicationButton from "@/components/delete-application-button"
 
 type JobApplication = {
   id: string
@@ -683,10 +683,11 @@ export default async function DashboardPage({
 
                         <form action={deleteJob}>
                           <input type="hidden" name="job_id" value={job.id} />
-                          <DeleteJobButton
-                            company={job.company}
-                            role={job.role}
-                          />
+                         <DeleteApplicationButton
+ applicationId={job.id}
+  company={job.company}
+  role={job.role}
+/>
                         </form>
                       </div>
                     </div>
