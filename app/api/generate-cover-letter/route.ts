@@ -13,10 +13,6 @@ export async function POST(req: Request) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-// 👉 Get user plan
-const {
-  data: { user },
-} = await supabase.auth.getUser()
 
 // ✅ FIRST check user
 if (!user) {
