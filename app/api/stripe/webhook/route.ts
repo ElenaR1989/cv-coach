@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret)
+    event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret!)
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Webhook signature verification failed"
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
       const userId =
         session.client_reference_id ||
-        session.subscription_details?.metadata?.user_id ||
+        (session as any).subscription_details?.metadata?.user_id ||
         null
 
       const customerId =
