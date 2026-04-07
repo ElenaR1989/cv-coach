@@ -577,11 +577,24 @@ export default async function ApplicationDetailsPage({
     notFound()
   }
 
-  const job = application as JobApplication
-  const tailoredSummary = generateTailoredSummaryPreview(
-    job.cv_profiles?.summary ?? null,
-    job.job_description ?? null
-  )
+const rawJob = application as JobApplication & {
+  cv_profiles?:
+    | { id: string; title: string; summary: string | null }[]
+    | { id: string; title: string; summary: string | null }
+    | null
+}
+
+const job: JobApplication = {
+  ...rawJob,
+  cv_profiles: Array.isArray(rawJob.cv_profiles)
+    ? rawJob.cv_profiles[0] ?? null
+    : rawJob.cv_profiles ?? null,
+}
+
+const tailoredSummary = generateTailoredSummaryPreview(
+  job.cv_profiles?.summary ?? null,
+  job.job_description ?? null
+)
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
