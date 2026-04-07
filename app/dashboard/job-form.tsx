@@ -10,7 +10,8 @@ type CVProfile = {
 }
 
 type JobFormProps = {
-  cvs: CVProfile[]
+  cvs?: CVProfile[]
+  initialData?:any
 }
 
 function generateFeedback(role: string, company: string) {
@@ -33,10 +34,6 @@ function generateFeedback(role: string, company: string) {
   }
 
   return "✅ Looks like a good application. Keep going!"
-}
-
-type JobFormProps = {
-  initialData?: any
 }
 
 export default function JobForm({ initialData }: JobFormProps) {
