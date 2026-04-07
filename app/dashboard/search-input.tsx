@@ -9,7 +9,7 @@ export default function SearchInput() {
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
 
-  function handleSearch(e) {
+  function handleSearch(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     const params = new URLSearchParams(searchParams.toString());
@@ -29,12 +29,14 @@ export default function SearchInput() {
         Search by company
       </label>
       <input
-        type="text"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Type company name..."
-        className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500"
-      />
+  type="text"
+  value={search}
+  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value)
+  }}
+  placeholder="Type company name..."
+  className="w-full rounded-xl border border-gray-700 bg-gray-900"
+/>
     </form>
   );
 }
