@@ -11,7 +11,7 @@ type CVProfile = {
 
 type JobFormProps = {
   cvs?: CVProfile[]
-  initialData?:any
+  initialData?: any
 }
 
 function generateFeedback(role: string, company: string) {

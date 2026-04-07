@@ -254,7 +254,7 @@ function formatScoreText(score: number | null) {
   return `CV match score: ${score}%`
 }
 
-export default function JobForm() {
+export default function JobForm({ cvs = [], initialData }: JobFormProps) {
   const router = useRouter()
   const supabase = createClient()
 
