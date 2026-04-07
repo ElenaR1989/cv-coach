@@ -9,7 +9,7 @@ export async function saveApplication(data: {
   cv: string;
   coverLetter: string;
 }) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error } = await supabase.from("job_applications").insert({
     user_id: data.userId,
