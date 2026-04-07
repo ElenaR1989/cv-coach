@@ -7,7 +7,7 @@ export default function StatusFilter() {
   const searchParams = useSearchParams();
   const currentStatus = searchParams.get("status") || "";
 
-  function handleChange(e) {
+  function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const value = e.target.value;
     const params = new URLSearchParams(searchParams.toString());
 
