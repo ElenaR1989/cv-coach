@@ -55,21 +55,22 @@ export async function POST(req: Request) {
           : session.subscription?.id
 
       if (userId) {
-        await supabase
+   const { error } = await supabase
   .from("profiles")
   .update({
     is_pro: true,
-    plan: "pro", // 👈 ADD THIS
+    plan: "pro",
     stripe_customer_id: customerId,
     stripe_subscription_id: subscriptionId,
   })
   .eq("id", userId)
 
-        if (error) {
-          console.error("Supabase update error on checkout.session.completed:", error.message)
-        }
-      }
-    }
+if (error) {
+  console.error(
+    "Supabase update error on checkout.session.completed:",
+    error.message
+  )
+}
 
     if (
       event.type === "customer.subscription.deleted" ||
