@@ -35,7 +35,11 @@ function generateFeedback(role: string, company: string) {
   return "✅ Looks like a good application. Keep going!"
 }
 
-export default function JobForm({ cvs }: JobFormProps) {
+type JobFormProps = {
+  initialData?: any
+}
+
+export default function JobForm({ initialData }: JobFormProps) {
   const router = useRouter()
   const supabase = createClient()
 
