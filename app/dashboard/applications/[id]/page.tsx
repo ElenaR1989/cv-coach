@@ -577,7 +577,7 @@ export default async function ApplicationDetailsPage({
     notFound()
   }
 
-const rawJob = application as JobApplication & {
+const rawJob = application as unknown as JobApplication & {
   cv_profiles?:
     | { id: string; title: string; summary: string | null }[]
     | { id: string; title: string; summary: string | null }
