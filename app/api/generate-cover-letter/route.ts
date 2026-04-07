@@ -2,6 +2,8 @@ import OpenAI from "openai"
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
+const FREE_COVER_LETTER_LIMIT = 3
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
@@ -14,36 +16,44 @@ export async function POST(req: Request) {
       data: { user },
     } = await supabase.auth.getUser()
 
-// ✅ FIRST check user
-if (!user) {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-}
-
-// 👉 THEN get plan
-const { data: profile } = await supabase
-  .from("profiles")
-  .select("is_pro")
-  .eq("id", user.id)
-  .single()
-
-const isPro = profile?.is_pro ?? false
-
-// 👉 THEN enforce limit
-if (!isPro) {
-  const { count } = await supabase
-    .from("cover_letters")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-
-  if ((count ?? 0) >= 3) {
-    return NextResponse.json(
-      { error: "Free limit reached. Upgrade to Pro." },
-      { status: 403 }
-    )
-  }
-}
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("is_pro, plan")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError) {
+      console.error("Error loading profile:", profileError.message)
+    }
+
+    const isPro =
+      profile?.is_pro === true ||
+      profile?.plan === "pro"
+
+    if (!isPro) {
+      const { count, error: countError } = await supabase
+        .from("cover_letters")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+
+      if (countError) {
+        console.error("Error counting cover letters:", countError.message)
+        return NextResponse.json(
+          { error: "Failed to check usage." },
+          { status: 500 }
+        )
+      }
+
+      if ((count ?? 0) >= FREE_COVER_LETTER_LIMIT) {
+        return NextResponse.json(
+          { error: "Free limit reached. Upgrade to Pro." },
+          { status: 403 }
+        )
+      }
     }
 
     const body = await req.json()
@@ -61,9 +71,7 @@ if (!isPro) {
 
     if (!cvText || !jobTitle || !companyName || !jobDescription) {
       return NextResponse.json(
-        {
-          error: "Missing required fields.",
-        },
+        { error: "Missing required fields." },
         { status: 400 }
       )
     }
@@ -118,13 +126,15 @@ ${jobDescription}
       )
     }
 
-    const { error: saveError } = await supabase.from("cover_letters").insert({
-      user_id: user.id,
-      cv_id: cvId || null,
-      job_title: jobTitle,
-      company_name: companyName,
-      content: letter,
-    })
+    const { error: saveError } = await supabase
+      .from("cover_letters")
+      .insert({
+        user_id: user.id,
+        cv_id: cvId || null,
+        job_title: jobTitle,
+        company_name: companyName,
+        content: letter,
+      })
 
     if (saveError) {
       console.error("Error saving cover letter:", saveError.message)
@@ -135,12 +145,16 @@ ${jobDescription}
     }
 
     return NextResponse.json({ letter })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Generate cover letter error:", error)
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to generate cover letter."
+
     return NextResponse.json(
-      {
-        error: error?.message || "Failed to generate cover letter.",
-      },
+      { error: message },
       { status: 500 }
     )
   }

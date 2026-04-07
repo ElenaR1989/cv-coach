@@ -3,145 +3,24 @@
 import { useEffect, useMemo, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 
-type JobApplication = {
+const FREE_COVER_LETTER_LIMIT = 3
+
+type Application = {
   id: string
-  company: string
-  role: string
+  company: string | null
+  role: string | null
   job_description: string | null
   cover_letter: string | null
+  cv_id?: string | null
+  hiring_manager?: string | null
+  location?: string | null
 }
 
 type CoverLetterToolProps = {
-  cvId: string
   cvTitle: string
   cvSummary: string
-  applications: JobApplication[]
-  initialApplicationId?: string
-}
-
-const FREE_COVER_LETTER_LIMIT = 3
-
-function normaliseText(text: string) {
-  return text.toLowerCase().replace(/\s+/g, " ").trim()
-}
-
-function cleanSummaryText(summary: string) {
-  return summary.replace(/\s+/g, " ").replace(/\bapis\b/gi, "APIs").trim()
-}
-
-function buildOpening(company: string, role: string) {
-  return `Dear Hiring Manager,
-
-I am writing to express my interest in the ${role} position at ${company}.`
-}
-
-function buildBody(cvSummary: string, jobDescription: string) {
-  const summary = cleanSummaryText(cvSummary)
-  const jobText = normaliseText(jobDescription)
-  const lines: string[] = []
-
-  if (summary) {
-    lines.push(
-      `With a background as a ${summary}, I have developed strong experience that aligns well with this opportunity.`
-    )
-  } else {
-    lines.push(
-      "I bring a strong and adaptable professional background with a focus on delivering reliable, high-quality work."
-    )
-  }
-
-  if (
-    jobText.includes("react") ||
-    jobText.includes("frontend") ||
-    jobText.includes("next.js") ||
-    jobText.includes("nextjs") ||
-    jobText.includes("typescript")
-  ) {
-    lines.push(
-      "I have hands-on experience building modern web applications, focusing on clean user interfaces, reusable components, and practical technical solutions."
-    )
-  }
-
-  if (jobText.includes("api") || jobText.includes("apis")) {
-    lines.push(
-      "I am also confident working with APIs and supporting reliable, data-driven user experiences."
-    )
-  }
-
-  if (
-    jobText.includes("team") ||
-    jobText.includes("stakeholder") ||
-    jobText.includes("stakeholders") ||
-    jobText.includes("communication") ||
-    jobText.includes("collaboration")
-  ) {
-    lines.push(
-      "I work effectively with teams and stakeholders, and I value clear communication and collaborative delivery."
-    )
-  }
-
-  if (
-    jobText.includes("fast-paced") ||
-    jobText.includes("operations") ||
-    jobText.includes("remote")
-  ) {
-    lines.push(
-      "I am comfortable working in fast-paced environments, adapting quickly to change while maintaining attention to detail and a consistent standard of work."
-    )
-  }
-
-  if (
-    jobText.includes("healthcare") ||
-    jobText.includes("nhs") ||
-    jobText.includes("patient care")
-  ) {
-    lines.push(
-      "I understand the importance of professionalism, compliance, and dependable service in people-focused environments."
-    )
-  }
-
-  if (
-    jobText.includes("security") ||
-    jobText.includes("sia") ||
-    jobText.includes("nebosh") ||
-    jobText.includes("health and safety")
-  ) {
-    lines.push(
-      "I also appreciate the importance of safety, compliance, and maintaining reliable standards in operational settings."
-    )
-  }
-
-  lines.push(
-    "I am particularly drawn to this role because it aligns well with my experience and my motivation to contribute to meaningful and high-quality work."
-  )
-
-  return lines.join(" ")
-}
-
-function buildClosing(company: string, fullName?: string) {
-  return `I would welcome the opportunity to discuss how my experience and strengths could contribute to ${company}. Thank you for your time and consideration.
-
-Kind regards${fullName ? `
-
-${fullName}` : ""}`
-}
-
-export function generateCoverLetter(
-  company: string,
-  role: string,
-  cvSummary: string,
-  jobDescription: string,
-  fullName?: string
-) {
-  const opening = buildOpening(company, role)
-  const body = buildBody(cvSummary, jobDescription)
-  const closing = buildClosing(company, fullName)
-
-  return `${opening}
-
-${body}
-
-${closing}`
+  applications: Application[]
+  initialApplicationId?: string | null
 }
 
 export default function CoverLetterTool({
@@ -152,70 +31,83 @@ export default function CoverLetterTool({
 }: CoverLetterToolProps) {
   const supabase = createClient()
 
-  const initialSelectedApplication =
-    applications.find((app) => app.id === initialApplicationId) ??
-    applications[0] ??
-    null
-
-  const [applicationId, setApplicationId] = useState(
-    initialSelectedApplication?.id ?? ""
-  )
-  const [customJobDescription, setCustomJobDescription] = useState(
-    initialSelectedApplication?.job_description ?? ""
-  )
-  const [draft, setDraft] = useState(
-    initialSelectedApplication?.cover_letter ?? ""
-  )
+  const [localApplications, setLocalApplications] = useState<Application[]>(applications)
+  const [applicationId, setApplicationId] = useState(initialApplicationId || applications[0]?.id || "")
+  const [customJobDescription, setCustomJobDescription] = useState("")
+  const [draft, setDraft] = useState("")
+  const [generating, setGenerating] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [savedMessage, setSavedMessage] = useState("")
   const [error, setError] = useState("")
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
-
-  const selectedApplication = useMemo(() => {
-    return applications.find((app) => app.id === applicationId) ?? null
-  }, [applications, applicationId])
+  const [savedMessage, setSavedMessage] = useState("")
+  const [copyMessage, setCopyMessage] = useState("")
+  const [isPro, setIsPro] = useState(false)
+  const [checkingPlan, setCheckingPlan] = useState(true)
 
   useEffect(() => {
-    const nextApp =
-      applications.find((app) => app.id === initialApplicationId) ??
-      applications[0] ??
-      null
-
-    if (!nextApp) return
-
-    setApplicationId(nextApp.id)
-    setCustomJobDescription(nextApp.job_description ?? "")
-    setDraft(nextApp.cover_letter ?? "")
-    setError("")
-    setSavedMessage("")
-  }, [initialApplicationId, applications])
-
-  const usedCoverLetters = useMemo(() => {
-    return applications.filter((app) => app.cover_letter?.trim()).length
+    setLocalApplications(applications)
   }, [applications])
 
-  const displayUsage = Math.min(
-    usedCoverLetters,
-    FREE_COVER_LETTER_LIMIT
-  )
+  useEffect(() => {
+    if (!applicationId && applications[0]?.id) {
+      setApplicationId(applications[0].id)
+    }
+  }, [applicationId, applications])
 
-  const selectedAlreadyHasCoverLetter =
-    !!selectedApplication?.cover_letter?.trim()
+  const selectedApplication = useMemo(() => {
+    return localApplications.find((app) => app.id === applicationId) ?? null
+  }, [localApplications, applicationId])
 
-  const freeLimitReached =
-    usedCoverLetters >= FREE_COVER_LETTER_LIMIT && !selectedAlreadyHasCoverLetter
-
-  const openUpgradeModal = () => {
-    setShowUpgradeModal(true)
-  }
-
-  const closeUpgradeModal = () => {
-    setShowUpgradeModal(false)
-  }
-
-  const handleGenerate = () => {
+  useEffect(() => {
+    setCustomJobDescription(selectedApplication?.job_description ?? "")
+    setDraft(selectedApplication?.cover_letter ?? "")
     setError("")
     setSavedMessage("")
+    setCopyMessage("")
+  }, [selectedApplication])
+
+  useEffect(() => {
+    const loadPlan = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        setCheckingPlan(false)
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_pro, plan")
+        .eq("id", user.id)
+        .single()
+
+      setIsPro(profile?.is_pro === true || profile?.plan === "pro")
+      setCheckingPlan(false)
+    }
+
+    loadPlan()
+  }, [supabase])
+
+  const usedCoverLetters = useMemo(() => {
+    return localApplications.filter((app) => app.cover_letter?.trim()).length
+  }, [localApplications])
+
+  const displayUsage = isPro
+    ? "Unlimited"
+    : Math.min(usedCoverLetters, FREE_COVER_LETTER_LIMIT)
+
+  const selectedAlreadyHasCoverLetter = !!selectedApplication?.cover_letter?.trim()
+
+  const freeLimitReached =
+    !isPro &&
+    usedCoverLetters >= FREE_COVER_LETTER_LIMIT &&
+    !selectedAlreadyHasCoverLetter
+
+  const handleGenerate = async () => {
+    setError("")
+    setSavedMessage("")
+    setCopyMessage("")
 
     if (!selectedApplication) {
       setError("Select an application first.")
@@ -224,9 +116,8 @@ export default function CoverLetterTool({
 
     if (freeLimitReached) {
       setError(
-        `Free limit reached. You have used ${displayUsage}/${FREE_COVER_LETTER_LIMIT} saved cover letters. Upgrade to Pro to continue.`
+        `Free limit reached. You have used ${displayUsage}/${FREE_COVER_LETTER_LIMIT} saved cover letters.`
       )
-      setShowUpgradeModal(true)
       return
     }
 
@@ -235,31 +126,49 @@ export default function CoverLetterTool({
       return
     }
 
-    const generated = generateCoverLetter(
-      selectedApplication.company,
-      selectedApplication.role,
-      cvSummary,
-      customJobDescription,
-      "Elena Rahimi"
-    )
+    setGenerating(true)
 
-    setDraft(generated)
+    try {
+      const res = await fetch("/api/generate-cover-letter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          cvId: selectedApplication.cv_id || "",
+          cvText: cvSummary || "",
+          fullName: cvTitle || "",
+          email: "",
+          phone: "",
+          jobTitle: selectedApplication.role || "",
+          companyName: selectedApplication.company || "",
+          hiringManager: selectedApplication.hiring_manager || "",
+          location: selectedApplication.location || "",
+          jobDescription: customJobDescription,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to generate cover letter.")
+      }
+
+      setDraft(data.letter || "")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to generate cover letter.")
+    } finally {
+      setGenerating(false)
+    }
   }
 
   const handleSave = async () => {
     setError("")
     setSavedMessage("")
+    setCopyMessage("")
 
     if (!selectedApplication) {
       setError("Select an application first.")
-      return
-    }
-
-    if (freeLimitReached) {
-      setError(
-        `Free limit reached. You have used ${displayUsage}/${FREE_COVER_LETTER_LIMIT} saved cover letters. Upgrade to Pro to continue.`
-      )
-      setShowUpgradeModal(true)
       return
     }
 
@@ -270,69 +179,74 @@ export default function CoverLetterTool({
 
     setSaving(true)
 
-    const { error: updateError } = await supabase
-      .from("job_applications")
-      .update({
-        cover_letter: draft,
-      })
-      .eq("id", selectedApplication.id)
+    try {
+      const { error: updateError } = await supabase
+        .from("job_applications")
+        .update({
+          cover_letter: draft,
+          job_description: customJobDescription || null,
+        })
+        .eq("id", selectedApplication.id)
 
-    setSaving(false)
+      if (updateError) {
+        throw new Error(updateError.message)
+      }
 
-    if (updateError) {
-      setError(updateError.message)
-      return
+      setLocalApplications((prev) =>
+        prev.map((app) =>
+          app.id === selectedApplication.id
+            ? {
+                ...app,
+                cover_letter: draft,
+                job_description: customJobDescription,
+              }
+            : app
+        )
+      )
+
+      setSavedMessage("Cover letter saved.")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to save cover letter.")
+    } finally {
+      setSaving(false)
     }
-
-    setSavedMessage(
-      `Saved to ${selectedApplication.company} — ${selectedApplication.role}`
-    )
   }
 
   const handleCopy = async () => {
-    setError("")
-    setSavedMessage("")
-
-    if (!draft.trim()) {
-      setError("Nothing to copy yet.")
-      return
-    }
+    if (!draft.trim()) return
 
     try {
       await navigator.clipboard.writeText(draft)
-      setSavedMessage("Cover letter copied to clipboard.")
+      setCopyMessage("Copied.")
     } catch {
-      setError("Copy failed. Please copy manually.")
+      setCopyMessage("Could not copy.")
     }
   }
 
   return (
-    <>
-      <div className="space-y-6">
-        {error ? (
-          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
-            {error}
-          </div>
-        ) : null}
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <h1 className="text-3xl font-bold text-white">Cover Letter Tool</h1>
+        <p className="mt-2 text-sm text-white/70">
+          Generate and save a tailored cover letter using this CV.
+        </p>
+      </div>
 
-        {savedMessage ? (
-          <div className="space-y-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-            <p>{savedMessage}</p>
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <p className="text-sm text-white/60">Selected CV</p>
+        <h2 className="mt-2 text-2xl font-semibold text-white">{cvTitle}</h2>
+        <p className="mt-1 text-sm text-white/70">{cvTitle}</p>
+      </div>
 
-            {selectedApplication ? (
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href = `/dashboard/applications/${selectedApplication.id}`
-                }}
-                className="text-xs text-emerald-200 underline hover:text-white"
-              >
-                Open application →
-              </button>
-            ) : null}
-          </div>
-        ) : null}
+      {!checkingPlan && isPro ? (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+          <p className="text-sm font-semibold text-emerald-300">
+            ✅ You are on Pro. Unlimited cover letters are unlocked.
+          </p>
+        </div>
+      ) : null}
 
+      {!checkingPlan && !isPro ? (
         <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4">
           <p className="text-sm font-semibold text-yellow-300">
             Free plan: {displayUsage} / {FREE_COVER_LETTER_LIMIT} cover letters used
@@ -340,236 +254,121 @@ export default function CoverLetterTool({
 
           {freeLimitReached ? (
             <p className="mt-2 text-sm text-yellow-200">
-              You’ve reached your free limit. Upgrade to continue.
+              You've reached your free limit. Upgrade to continue.
             </p>
           ) : (
             <p className="mt-2 text-sm text-yellow-200/80">
               You can still generate and save cover letters until you reach the free limit.
             </p>
           )}
-        </div>
 
-        <div className="rounded-2xl border border-cyan-400/40 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-cyan-300">
-                🚀 Upgrade to Pro
-              </p>
-              <p className="mt-1 text-sm text-white/80">
-                Unlimited cover letters + smarter AI
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-  window.location.href = "/pricing"
-}}
-              className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-cyan-300"
+          <div className="mt-4">
+            <a
+              href="/pricing"
+              className="inline-flex rounded-xl bg-cyan-400 px-4 py-2 text-sm font-semibold text-black"
             >
-              Upgrade
-            </button>
-          </div>
-        </div>
-
-        <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
-          <h2 className="text-2xl font-semibold">Source</h2>
-          <p className="mt-2 text-sm text-white/60">
-            Choose an application linked to{" "}
-            <span className="text-white/80">{cvTitle}</span>.
-          </p>
-
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm text-white/80">Application</label>
-
-              <select
-                value={applicationId}
-                onChange={(e) => {
-                  const nextId = e.target.value
-                  setApplicationId(nextId)
-
-                  const nextApp =
-                    applications.find((app) => app.id === nextId) ?? null
-
-                  setDraft(nextApp?.cover_letter ?? "")
-                  setCustomJobDescription(nextApp?.job_description ?? "")
-                  setError("")
-                  setSavedMessage("")
-                }}
-                className="w-full rounded-xl border border-white/20 bg-black/20 px-4 py-3 text-white outline-none transition focus:border-white/40"
-              >
-                {applications.length === 0 ? (
-                  <option value="">No linked applications found</option>
-                ) : null}
-
-                {applications.map((app) => (
-                  <option key={app.id} value={app.id}>
-                    {app.company} — {app.role}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs uppercase tracking-wide text-white/50">
-                CV Summary Source
-              </p>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-white/85">
-                {cvSummary || "No CV summary saved yet."}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <div className="grid gap-6 xl:grid-cols-2">
-          <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
-            <h2 className="text-2xl font-semibold">Job description</h2>
-            <p className="mt-2 text-sm text-white/60">
-              Edit the job description before generating the cover letter.
-            </p>
-
-            <textarea
-              value={customJobDescription}
-              onChange={(e) => setCustomJobDescription(e.target.value)}
-              rows={16}
-              placeholder="Paste or edit the job description here..."
-              className="mt-4 w-full rounded-xl border border-white/20 bg-black/20 px-4 py-3 text-white outline-none transition placeholder:text-white/40 focus:border-white/40"
-            />
-
-            <button
-              type="button"
-              onClick={handleGenerate}
-              disabled={freeLimitReached}
-              className={`mt-4 rounded-xl px-5 py-3 font-medium transition ${
-                freeLimitReached
-                  ? "cursor-not-allowed bg-white/10 text-white/40"
-                  : "bg-white text-black hover:opacity-90"
-              }`}
-            >
-              {freeLimitReached ? "Limit reached" : "Generate cover letter"}
-            </button>
-          </section>
-
-          <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
-            <h2 className="text-2xl font-semibold">Cover letter draft</h2>
-            <p className="mt-2 text-sm text-white/60">
-              Review and edit before saving it to the application.
-            </p>
-
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              rows={16}
-              placeholder="Your generated cover letter will appear here..."
-              className="mt-4 w-full rounded-xl border border-white/20 bg-black/20 px-4 py-3 text-white outline-none transition placeholder:text-white/40 focus:border-white/40"
-            />
-
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving || freeLimitReached}
-                className={`rounded-xl px-5 py-3 font-medium transition ${
-                  saving || freeLimitReached
-                    ? "cursor-not-allowed bg-white/10 text-white/40"
-                    : "bg-white text-black hover:opacity-90"
-                }`}
-              >
-                {saving
-                  ? "Saving..."
-                  : freeLimitReached
-                    ? "Limit reached"
-                    : "Save to application"}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-5 py-3 font-medium text-cyan-300 transition hover:bg-cyan-500/20"
-              >
-                Copy to clipboard
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setDraft(selectedApplication?.cover_letter ?? "")
-                  setCustomJobDescription(
-                    selectedApplication?.job_description ?? ""
-                  )
-                  setError("")
-                  setSavedMessage("")
-                }}
-                className="rounded-xl border border-white/20 bg-white/5 px-5 py-3 font-medium text-white transition hover:bg-white/10"
-              >
-                Reset
-              </button>
-            </div>
-          </section>
-        </div>
-      </div>
-
-      {showUpgradeModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-          <div className="w-full max-w-lg rounded-2xl border border-cyan-400/30 bg-zinc-950 p-6 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-cyan-300">
-                  Upgrade to Pro
-                </p>
-                <h3 className="mt-2 text-2xl font-bold text-white">
-                  Unlock unlimited cover letters
-                </h3>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeUpgradeModal}
-                className="rounded-lg border border-white/15 px-3 py-1 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-3 text-sm text-white/80">
-              <p>
-                You’re on the free plan and have reached your saved cover letter limit.
-              </p>
-
-              <ul className="space-y-2">
-                <li>✅ Unlimited cover letters</li>
-                <li>✅ Smarter AI suggestions</li>
-                <li>✅ Faster workflow</li>
-              </ul>
-            </div>
-
-            <div className="mt-6 rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-200">
-              Current usage: {displayUsage} / {FREE_COVER_LETTER_LIMIT}
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href = "/pricing"
-                }}
-                className="rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-black shadow-lg transition hover:bg-cyan-300"
-              >
-                Upgrade now
-              </button>
-
-              <button
-                type="button"
-                onClick={closeUpgradeModal}
-                className="rounded-xl border border-white/20 bg-white/10 px-5 py-3 font-medium text-white transition hover:bg-white/20"
-              >
-                Maybe later
-              </button>
-            </div>
+              Upgrade to Pro
+            </a>
           </div>
         </div>
       ) : null}
-    </>
+
+      {error ? (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+          {error}
+        </div>
+      ) : null}
+
+      {savedMessage ? (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+          {savedMessage}
+        </div>
+      ) : null}
+
+      {copyMessage ? (
+        <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-sm text-cyan-200">
+          {copyMessage}
+        </div>
+      ) : null}
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <h3 className="text-2xl font-semibold text-white">Source</h3>
+          <p className="mt-2 text-sm text-white/70">
+            Choose an application linked to this CV.
+          </p>
+
+          <div className="mt-4">
+            <label className="mb-2 block text-sm text-white/80">Application</label>
+            <select
+              value={applicationId}
+              onChange={(e) => setApplicationId(e.target.value)}
+              className="w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 text-white outline-none"
+            >
+              {localApplications.map((app) => (
+                <option key={app.id} value={app.id}>
+                  {app.company || "Unknown company"} — {app.role || "Unknown role"}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-6">
+            <label className="mb-2 block text-sm text-white/80">Full job description</label>
+            <textarea
+              value={customJobDescription}
+              onChange={(e) => setCustomJobDescription(e.target.value)}
+              rows={14}
+              className="w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 text-white outline-none"
+              placeholder="Paste or edit the job description here..."
+            />
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={generating || checkingPlan || freeLimitReached}
+              className="rounded-xl bg-white px-5 py-3 font-medium text-black disabled:opacity-50"
+            >
+              {generating ? "Generating..." : freeLimitReached ? "Limit reached" : "Generate"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || !draft.trim()}
+              className="rounded-xl border border-white/20 px-5 py-3 font-medium text-white disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              disabled={!draft.trim()}
+              className="rounded-xl border border-cyan-400/40 px-5 py-3 font-medium text-cyan-200 disabled:opacity-50"
+            >
+              Copy to clipboard
+            </button>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <h3 className="text-2xl font-semibold text-white">Cover letter draft</h3>
+          <p className="mt-2 text-sm text-white/70">
+            Review and edit before saving it to the application.
+          </p>
+
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={24}
+            className="mt-4 w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 text-white outline-none"
+            placeholder="Your generated cover letter will appear here..."
+          />
+        </div>
+      </div>
+    </div>
   )
 }
