@@ -17,7 +17,11 @@ function getLinkClass(pathname: string, href: string, exact = false) {
   ].join(" ")
 }
 
-export default function DashboardNavbar() {
+type DashboardNavbarProps = {
+  isAdmin?: boolean
+}
+
+export default function DashboardNavbar({ isAdmin = false }: DashboardNavbarProps) {
   const pathname = usePathname()
 
   return (
