@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabase/server";
 
 export async function saveApplication(data: {
   userId: string;
