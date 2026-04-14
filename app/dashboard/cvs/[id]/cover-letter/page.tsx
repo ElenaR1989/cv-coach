@@ -105,12 +105,10 @@ export default async function CoverLetterPage({
       </section>
 
       <CoverLetterTool
-        cvId={cv.id}
-        cvTitle={cv.title}
-        cvSummary={cv.summary ?? ""}
-        applications={jobApplications}
-        initialApplicationId={applicationId ?? ""}
-      />
+  cvTitle={cv.title}
+  cvSummary={cv.summary ?? ""}
+  applications={jobApplications}
+/>
     </div>
   )
 }
