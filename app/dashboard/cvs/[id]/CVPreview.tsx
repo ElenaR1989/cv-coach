@@ -35,9 +35,16 @@ type CV = {
 
 type Props = {
   cv: CV
+  applicationId?: string
+  application?: {
+    id?: string
+    company?: string | null
+    role?: string | null
+    tailored_cv?: string | null
+  } | null
 }
 
-export default function CVPreview({ cv }: Props) {
+export default function CVPreview({ cv, applicationId, application }: Props) {
   const contactItems = [
     cv.email,
     cv.phone,
@@ -115,18 +122,34 @@ export default function CVPreview({ cv }: Props) {
               >
                 Dashboard
               </Link>
+
+              <Link
+                href={
+                  applicationId
+                    ? `/dashboard/cvs/${cv.id}/print?applicationId=${applicationId}`
+                    : `/dashboard/cvs/${cv.id}/print`
+                }
+                target="_blank"
+                className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
+              >
+                Download PDF
+              </Link>
             </div>
           </div>
 
           <div className="print-card mx-auto w-full max-w-4xl rounded-2xl bg-white p-10 pt-16 text-black shadow-2xl md:p-12 md:pt-20">
+            {application?.company && application?.role ? (
+              <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+                Tailored for {application.company} — {application.role}
+              </div>
+            ) : null}
+
             <header className="border-b border-gray-200 pb-8">
               <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
                 {cv.full_name || cv.title}
               </h1>
 
-              <p className="mt-2 text-lg text-gray-500">
-                Professional Profile
-              </p>
+              <p className="mt-2 text-lg text-gray-500">Professional Profile</p>
             </header>
 
             <main className="mt-10 grid gap-10 md:grid-cols-3">
@@ -165,7 +188,9 @@ export default function CVPreview({ cv }: Props) {
                 {cv.summary && (
                   <section>
                     <h2 className="mb-3 text-xl font-semibold">Profile</h2>
-                    <p className="leading-7 text-gray-700">{cv.summary}</p>
+                    <p className="whitespace-pre-line leading-7 text-gray-700">
+                      {cv.summary}
+                    </p>
                   </section>
                 )}
 
@@ -179,7 +204,7 @@ export default function CVPreview({ cv }: Props) {
                           key={index}
                           className="border-b border-gray-200 pb-6"
                         >
-                          <div className="flex items-start justify-between">
+                          <div className="flex items-start justify-between gap-4">
                             <div>
                               {job.title && (
                                 <h3 className="text-lg font-semibold capitalize text-gray-900">
@@ -228,7 +253,7 @@ export default function CVPreview({ cv }: Props) {
                             key={index}
                             className="border-b border-gray-200 pb-6"
                           >
-                            <div className="flex items-start justify-between">
+                            <div className="flex items-start justify-between gap-4">
                               <div>
                                 {item.qualification && (
                                   <h3 className="text-lg font-semibold text-gray-900">

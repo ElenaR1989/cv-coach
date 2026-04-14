@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
@@ -8,6 +8,8 @@ type CVTailorToolProps = {
   cvId: string
   currentSummary: string
   cvTitle: string
+  initialJobDescription?: string
+  applicationId?: string
 }
 
 const KEYWORDS = [
@@ -65,6 +67,10 @@ function normaliseText(text: string) {
   return text.toLowerCase().replace(/\s+/g, " ").trim()
 }
 
+function uniqueItems(items: string[]) {
+  return [...new Set(items)]
+}
+
 function getMatchedKeywords(jobDescription: string, summary: string) {
   const jobText = normaliseText(jobDescription)
   const cvText = normaliseText(summary)
@@ -74,9 +80,9 @@ function getMatchedKeywords(jobDescription: string, summary: string) {
   const missing = jobKeywords.filter((keyword) => !cvText.includes(keyword))
 
   return {
-    jobKeywords,
-    matched,
-    missing,
+    jobKeywords: uniqueItems(jobKeywords),
+    matched: uniqueItems(matched),
+    missing: uniqueItems(missing),
   }
 }
 
@@ -179,13 +185,22 @@ function buildImpactLines(jobDescription: string, matched: string[], missing: st
     )
   }
 
-  if (jobText.includes("admin") || jobText.includes("excel") || jobText.includes("organisation")) {
+  if (
+    jobText.includes("admin") ||
+    jobText.includes("excel") ||
+    jobText.includes("organisation") ||
+    jobText.includes("organization")
+  ) {
     lines.push(
       "Handled administration, coordination, and organisation tasks accurately while supporting efficient team operations."
     )
   }
 
-  if (jobText.includes("senior") || jobText.includes("ownership") || jobText.includes("leadership")) {
+  if (
+    jobText.includes("senior") ||
+    jobText.includes("ownership") ||
+    jobText.includes("leadership")
+  ) {
     lines.push(
       "Able to take ownership, work independently, and contribute confidently to high-responsibility work."
     )
@@ -193,17 +208,17 @@ function buildImpactLines(jobDescription: string, matched: string[], missing: st
 
   if (matched.length > 0) {
     lines.push(
-      `Brings strengths in ${[...new Set(matched)].slice(0, 4).join(", ")} that align well with the role requirements.`
+      `Brings strengths in ${matched.slice(0, 4).join(", ")} that align well with the role requirements.`
     )
   }
 
   if (missing.length > 0) {
     lines.push(
-      `"Further strengthen your profile by highlighting ${missing.slice(0, 3).join(", ")} more visible where relevant and truthful.`
+      `Further strengthen your profile by highlighting ${missing.slice(0, 3).join(", ")} more clearly where relevant and truthful.`
     )
   }
 
-  return lines
+  return uniqueItems(lines)
 }
 
 function generateTailoredSummary(
@@ -211,11 +226,13 @@ function generateTailoredSummary(
   jobDescription: string,
   impactMode: boolean
 ) {
+  const cleanSummary = summary.trim()
   const cleanJob = jobDescription.trim()
-  if (!cleanJob) return summary.trim()
 
-  const { matched, missing } = getMatchedKeywords(cleanJob, summary)
-  const headline = pickBaseHeadline(summary, cleanJob)
+  if (!cleanJob) return cleanSummary
+
+  const { matched, missing } = getMatchedKeywords(cleanJob, cleanSummary)
+  const headline = pickBaseHeadline(cleanSummary, cleanJob)
 
   if (!impactMode) {
     const lines: string[] = [headline]
@@ -240,11 +257,10 @@ function generateTailoredSummary(
       )
     }
 
-    return lines.join(" ")
+    return uniqueItems(lines).join(" ")
   }
 
   const impactLines = buildImpactLines(cleanJob, matched, missing)
-
   return [headline, ...impactLines].join(" ")
 }
 
@@ -323,23 +339,32 @@ function generateSuggestions(jobDescription: string, summary: string) {
     )
   }
 
-  return suggestions
+  return uniqueItems(suggestions)
 }
 
 export default function CVTailorTool({
   cvId,
   currentSummary,
   cvTitle,
+  initialJobDescription = "",
+  applicationId,
 }: CVTailorToolProps) {
   const router = useRouter()
   const supabase = createClient()
 
-  const [jobDescription, setJobDescription] = useState("")
+  const [jobDescription, setJobDescription] = useState(initialJobDescription)
   const [summaryDraft, setSummaryDraft] = useState(currentSummary)
   const [saving, setSaving] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [savedMessage, setSavedMessage] = useState("")
   const [error, setError] = useState("")
   const [impactMode, setImpactMode] = useState(true)
+
+  useEffect(() => {
+    if (initialJobDescription.trim()) {
+      setJobDescription(initialJobDescription)
+    }
+  }, [initialJobDescription])
 
   const analysis = useMemo(() => {
     const matchedData = getMatchedKeywords(jobDescription, summaryDraft)
@@ -363,7 +388,7 @@ export default function CVTailorTool({
     }
   }, [jobDescription, summaryDraft, currentSummary, impactMode])
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setError("")
     setSavedMessage("")
 
@@ -372,7 +397,34 @@ export default function CVTailorTool({
       return
     }
 
-    setSummaryDraft(analysis.tailoredSummary)
+    setGenerating(true)
+
+    try {
+      const response = await fetch("/api/rewrite-cv-summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currentSummary,
+          jobDescription,
+          impactMode,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data?.error || "Failed to generate tailored summary.")
+        return
+      }
+
+      setSummaryDraft(String(data.summary || "").trim())
+    } catch (err: any) {
+      setError(err?.message || "Failed to generate tailored summary.")
+    } finally {
+      setGenerating(false)
+    }
   }
 
   const handleSave = async () => {
@@ -380,22 +432,50 @@ export default function CVTailorTool({
     setError("")
     setSavedMessage("")
 
-    const { error: updateError } = await supabase
+    const { error: cvError } = await supabase
       .from("cv_profiles")
       .update({
         summary: summaryDraft,
       })
       .eq("id", cvId)
 
-    setSaving(false)
-
-    if (updateError) {
-      setError(updateError.message)
+    if (cvError) {
+      setSaving(false)
+      setError(cvError.message)
       return
     }
 
+    if (applicationId) {
+      const { error: appError } = await supabase
+        .from("job_applications")
+        .update({
+          job_description: jobDescription || null,
+          tailored_cv: summaryDraft || null,
+        })
+        .eq("id", applicationId)
+
+      if (appError) {
+        setSaving(false)
+        setError(appError.message)
+        return
+      }
+
+      setSaving(false)
+      setSavedMessage("Saved CV + application details.")
+      router.refresh()
+      return
+    }
+
+    setSaving(false)
     setSavedMessage("Improved summary saved to CV.")
     router.refresh()
+  }
+
+  const handleReset = () => {
+    setError("")
+    setSavedMessage("")
+    setSummaryDraft(currentSummary)
+    setJobDescription(initialJobDescription || "")
   }
 
   return (
@@ -448,16 +528,17 @@ export default function CVTailorTool({
           <button
             type="button"
             onClick={handleGenerate}
-            className="mt-4 rounded-xl bg-white px-5 py-3 font-medium text-black transition hover:opacity-90"
+            disabled={generating}
+            className="mt-4 rounded-xl bg-white px-5 py-3 font-medium text-black transition hover:opacity-90 disabled:opacity-50"
           >
-            Auto-improve summary
+            {generating ? "Generating..." : "Generate tailored summary"}
           </button>
         </section>
 
         <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
           <h2 className="text-2xl font-semibold">Tailored summary</h2>
           <p className="mt-2 text-sm text-white/60">
-            Edit the generated version before saving it to your CV.
+            Edit the generated version before saving it.
           </p>
 
           <textarea
@@ -479,7 +560,7 @@ export default function CVTailorTool({
 
             <button
               type="button"
-              onClick={() => setSummaryDraft(currentSummary)}
+              onClick={handleReset}
               className="rounded-xl border border-white/20 bg-white/5 px-5 py-3 font-medium text-white transition hover:bg-white/10"
             >
               Reset
@@ -493,7 +574,7 @@ export default function CVTailorTool({
           <div>
             <h2 className="text-2xl font-semibold">Match review</h2>
             <p className="mt-2 text-sm text-white/60">
-              Simple keyword-based match for now. Later we can upgrade this to AI rewriting.
+              Simple keyword-based match for now. Later we can upgrade this further.
             </p>
           </div>
 
@@ -507,6 +588,7 @@ export default function CVTailorTool({
             <p className="text-xs uppercase tracking-wide text-emerald-300/70">
               Matched keywords
             </p>
+
             <div className="mt-3 flex flex-wrap gap-2">
               {analysis.matched.length > 0 ? (
                 analysis.matched.map((item) => (
@@ -518,9 +600,7 @@ export default function CVTailorTool({
                   </span>
                 ))
               ) : (
-                <p className="text-sm text-emerald-200/80">
-                  No matched keywords yet.
-                </p>
+                <p className="text-sm text-emerald-200/80">No matched keywords yet.</p>
               )}
             </div>
           </div>
@@ -529,6 +609,7 @@ export default function CVTailorTool({
             <p className="text-xs uppercase tracking-wide text-rose-300/70">
               Missing keywords
             </p>
+
             <div className="mt-3 flex flex-wrap gap-2">
               {analysis.missing.length > 0 ? (
                 analysis.missing.map((item) => (
@@ -540,9 +621,7 @@ export default function CVTailorTool({
                   </span>
                 ))
               ) : (
-                <p className="text-sm text-rose-200/80">
-                  No missing keywords detected.
-                </p>
+                <p className="text-sm text-rose-200/80">No missing keywords detected.</p>
               )}
             </div>
           </div>
@@ -551,10 +630,11 @@ export default function CVTailorTool({
             <p className="text-xs uppercase tracking-wide text-violet-300/70">
               Improvement suggestions
             </p>
+
             <div className="mt-3 space-y-2">
               {analysis.suggestions.map((item, index) => (
                 <div
-                  key={index}
+                  key={`${item}-${index}`}
                   className="rounded-lg border border-violet-500/10 bg-black/20 px-3 py-2 text-sm text-white/90"
                 >
                   {item}

@@ -8,7 +8,7 @@ type ProfileRow = {
   email: string | null
   created_at: string
   plan: string | null
-  role: string | null
+  is_admin: boolean
 }
 
 type ApplicationRow = {
@@ -93,19 +93,19 @@ export default async function AdminDashboardPage() {
     redirect("/login")
   }
 
-  const { data: myProfile, error: myProfileError } = await supabase
+  const { data: adminProfile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("is_admin")
     .eq("id", user.id)
     .single()
 
-  if (myProfileError || myProfile?.role !== "admin") {
+  if (!adminProfile?.is_admin) {
     redirect("/dashboard")
   }
 
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
-    .select("id, email, created_at, plan, role")
+    .select("id, email, created_at, plan, is_admin")
     .order("created_at", { ascending: false })
 
   const { data: applications, error: applicationsError } = await supabase
@@ -225,12 +225,12 @@ export default async function AdminDashboardPage() {
 
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    profile.role === "admin"
+                    profile.is_admin
                       ? "border border-green-500/30 bg-green-500/10 text-green-300"
                       : "border border-white/20 bg-white/5 text-white/70"
                   }`}
                 >
-                  {profile.role === "admin" ? "Admin" : "User"}
+                  {profile.is_admin ? "Admin" : "User"}
                 </span>
               </div>
             ))
@@ -314,6 +314,7 @@ export default async function AdminDashboardPage() {
               {safeProfiles.map((profile) => {
                 const applicationCount = appCountByUser.get(profile.id) ?? 0
                 const cvCount = cvCountByUser.get(profile.id) ?? 0
+                const isAdmin = profile.is_admin
 
                 return (
                   <tr
@@ -342,12 +343,12 @@ export default async function AdminDashboardPage() {
                     <td className="px-4 py-4">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          profile.role === "admin"
+                          isAdmin
                             ? "border border-green-500/30 bg-green-500/10 text-green-300"
                             : "border border-white/20 bg-white/5 text-white/70"
                         }`}
                       >
-                        {profile.role === "admin" ? "Admin" : "User"}
+                        {isAdmin ? "Admin" : "User"}
                       </span>
                     </td>
 
@@ -362,19 +363,17 @@ export default async function AdminDashboardPage() {
                           <input
                             type="hidden"
                             name="nextRole"
-                            value={profile.role === "admin" ? "user" : "admin"}
+                            value={isAdmin ? "user" : "admin"}
                           />
                           <button
                             type="submit"
                             className={`rounded-xl px-3 py-2 text-xs font-medium transition ${
-                              profile.role === "admin"
+                              isAdmin
                                 ? "border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20"
                                 : "border border-green-500/30 bg-green-500/10 text-green-300 hover:bg-green-500/20"
                             }`}
                           >
-                            {profile.role === "admin"
-                              ? "Remove admin"
-                              : "Make admin"}
+                            {isAdmin ? "Remove admin" : "Make admin"}
                           </button>
                         </form>
                       )}

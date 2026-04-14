@@ -3,11 +3,22 @@ import { notFound, redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import ApplicationStatusSelect from "@/components/application-status-select"
 import DeleteApplicationButton from "@/components/delete-application-button"
+import SaveTailoredCVButton from "@/components/save-tailored-cv-button"
+import AutoImproveCVButton from "@/components/auto-improve-cv-button"
 
 type ApplicationDetailsPageProps = {
   params: Promise<{
     id: string
   }>
+}
+
+type CVProfile = {
+  id: string
+  title: string
+  summary: string | null
+  content: string | null
+  skills: string | null
+  experience: string | null
 }
 
 type JobApplication = {
@@ -23,11 +34,9 @@ type JobApplication = {
   job_description: string | null
   created_at: string
   feedback: string | null
-  cv_profiles?: {
-    id: string
-    title: string
-    summary: string | null
-  } | null
+  tailored_cv: string | null
+  original_tailored_cv: string | null
+  cv_profiles?: CVProfile | null
 }
 
 function formatDate(dateString: string) {
@@ -63,68 +72,6 @@ function getStatusBadgeClass(status: string) {
   }
 }
 
-function getSmartCoachLineClass(text: string) {
-  if (text.includes("❌") || text.toLowerCase().includes("missing")) {
-    return "rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300"
-  }
-
-  if (
-    text.includes("⚠️") ||
-    text.includes("🛡️") ||
-    text.includes("🚗") ||
-    text.includes("📚")
-  ) {
-    return "rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300"
-  }
-
-  if (text.includes("✅") || text.includes("🎉")) {
-    return "rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
-  }
-
-  if (text.includes("✍️") || text.toLowerCase().includes("suggest")) {
-    return "rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm text-violet-300"
-  }
-
-  return "rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/90"
-}
-
-function extractSmartCoachSections(feedback: string | null) {
-  if (!feedback) {
-    return {
-      score: null as number | null,
-      messages: [] as string[],
-      suggestions: [] as string[],
-    }
-  }
-
-  const scoreMatch = feedback.match(/CV Match Score:\s*(\d+)%/i)
-  const score = scoreMatch ? Number(scoreMatch[1]) : null
-
-  const suggestionStart = feedback.indexOf("CV Improvement Suggestions:")
-  const mainPart =
-    suggestionStart === -1 ? feedback : feedback.slice(0, suggestionStart)
-  const suggestionPart =
-    suggestionStart === -1 ? "" : feedback.slice(suggestionStart)
-
-  const rawMessages = mainPart
-    .split(/(?=⚠️|✅|❌|🎉|💡|📊|🎯|🛡️|🚗|📚|🤝|📎|📄)/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .filter((item) => !item.toLowerCase().startsWith("cv match score:"))
-
-  const rawSuggestions = suggestionPart
-    .replace("CV Improvement Suggestions:", "")
-    .split(/(?=✍️)/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-
-  return {
-    score,
-    messages: rawMessages,
-    suggestions: rawSuggestions,
-  }
-}
-
 function getScoreBadgeClass(score: number | null) {
   if (score === null) {
     return "rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm text-white/70"
@@ -155,79 +102,109 @@ function getScoreLabel(score: number | null) {
   return "Low match"
 }
 
-const KEYWORDS = [
-  "react",
-  "next.js",
-  "nextjs",
-  "typescript",
-  "javascript",
-  "node",
-  "sql",
-  "api",
-  "apis",
-  "frontend",
-  "backend",
-  "full stack",
-  "ui",
-  "ux",
-  "testing",
-  "jest",
-  "cypress",
-  "agile",
-  "scrum",
-  "leadership",
-  "management",
-  "communication",
-  "customer service",
-  "sales",
-  "health and safety",
-  "nebosh",
-  "sia",
-  "security",
-  "auditor",
-  "nhs",
-  "healthcare",
-  "clinical",
-  "registration",
-  "patient care",
-  "support worker",
-  "admin",
-  "excel",
-  "organisation",
-  "organization",
-  "teamwork",
-  "problem solving",
-  "stakeholder",
-  "stakeholders",
-  "collaboration",
-  "team",
-  "remote",
-  "operations",
-  "fast-paced",
-]
+function extractKeywords(text: string) {
+  const stopWords = new Set([
+    "about",
+    "after",
+    "again",
+    "against",
+    "along",
+    "also",
+    "among",
+    "and",
+    "are",
+    "because",
+    "been",
+    "before",
+    "being",
+    "between",
+    "both",
+    "could",
+    "each",
+    "from",
+    "have",
+    "into",
+    "must",
+    "need",
+    "role",
+    "this",
+    "that",
+    "their",
+    "there",
+    "they",
+    "with",
+    "will",
+    "would",
+    "your",
+    "ours",
+    "team",
+    "work",
+    "working",
+    "experience",
+    "looking",
+    "skills",
+    "ability",
+    "required",
+    "requirements",
+    "candidate",
+    "support",
+    "service",
+    "responsible",
+    "including",
+    "across",
+    "within",
+    "daily",
+    "duties",
+    "hours",
+    "benefits",
+  ])
 
-function normaliseText(text: string) {
-  return text.toLowerCase().replace(/\s+/g, " ").trim()
+  const words = text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s/-]/g, " ")
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter((word) => word.length >= 4 && !stopWords.has(word))
+
+  const counts = new Map<string, number>()
+
+  for (const word of words) {
+    counts.set(word, (counts.get(word) || 0) + 1)
+  }
+
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([word]) => word)
+    .slice(0, 12)
 }
 
-function getMatchedKeywords(jobDescription: string, summary: string) {
-  const jobText = normaliseText(jobDescription)
-  const cvText = normaliseText(summary)
+function getMatchResult(cvText: string, jobDescription: string) {
+  if (!cvText.trim() || !jobDescription.trim()) {
+    return null
+  }
 
-  const jobKeywords = KEYWORDS.filter((keyword) => jobText.includes(keyword))
-  const matched = jobKeywords.filter((keyword) => cvText.includes(keyword))
-  const missing = jobKeywords.filter((keyword) => !cvText.includes(keyword))
+  const keywords = extractKeywords(jobDescription)
+  if (keywords.length === 0) {
+    return null
+  }
+
+  const cvLower = cvText.toLowerCase()
+
+  const matched = keywords.filter((keyword) => cvLower.includes(keyword))
+  const missing = keywords.filter((keyword) => !cvLower.includes(keyword))
+
+  const score = Math.round((matched.length / keywords.length) * 100)
 
   return {
-    jobKeywords,
-    matched,
-    missing,
+    score,
+    matched: matched.slice(0, 6),
+    missing: missing.slice(0, 6),
   }
 }
 
 function pickBaseHeadline(summary: string, jobDescription: string) {
   const cleanSummary = summary.trim()
-  const jobText = normaliseText(jobDescription)
+  const jobText = jobDescription.toLowerCase()
 
   if (jobText.includes("react") || jobText.includes("frontend")) {
     return "Frontend developer with experience building modern web applications."
@@ -257,12 +234,8 @@ function pickBaseHeadline(summary: string, jobDescription: string) {
   return "Experienced professional with a strong background and adaptable skill set."
 }
 
-function buildImpactLines(
-  jobDescription: string,
-  matched: string[],
-  missing: string[]
-) {
-  const jobText = normaliseText(jobDescription)
+function buildImpactLines(jobDescription: string, matched: string[], missing: string[]) {
+  const jobText = jobDescription.toLowerCase()
   const lines: string[] = []
 
   if (
@@ -331,7 +304,8 @@ function buildImpactLines(
   if (
     jobText.includes("admin") ||
     jobText.includes("excel") ||
-    jobText.includes("organisation")
+    jobText.includes("organisation") ||
+    jobText.includes("organization")
   ) {
     lines.push(
       "Handled administration, coordination, and organisation tasks accurately while supporting efficient team operations."
@@ -341,7 +315,8 @@ function buildImpactLines(
   if (
     jobText.includes("senior") ||
     jobText.includes("ownership") ||
-    jobText.includes("leadership")
+    jobText.includes("leadership") ||
+    jobText.includes("manager")
   ) {
     lines.push(
       "Able to take ownership, work independently, and contribute confidently to high-responsibility work."
@@ -365,37 +340,107 @@ function buildImpactLines(
 
 function generateTailoredSummaryPreview(
   cvSummary: string | null,
-  jobDescription: string | null
+  jobDescription: string | null,
+  matched: string[],
+  missing: string[]
 ) {
   const summary = cvSummary?.trim() ?? ""
   const job = jobDescription?.trim() ?? ""
 
   if (!summary || !job) return null
 
-  const { matched, missing } = getMatchedKeywords(job, summary)
   const headline = pickBaseHeadline(summary, job)
   const lines = buildImpactLines(job, matched, missing)
 
   return [headline, ...lines].join(" ")
 }
 
+function buildSmartCoachMessages(
+  score: number | null,
+  matched: string[],
+  missing: string[],
+  hasCv: boolean,
+  hasJobDescription: boolean
+) {
+  const messages: string[] = []
+
+  if (!hasCv) {
+    messages.push("⚠️ Link a CV to unlock match score and tailored summary.")
+  }
+
+  if (!hasJobDescription) {
+    messages.push("⚠️ Add a job description to compare your CV against the role.")
+  }
+
+  if (!hasCv || !hasJobDescription) {
+    return messages
+  }
+
+  if (score === null) {
+    messages.push("⚠️ Match score unavailable for this application.")
+    return messages
+  }
+
+  if (score >= 80) {
+    messages.push("✅ Strong fit overall based on your linked CV and this job description.")
+  } else if (score >= 50) {
+    messages.push("📊 Partial fit found. You match some of the core role keywords.")
+  } else {
+    messages.push("❌ Low keyword match so far. Your CV may not clearly reflect this role yet.")
+  }
+
+  if (matched.length > 0) {
+    messages.push(`✅ Matched keywords: ${matched.join(", ")}`)
+  }
+
+  if (missing.length > 0) {
+    messages.push(`❌ Missing keywords: ${missing.join(", ")}`)
+    messages.push(
+      `✍️ CV Improvement Suggestions: Highlight ${missing
+        .slice(0, 3)
+        .join(", ")} more clearly where relevant and truthful.`
+    )
+  }
+
+  return messages
+}
+
+function getSmartCoachLineClass(text: string) {
+  if (text.includes("❌") || text.toLowerCase().includes("missing")) {
+    return "rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300"
+  }
+
+  if (
+    text.includes("⚠️") ||
+    text.includes("📊")
+  ) {
+    return "rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300"
+  }
+
+  if (text.includes("✅")) {
+    return "rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
+  }
+
+  if (text.includes("✍️")) {
+    return "rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm text-violet-300"
+  }
+
+  return "rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/90"
+}
+
 function SmartCoachCard({
-  feedback,
+  score,
+  matched,
+  missing,
+  messages,
   tailoredSummary,
 }: {
-  feedback: string | null
+  score: number | null
+  matched: string[]
+  missing: string[]
+  messages: string[]
   tailoredSummary: string | null
 }) {
-  const { score, messages, suggestions } = extractSmartCoachSections(feedback)
-
-  if (!feedback && !tailoredSummary) return null
-
-  const matchedCount = messages.filter((message) => message.includes("✅")).length
-  const missingCount = messages.filter(
-    (message) =>
-      message.includes("❌") || message.toLowerCase().includes("missing")
-  ).length
-
   return (
     <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -433,9 +478,9 @@ function SmartCoachCard({
                   </p>
                 </div>
 
-                {score !== null ? (
-                  <span className={getScoreBadgeClass(score)}>{score}%</span>
-                ) : null}
+                <span className={getScoreBadgeClass(score)}>
+                  {score !== null ? `${score}%` : "N/A"}
+                </span>
               </div>
 
               <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-4">
@@ -458,25 +503,6 @@ function SmartCoachCard({
               Add a job description and link a CV to preview a tailored summary here.
             </div>
           )}
-
-          {suggestions.length > 0 ? (
-            <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 p-4">
-              <p className="text-sm font-medium text-violet-300">
-                Improve CV suggestions
-              </p>
-
-              <div className="mt-3 space-y-2">
-                {suggestions.map((suggestion, index) => (
-                  <div
-                    key={index}
-                    className="rounded-lg border border-violet-500/10 bg-black/20 px-3 py-2 text-sm text-white/90"
-                  >
-                    {suggestion}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
@@ -495,7 +521,7 @@ function SmartCoachCard({
           </div>
 
           <p className="mt-3 text-xs text-white/60">
-            {getScoreLabel(score)} • {matchedCount} matched / {missingCount} missing
+            {getScoreLabel(score)} • {matched.length} matched / {missing.length} missing
           </p>
 
           <div className="mt-4 grid gap-3">
@@ -513,7 +539,7 @@ function SmartCoachCard({
                 Matched
               </p>
               <p className="mt-1 text-xl font-semibold text-emerald-300">
-                {matchedCount}
+                {matched.length}
               </p>
             </div>
 
@@ -522,7 +548,7 @@ function SmartCoachCard({
                 Missing
               </p>
               <p className="mt-1 text-xl font-semibold text-rose-300">
-                {missingCount}
+                {missing.length}
               </p>
             </div>
           </div>
@@ -531,7 +557,6 @@ function SmartCoachCard({
     </section>
   )
 }
-
 export default async function ApplicationDetailsPage({
   params,
 }: ApplicationDetailsPageProps) {
@@ -562,10 +587,15 @@ export default async function ApplicationDetailsPage({
       job_description,
       created_at,
       feedback,
+      tailored_cv,
+      original_tailored_cv,
       cv_profiles (
         id,
         title,
-        summary
+        summary,
+        content,
+        skills,
+        experience
       )
     `
     )
@@ -577,25 +607,70 @@ export default async function ApplicationDetailsPage({
     notFound()
   }
 
-const rawJob = application as unknown as JobApplication & {
-  cv_profiles?:
-    | { id: string; title: string; summary: string | null }[]
-    | { id: string; title: string; summary: string | null }
-    | null
-}
+  const rawJob = application as unknown as JobApplication & {
+    cv_profiles?: CVProfile[] | CVProfile | null
+  }
 
-const job: JobApplication = {
-  ...rawJob,
-  cv_profiles: Array.isArray(rawJob.cv_profiles)
-    ? rawJob.cv_profiles[0] ?? null
-    : rawJob.cv_profiles ?? null,
-}
+  const job: JobApplication = {
+    ...rawJob,
+    cv_profiles: Array.isArray(rawJob.cv_profiles)
+      ? rawJob.cv_profiles[0] ?? null
+      : rawJob.cv_profiles ?? null,
+  }
 
-const tailoredSummary = generateTailoredSummaryPreview(
-  job.cv_profiles?.summary ?? null,
-  job.job_description ?? null
+const baseCvText = [
+  job.cv_profiles?.summary ?? "",
+  job.cv_profiles?.content ?? "",
+  job.cv_profiles?.skills ?? "",
+  job.cv_profiles?.experience ?? "",
+].join("\n")
+
+const cvText = job.tailored_cv?.trim()
+  ? job.tailored_cv
+  : baseCvText
+
+const matchResult =
+  cvText.trim() && job.job_description?.trim()
+    ? getMatchResult(cvText, job.job_description)
+    : null
+
+const score = matchResult?.score ?? null
+const matched = matchResult?.matched ?? []
+const missing = matchResult?.missing ?? []
+
+const tailoredSummary = job.tailored_cv?.trim()
+  ? job.tailored_cv
+  : generateTailoredSummaryPreview(
+      job.cv_profiles?.summary ?? null,
+      job.job_description ?? null,
+      matched,
+      missing
+    )
+const messages = buildSmartCoachMessages(
+  score,
+  matched,
+  missing,
+  Boolean(job.cv_profiles),
+  Boolean(job.job_description?.trim())
 )
 
+const originalMatchResult =
+  job.original_tailored_cv?.trim() && job.job_description?.trim()
+    ? getMatchResult(job.original_tailored_cv, job.job_description)
+    : null
+
+const originalScore = originalMatchResult?.score ?? null
+
+const scoreImprovement =
+  score !== null && originalScore !== null
+    ? score - originalScore
+    : null
+
+const aiSourceText =
+  job.original_tailored_cv?.trim() ||
+  job.tailored_cv?.trim() ||
+  tailoredSummary ||
+  ""
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
       <div className="flex justify-end">
@@ -626,7 +701,7 @@ const tailoredSummary = generateTailoredSummaryPreview(
 
               {job.cv_id && job.cv_profiles?.title ? (
                 <Link
-                  href={`/dashboard/cvs/${job.cv_id}`}
+                  href={`/dashboard/cvs/${job.cv_id}?applicationId=${job.id}`}
                   className="rounded-full border border-blue-500/40 bg-blue-500/10 px-3 py-1 text-sm text-blue-300 transition hover:bg-blue-500/20"
                 >
                   CV: {job.cv_profiles.title}
@@ -653,19 +728,37 @@ const tailoredSummary = generateTailoredSummaryPreview(
 
           <div className="flex flex-col gap-3 lg:items-end">
             <ApplicationStatusSelect
-              applicationId={job.id}
-              currentStatus={job.status}
-            />
-
-           <div className="flex flex-wrap gap-2">
+  applicationId={job.id}
+  currentStatus={job.status}
+  currentInterviewDate={job.interview_date ?? ""}
+/>
+<div className="flex flex-wrap gap-2">
   {job.cv_id ? (
     <Link
-      href={`/dashboard/cvs/${job.cv_id}`}
+      href={`/dashboard/cvs/${job.cv_id}?applicationId=${job.id}`}
       className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
     >
       View CV
     </Link>
   ) : null}
+
+  {job.cv_id ? (
+    <SaveTailoredCVButton
+      applicationId={job.id}
+      tailoredSummary={tailoredSummary}
+      hasTailoredCv={Boolean(job.tailored_cv?.trim())}
+    />
+  ) : null}
+
+  {job.cv_id ? (
+  <AutoImproveCVButton
+  applicationId={job.id}
+  currentText={aiSourceText}
+  missingKeywords={missing}
+  jobDescription={job.job_description}
+  hasExistingTailoredCv={Boolean(job.tailored_cv?.trim())}
+/>
+) : null}
 
   {job.cv_id ? (
     <Link
@@ -687,11 +780,64 @@ const tailoredSummary = generateTailoredSummaryPreview(
       </section>
 
       <SmartCoachCard
-        feedback={job.feedback}
+        score={score}
+        matched={matched}
+        missing={missing}
+        messages={messages}
         tailoredSummary={tailoredSummary}
       />
+     {job.tailored_cv?.trim() ? (
+  <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <h2 className="text-2xl font-semibold">Before vs After</h2>
+        <p className="mt-1 text-sm text-white/60">
+          Compare your original tailored CV with the AI-improved version.
+        </p>
+      </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      {scoreImprovement !== null ? (
+        <span
+          className={`rounded-full px-3 py-1 text-sm font-medium ${
+            scoreImprovement > 0
+              ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+              : scoreImprovement < 0
+              ? "border border-rose-500/30 bg-rose-500/10 text-rose-300"
+              : "border border-white/20 bg-white/10 text-white/70"
+          }`}
+        >
+          {scoreImprovement > 0 ? "+" : ""}
+          {scoreImprovement}%
+        </span>
+      ) : null}
+    </div>
+
+    <div className="mt-4 grid gap-4 xl:grid-cols-2">
+      <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-white/50">
+          Before AI
+        </p>
+        <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+          <p className="whitespace-pre-wrap text-sm leading-7 text-white/80">
+            {JSON.stringify(job.original_tailored_cv)}
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-emerald-300/80">
+          After AI
+        </p>
+        <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+          <p className="whitespace-pre-wrap text-sm leading-7 text-white/90">
+            {job.tailored_cv}
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+) : null}
+<div className="grid gap-6 xl:grid-cols-2">
         <section
           id="job-description"
           className="rounded-2xl border border-white/20 bg-white/5 p-6"

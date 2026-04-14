@@ -29,10 +29,13 @@ export default function CoverLetterTool({
   applications,
   initialApplicationId,
 }: CoverLetterToolProps) {
-  const supabase = createClient()
+  const [localApplications, setLocalApplications] =
+    useState<Application[]>(applications)
 
-  const [localApplications, setLocalApplications] = useState<Application[]>(applications)
-  const [applicationId, setApplicationId] = useState(initialApplicationId || applications[0]?.id || "")
+  const [applicationId, setApplicationId] = useState(
+    initialApplicationId || applications[0]?.id || ""
+  )
+
   const [customJobDescription, setCustomJobDescription] = useState("")
   const [draft, setDraft] = useState("")
   const [generating, setGenerating] = useState(false)
@@ -67,6 +70,8 @@ export default function CoverLetterTool({
 
   useEffect(() => {
     const loadPlan = async () => {
+      const supabase = createClient()
+
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -87,7 +92,7 @@ export default function CoverLetterTool({
     }
 
     loadPlan()
-  }, [supabase])
+  }, [])
 
   const usedCoverLetters = useMemo(() => {
     return localApplications.filter((app) => app.cover_letter?.trim()).length
@@ -97,7 +102,8 @@ export default function CoverLetterTool({
     ? "Unlimited"
     : Math.min(usedCoverLetters, FREE_COVER_LETTER_LIMIT)
 
-  const selectedAlreadyHasCoverLetter = !!selectedApplication?.cover_letter?.trim()
+  const selectedAlreadyHasCoverLetter =
+    !!selectedApplication?.cover_letter?.trim()
 
   const freeLimitReached =
     !isPro &&
@@ -156,7 +162,11 @@ export default function CoverLetterTool({
 
       setDraft(data.letter || "")
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to generate cover letter.")
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to generate cover letter."
+      )
     } finally {
       setGenerating(false)
     }
@@ -180,6 +190,8 @@ export default function CoverLetterTool({
     setSaving(true)
 
     try {
+      const supabase = createClient()
+
       const { error: updateError } = await supabase
         .from("job_applications")
         .update({
@@ -206,7 +218,9 @@ export default function CoverLetterTool({
 
       setSavedMessage("Cover letter saved.")
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to save cover letter.")
+      setError(
+        err instanceof Error ? err.message : "Failed to save cover letter."
+      )
     } finally {
       setSaving(false)
     }
@@ -217,7 +231,7 @@ export default function CoverLetterTool({
 
     try {
       await navigator.clipboard.writeText(draft)
-      setCopyMessage("Copied.")
+      setCopyMessage("Copied to clipboard.")
     } catch {
       setCopyMessage("Could not copy.")
     }
@@ -225,19 +239,6 @@ export default function CoverLetterTool({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <h1 className="text-3xl font-bold text-white">Cover Letter Tool</h1>
-        <p className="mt-2 text-sm text-white/70">
-          Generate and save a tailored cover letter using this CV.
-        </p>
-      </div>
-
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <p className="text-sm text-white/60">Selected CV</p>
-        <h2 className="mt-2 text-2xl font-semibold text-white">{cvTitle}</h2>
-        <p className="mt-1 text-sm text-white/70">{cvTitle}</p>
-      </div>
-
       {!checkingPlan && isPro ? (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
           <p className="text-sm font-semibold text-emerald-300">
@@ -249,7 +250,8 @@ export default function CoverLetterTool({
       {!checkingPlan && !isPro ? (
         <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4">
           <p className="text-sm font-semibold text-yellow-300">
-            Free plan: {displayUsage} / {FREE_COVER_LETTER_LIMIT} cover letters used
+            Free plan: {displayUsage} / {FREE_COVER_LETTER_LIMIT} cover letters
+            used
           </p>
 
           {freeLimitReached ? (
@@ -258,18 +260,10 @@ export default function CoverLetterTool({
             </p>
           ) : (
             <p className="mt-2 text-sm text-yellow-200/80">
-              You can still generate and save cover letters until you reach the free limit.
+              You can still generate and save cover letters until you reach the
+              free limit.
             </p>
           )}
-
-          <div className="mt-4">
-            <a
-              href="/pricing"
-              className="inline-flex rounded-xl bg-cyan-400 px-4 py-2 text-sm font-semibold text-black"
-            >
-              Upgrade to Pro
-            </a>
-          </div>
         </div>
       ) : null}
 
@@ -298,8 +292,10 @@ export default function CoverLetterTool({
             Choose an application linked to this CV.
           </p>
 
-          <div className="mt-4">
-            <label className="mb-2 block text-sm text-white/80">Application</label>
+          <div className="mt-5">
+            <label className="mb-2 block text-sm text-white/80">
+              Application
+            </label>
             <select
               value={applicationId}
               onChange={(e) => setApplicationId(e.target.value)}
@@ -307,31 +303,55 @@ export default function CoverLetterTool({
             >
               {localApplications.map((app) => (
                 <option key={app.id} value={app.id}>
-                  {app.company || "Unknown company"} — {app.role || "Unknown role"}
+                  {app.company || "Unknown company"} —{" "}
+                  {app.role || "Unknown role"}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="mt-6">
-            <label className="mb-2 block text-sm text-white/80">Full job description</label>
+          <div className="mt-5">
+            <label className="mb-2 block text-sm text-white/80">
+              Full job description
+            </label>
             <textarea
               value={customJobDescription}
               onChange={(e) => setCustomJobDescription(e.target.value)}
-              rows={14}
+              rows={18}
               className="w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 text-white outline-none"
               placeholder="Paste or edit the job description here..."
             />
           </div>
+        </div>
 
-          <div className="mt-4 flex flex-wrap gap-3">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <h3 className="text-2xl font-semibold text-white">
+            Cover letter draft
+          </h3>
+          <p className="mt-2 text-sm text-white/70">
+            Review and edit before saving it to the application.
+          </p>
+
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={22}
+            className="mt-5 w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 text-white outline-none"
+            placeholder="Your generated cover letter will appear here..."
+          />
+
+          <div className="mt-5 flex flex-wrap gap-3">
             <button
               type="button"
               onClick={handleGenerate}
               disabled={generating || checkingPlan || freeLimitReached}
               className="rounded-xl bg-white px-5 py-3 font-medium text-black disabled:opacity-50"
             >
-              {generating ? "Generating..." : freeLimitReached ? "Limit reached" : "Generate"}
+              {generating
+                ? "Generating..."
+                : freeLimitReached
+                  ? "Limit reached"
+                  : "Generate"}
             </button>
 
             <button
@@ -352,21 +372,10 @@ export default function CoverLetterTool({
               Copy to clipboard
             </button>
           </div>
-        </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-          <h3 className="text-2xl font-semibold text-white">Cover letter draft</h3>
-          <p className="mt-2 text-sm text-white/70">
-            Review and edit before saving it to the application.
-          </p>
-
-          <textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            rows={24}
-            className="mt-4 w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 text-white outline-none"
-            placeholder="Your generated cover letter will appear here..."
-          />
+          <div className="mt-4 text-xs text-white/50">
+            Selected CV: {cvTitle}
+          </div>
         </div>
       </div>
     </div>

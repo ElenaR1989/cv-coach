@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import ApplicationCard from "@/components/application-card"
 
 type JobApplication = {
   id: string
@@ -11,13 +12,112 @@ type JobApplication = {
   feedback: string | null
   job_description: string | null
   cv_id: string | null
+  tailored_cv: string | null
   cv_profiles: {
     id: string
     title: string
     summary: string | null
   } | null
 }
+function extractKeywords(text: string) {
+  const stopWords = new Set([
+    "about",
+    "after",
+    "again",
+    "against",
+    "along",
+    "also",
+    "among",
+    "and",
+    "are",
+    "because",
+    "been",
+    "before",
+    "being",
+    "between",
+    "both",
+    "could",
+    "each",
+    "from",
+    "have",
+    "into",
+    "must",
+    "need",
+    "role",
+    "this",
+    "that",
+    "their",
+    "there",
+    "they",
+    "with",
+    "will",
+    "would",
+    "your",
+    "ours",
+    "team",
+    "work",
+    "working",
+    "experience",
+    "looking",
+    "skills",
+    "ability",
+    "required",
+    "requirements",
+    "candidate",
+    "support",
+    "service",
+    "responsible",
+    "including",
+    "across",
+    "within",
+    "daily",
+    "duties",
+    "hours",
+    "benefits",
+  ])
 
+  const words = text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s/-]/g, " ")
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter((word) => word.length >= 4 && !stopWords.has(word))
+
+  const counts = new Map<string, number>()
+
+  for (const word of words) {
+    counts.set(word, (counts.get(word) || 0) + 1)
+  }
+
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([word]) => word)
+    .slice(0, 12)
+}
+
+function getMatchResult(cvText: string, jobDescription: string) {
+  if (!cvText.trim() || !jobDescription.trim()) {
+    return null
+  }
+
+  const keywords = extractKeywords(jobDescription)
+  if (keywords.length === 0) {
+    return null
+  }
+
+  const cvLower = cvText.toLowerCase()
+
+  const matched = keywords.filter((keyword) => cvLower.includes(keyword))
+  const missing = keywords.filter((keyword) => !cvLower.includes(keyword))
+
+  const score = Math.round((matched.length / keywords.length) * 100)
+
+  return {
+    score,
+    matched: matched.slice(0, 6),
+    missing: missing.slice(0, 6),
+  }
+}
 const KEYWORDS = [
   "react",
   "next.js",
@@ -314,27 +414,26 @@ export default async function ApplicationsPage() {
     redirect("/login")
   }
 
-  const { data: applications, error } = await supabase
-    .from("job_applications")
-    .select(
-      `
+ const { data: applications, error } = await supabase
+  .from("job_applications")
+  .select(`
+    id,
+    company,
+    role,
+    status,
+    created_at,
+    feedback,
+    job_description,
+    cv_id,
+    tailored_cv,
+    cv_profiles (
       id,
-      company,
-      role,
-      status,
-      created_at,
-      feedback,
-      job_description,
-      cv_id,
-      cv_profiles (
-        id,
-        title,
-        summary
-      )
-    `
+      title,
+      summary
     )
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+  `)
+  .eq("user_id", user.id)
+  .order("created_at", { ascending: false })
 
   if (error) {
     return (
@@ -378,13 +477,16 @@ export default async function ApplicationsPage() {
       ) : (
         <div className="space-y-5">
           {safeApplications.map((app) => {
-            const cvSummary = app.cv_profiles?.summary ?? ""
+            const cvSummary = app.tailored_cv?.trim() || app.cv_profiles?.summary || ""
             const tailoredSummary =
-              app.job_description && cvSummary
-                ? generateTailoredSummary(cvSummary, app.job_description, true)
-                : null
+  app.job_description && cvSummary
+    ? generateTailoredSummary(cvSummary, app.job_description, true)
+    : null
 
-            const feedbackPreview = getFeedbackPreview(app.feedback)
+            const feedbackPreview =
+  tailoredSummary
+    ? "Tailored CV ready for this application."
+    : getFeedbackPreview(app.feedback)
 
             return (
               <div
@@ -442,20 +544,20 @@ export default async function ApplicationsPage() {
 
                   <div className="flex shrink-0 flex-wrap gap-3 lg:flex-col lg:items-end">
                     <Link
-                      href={`/dashboard/applications/${app.id}`}
-                      className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
-                    >
-                      View Details
-                    </Link>
+  href={`/dashboard/applications/${app.id}`}
+  className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
+>
+  View Details
+</Link>
 
                     {app.cv_id ? (
-                      <Link
-                        href={`/dashboard/cvs/${app.cv_id}`}
-                        className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
-                      >
-                        View CV
-                      </Link>
-                    ) : null}
+  <Link
+    href={`/dashboard/cvs/${app.cv_id}?applicationId=${app.id}`}
+    className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
+  >
+    View CV
+  </Link>
+) : null}
                   </div>
                 </div>
               </div>

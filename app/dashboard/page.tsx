@@ -17,15 +17,12 @@ type JobApplication = {
   cv_id: string | null
   created_at: string
   feedback: string | null
+  tailored_cv: string | null
+  original_tailored_cv?: string | null
   cv_profiles?: {
     id: string
     title: string
   } | null
-}
-
-type CVProfile = {
-  id: string
-  title: string
 }
 
 type TimelineEvent = {
@@ -41,7 +38,131 @@ type DashboardPageProps = {
   searchParams: Promise<{
     cv_id?: string
     status?: string
+    range?: string
   }>
+}
+
+function normalizeDate(dateString: string) {
+  return dateString.length === 10 ? `${dateString}T00:00:00` : dateString
+}
+
+function formatDate(dateString: string) {
+  return new Date(normalizeDate(dateString)).toLocaleDateString("en-GB")
+}
+
+function formatInterviewDate(dateString: string) {
+  const date = new Date(`${dateString}T00:00:00`)
+
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })
+}
+
+function getDaysUntil(dateString: string) {
+  const today = new Date()
+  const target = new Date(`${dateString}T00:00:00`)
+
+  today.setHours(0, 0, 0, 0)
+  target.setHours(0, 0, 0, 0)
+
+  const diffMs = target.getTime() - today.getTime()
+  return Math.round(diffMs / (1000 * 60 * 60 * 24))
+}
+
+function getDaysSince(dateString: string) {
+  const today = new Date()
+  const past = new Date(normalizeDate(dateString))
+
+  const startOfToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  )
+  const startOfPast = new Date(
+    past.getFullYear(),
+    past.getMonth(),
+    past.getDate()
+  )
+
+  const diffTime = startOfToday.getTime() - startOfPast.getTime()
+  return Math.round(diffTime / (1000 * 60 * 60 * 24))
+}
+
+function getDashboardFollowUpText(dateString: string) {
+  const days = getDaysUntil(dateString)
+
+  if (days < 0) return "⚠️ Overdue follow-up"
+  if (days === 0) return "Follow up today"
+  if (days === 1) return "Follow up tomorrow"
+  return `Follow up in ${days} days`
+}
+
+function normalizeStatus(status: string) {
+  switch (status) {
+    case "Applied":
+      return "Applied"
+    case "Interview":
+    case "Interviewing":
+      return "Interviewing"
+    case "Offer":
+      return "Offer"
+    case "Rejected":
+      return "Rejected"
+    default:
+      return ""
+  }
+}
+
+function matchesStatus(jobStatus: string, selectedStatus: string) {
+  if (selectedStatus === "Interviewing") {
+    return jobStatus === "Interviewing" || jobStatus === "Interview"
+  }
+
+  return jobStatus === selectedStatus
+}
+
+function getStatusBadgeClass(status: string) {
+  const base =
+    "rounded-full border px-3 py-1 text-sm font-medium tracking-wide"
+
+  switch (status) {
+    case "Applied":
+      return `${base} border-yellow-500/40 bg-yellow-500/10 text-yellow-300`
+    case "Interview":
+    case "Interviewing":
+      return `${base} border-violet-500/40 bg-violet-500/10 text-violet-300`
+    case "Offer":
+      return `${base} border-emerald-500/40 bg-emerald-500/10 text-emerald-300`
+    case "Rejected":
+      return `${base} border-rose-500/40 bg-rose-500/10 text-rose-300`
+    case "Saved":
+    default:
+      return `${base} border-cyan-500/40 bg-cyan-500/10 text-cyan-300`
+  }
+}
+
+function buildDashboardHref(cvId: string, status: string, range?: string) {
+  const params = new URLSearchParams()
+
+  if (cvId) params.set("cv_id", cvId)
+  if (status) params.set("status", status)
+  if (range && range !== "all") params.set("range", range)
+
+  const query = params.toString()
+  return query ? `/dashboard?${query}` : "/dashboard"
+}
+
+function buildRangeHref(range: string, status: string, cvId: string) {
+  const params = new URLSearchParams()
+
+  if (range && range !== "all") params.set("range", range)
+  if (status) params.set("status", status)
+  if (cvId) params.set("cv_id", cvId)
+
+  const query = params.toString()
+  return query ? `/dashboard?${query}` : "/dashboard"
 }
 
 export default async function DashboardPage({
@@ -68,12 +189,24 @@ export default async function DashboardPage({
   const params = await searchParams
   const selectedCvId = params.cv_id ?? ""
   const selectedStatus = normalizeStatus(params.status ?? "")
+  const selectedRange = params.range ?? "30d"
 
-  const { data: cvs } = await supabase
-    .from("cv_profiles")
-    .select("id, title")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+  const now = new Date()
+  let fromDate: string | null = null
+
+  if (selectedRange === "7d") {
+    fromDate = new Date(
+      now.getTime() - 7 * 24 * 60 * 60 * 1000
+    ).toISOString()
+  } else if (selectedRange === "30d") {
+    fromDate = new Date(
+      now.getTime() - 30 * 24 * 60 * 60 * 1000
+    ).toISOString()
+  } else if (selectedRange === "90d") {
+    fromDate = new Date(
+      now.getTime() - 90 * 24 * 60 * 60 * 1000
+    ).toISOString()
+  }
 
   let jobsQuery = supabase
     .from("job_applications")
@@ -88,6 +221,8 @@ export default async function DashboardPage({
       cv_id,
       created_at,
       feedback,
+      tailored_cv,
+      original_tailored_cv,
       cv_profiles (
         id,
         title
@@ -95,6 +230,10 @@ export default async function DashboardPage({
     `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
+
+  if (fromDate) {
+    jobsQuery = jobsQuery.gte("created_at", fromDate)
+  }
 
   if (selectedCvId) {
     jobsQuery = jobsQuery.eq("cv_id", selectedCvId)
@@ -117,12 +256,12 @@ export default async function DashboardPage({
   }
 
   const safeJobs: JobApplication[] = (jobs ?? []).map((job: any) => ({
-  ...job,
-  cv_profiles: Array.isArray(job.cv_profiles)
-    ? (job.cv_profiles[0] ?? null)
-    : (job.cv_profiles ?? null),
-}))
-  const safeCvs: CVProfile[] = cvs ?? []
+    ...job,
+    cv_profiles: Array.isArray(job.cv_profiles)
+      ? (job.cv_profiles[0] ?? null)
+      : (job.cv_profiles ?? null),
+  }))
+
   const safeEvents: TimelineEvent[] = events ?? []
 
   const total = safeJobs.length
@@ -143,33 +282,21 @@ export default async function DashboardPage({
     filteredJobIds.has(event.job_application_id)
   )
 
-  const upcomingInterviews = filteredJobs
-    .filter((job) => job.interview_date)
-    .sort((a, b) => {
-      const aTime = a.interview_date
-        ? new Date(normalizeDate(a.interview_date)).getTime()
-        : Infinity
-      const bTime = b.interview_date
-        ? new Date(normalizeDate(b.interview_date)).getTime()
-        : Infinity
-      return aTime - bTime
-    })
-    .slice(0, 5)
-
   const recentApplications = filteredJobs.slice(0, 5)
 
-  const upcomingThisWeek = filteredJobs
-    .filter((job) => {
-      if (!job.interview_date) return false
-      const days = getDaysUntil(job.interview_date)
-      return days >= 0 && days <= 7
-    })
-    .sort((a, b) => {
-      const aTime = new Date(normalizeDate(a.interview_date!)).getTime()
-      const bTime = new Date(normalizeDate(b.interview_date!)).getTime()
-      return aTime - bTime
-    })
-    .slice(0, 4)
+  const upcomingInterviews = filteredJobs
+    .filter(
+      (job) =>
+        (job.status === "Interviewing" || job.status === "Interview") &&
+        Boolean(job.interview_date)
+    )
+    .filter((job) => getDaysUntil(job.interview_date!) >= 0)
+    .sort(
+      (a, b) =>
+        new Date(a.interview_date!).getTime() -
+        new Date(b.interview_date!).getTime()
+    )
+    .slice(0, 3)
 
   const latestEventByJob = new Map<string, string>()
   for (const event of safeEvents) {
@@ -192,6 +319,7 @@ export default async function DashboardPage({
     .sort((a, b) => {
       const aDate = a.follow_up_date ?? latestEventByJob.get(a.id) ?? a.created_at
       const bDate = b.follow_up_date ?? latestEventByJob.get(b.id) ?? b.created_at
+
       return (
         new Date(normalizeDate(aDate)).getTime() -
         new Date(normalizeDate(bDate)).getTime()
@@ -200,6 +328,67 @@ export default async function DashboardPage({
     .slice(0, 4)
 
   const recentActivity = filteredEvents.slice(0, 5)
+
+  const applicationsLast7Days = safeJobs.filter(
+    (job) => getDaysSince(job.created_at) <= 7
+  ).length
+
+  const interviewsSoon = filteredJobs.filter((job) => {
+    if (!job.interview_date) return false
+    const days = getDaysUntil(job.interview_date)
+    return days >= 0 && days <= 7
+  }).length
+
+  let momentumTitle = "Steady progress"
+  let momentumText =
+    "Keep going — your dashboard is moving in the right direction."
+
+  if (applicationsLast7Days === 0) {
+    momentumTitle = "Time to apply"
+    momentumText = "You have not added any new applications in the last 7 days."
+  } else if (applicationsLast7Days >= 5) {
+    momentumTitle = "Strong momentum"
+    momentumText = `You added ${applicationsLast7Days} applications in the last 7 days.`
+  } else {
+    momentumTitle = "Good progress"
+    momentumText = `You added ${applicationsLast7Days} application${
+      applicationsLast7Days === 1 ? "" : "s"
+    } in the last 7 days.`
+  }
+
+  let momentumExtra = ""
+
+  if (interviewsSoon > 0) {
+    momentumExtra = `${interviewsSoon} interview${
+      interviewsSoon === 1 ? "" : "s"
+    } coming up in the next 7 days.`
+  }
+
+  const interviewingCount = filteredJobs.filter(
+    (job) => job.status === "Interviewing" || job.status === "Interview"
+  ).length
+
+  const overdueFollowUps = filteredJobs.filter((job) => {
+    if (!job.follow_up_date) return false
+    return getDaysUntil(job.follow_up_date) < 0
+  }).length
+
+  let focusTitle = "Everything looks balanced"
+  let focusText = "Your pipeline looks healthy right now."
+
+  if (overdueFollowUps > 0) {
+    focusTitle = "Follow-ups need attention"
+    focusText = `You have ${overdueFollowUps} overdue follow-up${
+      overdueFollowUps === 1 ? "" : "s"
+    }.`
+  } else if (interviewingCount >= 3 && offer === 0) {
+    focusTitle = "Strong interview momentum"
+    focusText = `You have ${interviewingCount} applications in interviewing. Keep pushing toward offers.`
+  } else if (applied >= 5 && interviewing === 0) {
+    focusTitle = "Applications need conversion"
+    focusText =
+      "You have many applications out, but none have moved to interviewing yet."
+  }
 
   const statusChartData = [
     {
@@ -240,9 +429,6 @@ export default async function DashboardPage({
       applications,
     }))
 
-  const selectedCvTitle =
-    safeCvs.find((cv) => cv.id === selectedCvId)?.title ?? null
-
   async function deleteJob(formData: FormData) {
     "use server"
 
@@ -276,6 +462,9 @@ export default async function DashboardPage({
     const nextParams = new URLSearchParams()
     if (selectedCvId) nextParams.set("cv_id", selectedCvId)
     if (selectedStatus) nextParams.set("status", selectedStatus)
+    if (selectedRange && selectedRange !== "all") {
+      nextParams.set("range", selectedRange)
+    }
 
     const nextQuery = nextParams.toString()
     redirect(nextQuery ? `/dashboard?${nextQuery}` : "/dashboard")
@@ -313,64 +502,65 @@ export default async function DashboardPage({
         </p>
       </div>
 
-      <section className="rounded-2xl border p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <section className="rounded-2xl border border-white/20 bg-white/5 p-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-xl font-semibold">Filter by CV</h2>
-            <p className="text-muted-foreground">
-              Show applications linked to a specific CV
+            <h2 className="text-xl font-semibold">Applications timeframe</h2>
+            <p className="text-sm text-white/60">
+              View applications by recent time period.
             </p>
           </div>
 
-          <form action="/dashboard" method="get" className="flex gap-3">
-            <input type="hidden" name="status" value={selectedStatus} />
-
-            <select
-              name="cv_id"
-              defaultValue={selectedCvId}
-              className="min-w-[220px] rounded-lg border bg-transparent px-4 py-3"
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={buildRangeHref("7d", selectedStatus, selectedCvId)}
+              className={`rounded-lg border px-4 py-2 text-sm transition ${
+                selectedRange === "7d"
+                  ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-300"
+                  : "border-white/20 bg-white/5 text-white/80 hover:bg-white/10"
+              }`}
             >
-              <option value="">All CVs</option>
-              {safeCvs.map((cv) => (
-                <option key={cv.id} value={cv.id}>
-                  {cv.title}
-                </option>
-              ))}
-            </select>
+              Last 7 days
+            </Link>
 
-            <button
-              type="submit"
-              className="rounded-lg border px-4 py-3 transition hover:bg-muted"
+            <Link
+              href={buildRangeHref("30d", selectedStatus, selectedCvId)}
+              className={`rounded-lg border px-4 py-2 text-sm transition ${
+                selectedRange === "30d"
+                  ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-300"
+                  : "border-white/20 bg-white/5 text-white/80 hover:bg-white/10"
+              }`}
             >
-              Apply
-            </button>
+              Last 30 days
+            </Link>
 
-            {(selectedCvId || selectedStatus) && (
-              <Link
-                href="/dashboard"
-                className="rounded-lg border px-4 py-3 transition hover:bg-muted"
-              >
-                Clear
-              </Link>
-            )}
-          </form>
+            <Link
+              href={buildRangeHref("90d", selectedStatus, selectedCvId)}
+              className={`rounded-lg border px-4 py-2 text-sm transition ${
+                selectedRange === "90d"
+                  ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-300"
+                  : "border-white/20 bg-white/5 text-white/80 hover:bg-white/10"
+              }`}
+            >
+              Last 90 days
+            </Link>
+
+            <Link
+              href={buildRangeHref("all", selectedStatus, selectedCvId)}
+              className={`rounded-lg border px-4 py-2 text-sm transition ${
+                selectedRange === "all"
+                  ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-300"
+                  : "border-white/20 bg-white/5 text-white/80 hover:bg-white/10"
+              }`}
+            >
+              All time
+            </Link>
+          </div>
         </div>
-
-        {selectedCvTitle && (
-          <p className="mt-4 text-sm text-blue-300">
-            Showing jobs for CV: {selectedCvTitle}
-          </p>
-        )}
-
-        {selectedStatus && (
-          <p className="mt-2 text-sm text-emerald-300">
-            Filtering by status: {selectedStatus}
-          </p>
-        )}
       </section>
 
       <div className="space-y-4">
-        {(selectedStatus || selectedCvId) && (
+        {(selectedStatus || selectedCvId || selectedRange !== "30d") && (
           <div className="flex justify-end">
             <Link
               href="/dashboard"
@@ -385,72 +575,244 @@ export default async function DashboardPage({
           <StatLinkCard
             title="Total"
             value={total}
-            href={buildDashboardHref(selectedCvId, "")}
+            href={buildDashboardHref(selectedCvId, "", selectedRange)}
             isActive={!selectedStatus}
             variant="default"
           />
           <StatLinkCard
             title="Applied"
             value={applied}
-            href={buildDashboardHref(selectedCvId, "Applied")}
+            href={buildDashboardHref(selectedCvId, "Applied", selectedRange)}
             isActive={selectedStatus === "Applied"}
             variant="applied"
           />
           <StatLinkCard
             title="Interviewing"
             value={interviewing}
-            href={buildDashboardHref(selectedCvId, "Interviewing")}
+            href={buildDashboardHref(
+              selectedCvId,
+              "Interviewing",
+              selectedRange
+            )}
             isActive={selectedStatus === "Interviewing"}
             variant="interviewing"
           />
           <StatLinkCard
             title="Offer"
             value={offer}
-            href={buildDashboardHref(selectedCvId, "Offer")}
+            href={buildDashboardHref(selectedCvId, "Offer", selectedRange)}
             isActive={selectedStatus === "Offer"}
             variant="offer"
           />
           <StatLinkCard
             title="Rejected"
             value={rejected}
-            href={buildDashboardHref(selectedCvId, "Rejected")}
+            href={buildDashboardHref(selectedCvId, "Rejected", selectedRange)}
             isActive={selectedStatus === "Rejected"}
             variant="rejected"
           />
         </div>
+
+        <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold">Recent Job Applications</h2>
+              <p className="text-muted-foreground">
+                {selectedStatus
+                  ? `Showing ${selectedStatus.toLowerCase()} applications`
+                  : "Your latest saved applications"}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Link
+                href="/dashboard/applications"
+                className="text-sm text-blue-400 hover:underline"
+              >
+                View all →
+              </Link>
+
+              <Link
+                href="/dashboard/jobs/new"
+                className="rounded-lg border border-white/20 px-4 py-2 transition hover:bg-white/10"
+              >
+                Add another
+              </Link>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {recentApplications.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-white/10 p-8 text-center text-muted-foreground">
+                {selectedStatus
+                  ? `No ${selectedStatus.toLowerCase()} applications yet. Click "Total" to see all jobs.`
+                  : "No job applications yet."}
+              </div>
+            ) : (
+              recentApplications.map((job) => {
+                const hasTailoredCv = Boolean(job.tailored_cv?.trim())
+
+                return (
+                  <div
+                    key={job.id}
+                    className="rounded-xl border border-white/10 p-4 transition hover:bg-white/[0.04]"
+                  >
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            {job.company} — {job.role}
+                          </h3>
+
+                          {job.feedback ? (
+                            <p className="mt-2 text-sm text-blue-300">
+                              {job.feedback}
+                            </p>
+                          ) : null}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 text-sm">
+                          <span className={getStatusBadgeClass(job.status)}>
+                            {job.status}
+                          </span>
+
+                          {job.cv_id && job.cv_profiles?.title ? (
+                            <>
+                              <Link
+                                href={`/dashboard/cvs/${job.cv_id}/edit`}
+                                className="rounded-full border border-blue-500/40 bg-blue-500/10 px-3 py-1 text-blue-300 transition hover:bg-blue-500/20"
+                              >
+                                Base CV: {job.cv_profiles.title}
+                              </Link>
+
+                              <Link
+                                href={`/dashboard/cvs/${job.cv_id}?applicationId=${job.id}`}
+                                className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-emerald-300 transition hover:bg-emerald-500/20"
+                              >
+                                View tailored CV
+                              </Link>
+                            </>
+                          ) : (
+                            <span className="rounded-full border border-zinc-500/40 bg-zinc-500/10 px-3 py-1 text-zinc-300">
+                              No CV attached
+                            </span>
+                          )}
+
+                          {job.interview_date ? (
+                            <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-amber-300">
+                              Interview: {formatDate(job.interview_date)}
+                            </span>
+                          ) : null}
+
+                          {job.follow_up_date ? (
+                            <span className="rounded-full border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-rose-300">
+                              Follow-up: {formatDate(job.follow_up_date)}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        {hasTailoredCv ? (
+                          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+                            <p>Job-specific CV ready for this application.</p>
+                            <p className="mt-1 text-xs text-emerald-200/80">
+                              This version is tailored specifically for this job.
+                            </p>
+                          </div>
+                        ) : job.cv_id ? (
+                          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">
+                            No tailored CV yet. This application is still using your base CV.
+                          </div>
+                        ) : null}
+
+                        {job.notes ? (
+                          <p className="pt-1 text-sm text-muted-foreground">
+                            {job.notes}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Link
+                          href={`/dashboard/applications/${job.id}`}
+                          className="rounded-lg border border-white/20 px-3 py-1 text-sm transition hover:bg-white/10"
+                        >
+                          View
+                        </Link>
+
+                        <Link
+                          href={`/dashboard/jobs/${job.id}/edit`}
+                          className="rounded-lg border border-white/20 px-3 py-1 text-sm transition hover:bg-white/10"
+                        >
+                          Edit
+                        </Link>
+
+                        <form action={deleteJob}>
+                          <input type="hidden" name="job_id" value={job.id} />
+                          <DeleteApplicationButton
+                            applicationId={job.id}
+                            company={job.company}
+                            role={job.role}
+                          />
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </section>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
         <InsightCard
-          title="Upcoming This Week"
-          subtitle="Interviews in the next 7 days"
+          title="Upcoming Interviews"
+          subtitle="Your next scheduled interviews"
         >
-          {upcomingThisWeek.length === 0 ? (
-            <EmptyInsight text="No interviews coming up this week." />
+          {upcomingInterviews.length === 0 ? (
+            <EmptyInsight text="No upcoming interviews scheduled yet." />
           ) : (
             <div className="space-y-3">
-              {upcomingThisWeek.map((job) => (
-                <Link
-                  key={job.id}
-                  href={`/dashboard/applications/${job.id}`}
-                  className="group block rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-black/20 p-4 transition-all duration-200 hover:-translate-y-1 hover:scale-[1.01] hover:border-white/30 hover:bg-white/5 hover:shadow-xl hover:shadow-black/30"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="font-medium text-white transition group-hover:text-blue-300">
-                        {job.company} — {job.role}
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        {formatDate(job.interview_date!)}
-                      </p>
-                    </div>
+              {upcomingInterviews.map((job) => {
+                const daysUntil = getDaysUntil(job.interview_date!)
 
-                    <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
-                      {getInterviewCountdown(job.interview_date!)}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                return (
+                  <Link
+                    key={job.id}
+                    href={`/dashboard/applications/${job.id}`}
+                    className="group block rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-black/30 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/30 hover:bg-white/[0.07] hover:shadow-lg hover:shadow-cyan-950/20"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0 space-y-1">
+                        <p className="truncate font-semibold text-white transition group-hover:text-cyan-200">
+                          {job.company} — {job.role}
+                        </p>
+                        <p className="text-sm text-white/55">
+                          {formatInterviewDate(job.interview_date!)}
+                        </p>
+                      </div>
+
+                      <div
+                        className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold tracking-wide ${
+                          daysUntil === 0
+                            ? "border-rose-400/30 bg-rose-500/15 text-rose-200"
+                            : daysUntil === 1
+                              ? "border-amber-400/30 bg-amber-500/15 text-amber-200"
+                              : daysUntil <= 3
+                                ? "border-cyan-400/30 bg-cyan-500/15 text-cyan-200"
+                                : "border-white/15 bg-white/5 text-white/70"
+                        }`}
+                      >
+                        {daysUntil === 0
+                          ? "Today"
+                          : daysUntil === 1
+                            ? "Tomorrow"
+                            : `In ${daysUntil} days`}
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           )}
         </InsightCard>
@@ -464,8 +826,7 @@ export default async function DashboardPage({
           ) : (
             <div className="space-y-3">
               {needsAttention.map((job) => {
-                const lastActivity =
-                  latestEventByJob.get(job.id) ?? job.created_at
+                const lastActivity = latestEventByJob.get(job.id) ?? job.created_at
 
                 return (
                   <Link
@@ -516,6 +877,7 @@ export default async function DashboardPage({
                       {formatDate(event.created_at)}
                     </span>
                   </div>
+
                   {event.description ? (
                     <p className="mt-2 text-sm text-muted-foreground">
                       {event.description}
@@ -526,182 +888,70 @@ export default async function DashboardPage({
             </div>
           )}
         </InsightCard>
-      </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <section className="rounded-2xl border p-6 h-full flex flex-col">
-          <h2 className="text-2xl font-semibold">Upcoming Interviews</h2>
-          <p className="mt-1 text-muted-foreground">
-            {selectedStatus
-              ? `Nearest scheduled interviews for ${selectedStatus} jobs`
-              : "Your nearest scheduled interviews"}
-          </p>
+        <InsightCard
+          title="Momentum"
+          subtitle="A quick read on your job search progress"
+        >
+          <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+            <p className="text-sm font-semibold text-cyan-300">
+              {momentumTitle}
+            </p>
 
-          <div className="mt-6 rounded-2xl border border-dashed p-4 flex-1 overflow-auto pr-1">
-            {upcomingInterviews.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground">
-                {selectedStatus
-                  ? `No upcoming interviews for ${selectedStatus.toLowerCase()} jobs.`
-                  : "No upcoming interviews scheduled."}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {upcomingInterviews.map((job) => (
-                  <Link
-                    key={job.id}
-                    href={`/dashboard/applications/${job.id}`}
-                  >
-                    <div className="flex flex-col justify-between gap-2 rounded-xl border p-4 transition hover:bg-white/5 md:flex-row md:items-center">
-                      <div>
-                        <p className="font-semibold">
-                          {job.company} — {job.role}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {job.interview_date
-                            ? formatDate(job.interview_date)
-                            : "No date"}
-                        </p>
-                      </div>
+            <p className="mt-2 text-sm text-white/80">
+              {momentumText}
+            </p>
 
-                      <span className={getStatusBadgeClass(job.status)}>
-                        {job.status}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border p-6 h-full flex flex-col">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold">Recent Job Applications</h2>
-              <p className="text-muted-foreground">
-                {selectedStatus
-                  ? `Showing ${selectedStatus.toLowerCase()} applications`
-                  : "Your latest saved applications"}
+            {momentumExtra ? (
+              <p className="mt-2 text-xs text-cyan-200/80">
+                {momentumExtra}
               </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Link
-                href="/dashboard/applications"
-                className="text-sm text-blue-400 hover:underline"
-              >
-                View all →
-              </Link>
-
-              <Link
-                href="/dashboard/jobs/new"
-                className="rounded-lg border px-4 py-2 transition hover:bg-muted"
-              >
-                Add another
-              </Link>
-            </div>
+            ) : null}
           </div>
+        </InsightCard>
 
-          <div className="flex-1 overflow-auto pr-1">
-            {recentApplications.length === 0 ? (
-              <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
-                {selectedStatus
-                  ? `No ${selectedStatus.toLowerCase()} applications yet. Click "Total" to see all jobs.`
-                  : "No job applications yet."}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {recentApplications.map((job) => (
-                  <div
-                    key={job.id}
-                    className="rounded-xl border p-4 transition hover:bg-muted/30"
-                  >
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">
-                          {job.company} — {job.role}
-                        </h3>
+        <InsightCard
+          title="Focus Area"
+          subtitle="What deserves your attention most"
+        >
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <p className="text-sm font-semibold text-amber-300">
+              {focusTitle}
+            </p>
 
-                        {job.feedback && (
-                          <p className="mt-2 text-sm text-blue-300">
-                            {job.feedback}
-                          </p>
-                        )}
-
-                        <div className="flex flex-wrap gap-2 text-sm">
-                          <span className={getStatusBadgeClass(job.status)}>
-                            {job.status}
-                          </span>
-
-                          {job.cv_id && job.cv_profiles?.title ? (
-                            <Link
-                              href={`/dashboard/cvs/${job.cv_id}/edit`}
-                              className="rounded-full border border-blue-500/40 bg-blue-500/10 px-3 py-1 text-blue-300 transition hover:bg-blue-500/20"
-                            >
-                              CV: {job.cv_profiles.title}
-                            </Link>
-                          ) : (
-                            <span className="rounded-full border border-zinc-500/40 bg-zinc-500/10 px-3 py-1 text-zinc-300">
-                              No CV attached
-                            </span>
-                          )}
-
-                          {job.interview_date && (
-                            <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-amber-300">
-                              Interview: {formatDate(job.interview_date)}
-                            </span>
-                          )}
-
-                          {job.follow_up_date && (
-                            <span className="rounded-full border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-rose-300">
-                              Follow-up: {formatDate(job.follow_up_date)}
-                            </span>
-                          )}
-                        </div>
-
-                        {job.notes && (
-                          <p className="pt-1 text-sm text-muted-foreground">
-                            {job.notes}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/dashboard/applications/${job.id}`}
-                          className="rounded-lg border px-3 py-1 text-sm transition hover:bg-muted"
-                        >
-                          View
-                        </Link>
-
-                        <Link
-                          href={`/dashboard/jobs/${job.id}/edit`}
-                          className="rounded-lg border px-3 py-1 text-sm transition hover:bg-muted"
-                        >
-                          Edit
-                        </Link>
-
-                        <form action={deleteJob}>
-                          <input type="hidden" name="job_id" value={job.id} />
-                         <DeleteApplicationButton
- applicationId={job.id}
-  company={job.company}
-  role={job.role}
-/>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <p className="mt-2 text-sm text-white/80">
+              {focusText}
+            </p>
           </div>
-        </section>
+        </InsightCard>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <StatusChart data={statusChartData} />
-        <ApplicationsOverTimeChart data={applicationsOverTimeData} />
+      <div className="grid gap-6 md:grid-cols-2">
+        <section className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl transition hover:border-white/20 hover:bg-white/10">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-white">Application Status</h2>
+            <p className="mt-1 text-sm text-gray-400">
+              Breakdown of your current application stages.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/5 bg-black/20 p-4">
+            <StatusChart data={statusChartData} />
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-white">Applications Over Time</h2>
+            <p className="mt-1 text-sm text-gray-400">
+              Track how your applications are growing over time.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/5 bg-black/20 p-4">
+            <ApplicationsOverTimeChart data={applicationsOverTimeData} />
+          </div>
+        </section>
       </div>
     </div>
   )
@@ -765,137 +1015,4 @@ function StatLinkCard({
       <p className="mt-2 text-4xl font-bold">{value}</p>
     </Link>
   )
-}
-
-function buildDashboardHref(cvId: string, status: string) {
-  const params = new URLSearchParams()
-
-  if (cvId) params.set("cv_id", cvId)
-  if (status) params.set("status", status)
-
-  const query = params.toString()
-  return query ? `/dashboard?${query}` : "/dashboard"
-}
-
-function normalizeStatus(status: string) {
-  switch (status) {
-    case "Applied":
-      return "Applied"
-    case "Interview":
-    case "Interviewing":
-      return "Interviewing"
-    case "Offer":
-      return "Offer"
-    case "Rejected":
-      return "Rejected"
-    default:
-      return ""
-  }
-}
-
-function matchesStatus(jobStatus: string, selectedStatus: string) {
-  if (selectedStatus === "Interviewing") {
-    return jobStatus === "Interviewing" || jobStatus === "Interview"
-  }
-
-  return jobStatus === selectedStatus
-}
-
-function getStatusBadgeClass(status: string) {
-  const base =
-    "rounded-full border px-3 py-1 text-sm font-medium tracking-wide"
-
-  switch (status) {
-    case "Applied":
-      return `${base} border-yellow-500/40 bg-yellow-500/10 text-yellow-300`
-    case "Interview":
-    case "Interviewing":
-      return `${base} border-violet-500/40 bg-violet-500/10 text-violet-300`
-    case "Offer":
-      return `${base} border-emerald-500/40 bg-emerald-500/10 text-emerald-300`
-    case "Rejected":
-      return `${base} border-rose-500/40 bg-rose-500/10 text-rose-300`
-    case "Saved":
-    default:
-      return `${base} border-cyan-500/40 bg-cyan-500/10 text-cyan-300`
-  }
-}
-
-function getInterviewCountdown(dateString: string) {
-  const today = new Date()
-  const interview = new Date(normalizeDate(dateString))
-
-  const startOfToday = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  )
-  const startOfInterview = new Date(
-    interview.getFullYear(),
-    interview.getMonth(),
-    interview.getDate()
-  )
-
-  const diffTime = startOfInterview.getTime() - startOfToday.getTime()
-  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
-
-  if (diffDays < 0) return "Past"
-  if (diffDays === 0) return "Today"
-  if (diffDays === 1) return "Tomorrow"
-  return `In ${diffDays} days`
-}
-
-function getDaysUntil(dateString: string) {
-  const today = new Date()
-  const future = new Date(normalizeDate(dateString))
-
-  const startOfToday = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  )
-  const startOfFuture = new Date(
-    future.getFullYear(),
-    future.getMonth(),
-    future.getDate()
-  )
-
-  const diffTime = startOfFuture.getTime() - startOfToday.getTime()
-  return Math.round(diffTime / (1000 * 60 * 60 * 24))
-}
-
-function getDaysSince(dateString: string) {
-  const today = new Date()
-  const past = new Date(normalizeDate(dateString))
-
-  const startOfToday = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  )
-  const startOfPast = new Date(
-    past.getFullYear(),
-    past.getMonth(),
-    past.getDate()
-  )
-
-  const diffTime = startOfToday.getTime() - startOfPast.getTime()
-  return Math.round(diffTime / (1000 * 60 * 60 * 24))
-}
-
-function getDashboardFollowUpText(dateString: string) {
-  const days = getDaysUntil(dateString)
-
-  if (days < 0) return "⚠️ Overdue follow-up"
-  if (days === 0) return "Follow up today"
-  if (days === 1) return "Follow up tomorrow"
-  return `Follow up in ${days} days`
-}
-
-function formatDate(dateString: string) {
-  return new Date(normalizeDate(dateString)).toLocaleDateString("en-GB")
-}
-
-function normalizeDate(dateString: string) {
-  return dateString.length === 10 ? `${dateString}T00:00:00` : dateString
 }

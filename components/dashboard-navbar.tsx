@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import LogoutButton from "@/components/logout-button"
@@ -10,10 +11,10 @@ function getLinkClass(pathname: string, href: string, exact = false) {
     : pathname === href || pathname.startsWith(`${href}/`)
 
   return [
-    "rounded-xl border px-4 py-2 text-sm transition",
+    "rounded-xl border px-4 py-2 text-sm font-medium transition",
     isActive
-      ? "border-white/30 bg-white/15 text-white"
-      : "border-white/20 bg-white/5 text-white hover:bg-white/10",
+      ? "border-white/30 bg-white/15 text-white shadow-sm"
+      : "border-white/15 bg-white/[0.04] text-white/90 hover:border-white/25 hover:bg-white/[0.08]",
   ].join(" ")
 }
 
@@ -21,11 +22,34 @@ type DashboardNavbarProps = {
   isAdmin?: boolean
 }
 
-export default function DashboardNavbar({ isAdmin = false }: DashboardNavbarProps) {
+export default function DashboardNavbar({
+  isAdmin = false,
+}: DashboardNavbarProps) {
   const pathname = usePathname()
 
   return (
-    <nav className="flex flex-wrap items-center gap-3">
+    <nav className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-5 py-4 backdrop-blur-xl">
+      <Link
+        href="/dashboard"
+        className="mr-3 flex items-center gap-3 opacity-95 transition hover:opacity-100"
+      >
+        <Image
+          src="/logo.png"
+          alt="Hireflow"
+          width={36}
+          height={36}
+          priority
+        />
+        <div className="leading-tight">
+          <span className="block text-base font-semibold text-white">
+            Hireflow
+          </span>
+          <span className="hidden text-[11px] text-white/50 sm:block">
+            Where talent meets opportunity
+          </span>
+        </div>
+      </Link>
+
       <Link
         href="/dashboard"
         className={getLinkClass(pathname, "/dashboard", true)}
@@ -54,26 +78,25 @@ export default function DashboardNavbar({ isAdmin = false }: DashboardNavbarProp
         Applications
       </Link>
 
-      <Link
-        href="/dashboard/admin"
-        className={getLinkClass(pathname, "/dashboard/admin")}
-      >
-        Admin
-      </Link>
+      {isAdmin && (
+        <Link
+          href="/dashboard/admin"
+          className={getLinkClass(pathname, "/dashboard/admin")}
+        >
+          Admin
+        </Link>
+      )}
 
       <Link
         href="/dashboard/jobs/new"
-        className={[
-          "rounded-xl px-4 py-2 text-sm font-medium transition",
-          pathname === "/dashboard/jobs/new"
-            ? "bg-white text-black"
-            : "bg-white text-black hover:opacity-90",
-        ].join(" ")}
+        className={getLinkClass(pathname, "/dashboard/jobs/new")}
       >
         Add Job
       </Link>
 
-      <LogoutButton />
+      <div className="ml-auto">
+        <LogoutButton />
+      </div>
     </nav>
   )
 }

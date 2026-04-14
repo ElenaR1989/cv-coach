@@ -19,11 +19,11 @@ export async function updateUserRole(formData: FormData) {
 
   const { data: myProfile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("is_admin")
     .eq("id", user.id)
     .single()
 
-  if (myProfile?.role !== "admin") {
+  if (!myProfile?.is_admin) {
     throw new Error("Not authorized")
   }
 
@@ -31,13 +31,15 @@ export async function updateUserRole(formData: FormData) {
     throw new Error("Invalid form data")
   }
 
-  if (user.id === userId && nextRole !== "admin") {
+  const nextIsAdmin = nextRole === "admin"
+
+  if (user.id === userId && !nextIsAdmin) {
     throw new Error("You cannot remove your own admin access")
   }
 
   const { error } = await supabase
     .from("profiles")
-    .update({ role: nextRole })
+    .update({ is_admin: nextIsAdmin })
     .eq("id", userId)
 
   if (error) {
