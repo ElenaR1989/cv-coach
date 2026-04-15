@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { createClient } from "@/lib/supabase/server"
 import DashboardNavbar from "@/components/dashboard-navbar"
 
 export default async function DashboardLayout({
@@ -6,7 +7,23 @@ export default async function DashboardLayout({
 }: {
   children: ReactNode
 }) {
-  const isAdmin = true
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let isAdmin = false
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_admin, role")
+      .eq("id", user.id)
+      .single()
+
+    isAdmin = profile?.is_admin === true || profile?.role === "admin"
+  }
 
   return (
     <div className="min-h-screen">

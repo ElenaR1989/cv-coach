@@ -83,7 +83,7 @@ export default function DashboardNavbar({
   href="/dashboard/admin"
   className={getLinkClass(pathname, "/dashboard/admin")}
 >
-  Admin TEST
+  Admin
 </Link>
       )}
 
