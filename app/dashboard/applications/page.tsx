@@ -486,9 +486,7 @@ export default async function ApplicationsPage() {
       tailoredSummary={tailoredSummary}
     />
   )
-})}
-        </div>
-      )}
+      })}
     </div>
   )
 }
