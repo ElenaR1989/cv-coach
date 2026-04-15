@@ -101,7 +101,6 @@ export default async function TailorCVPage({
       </section>
 
       <CVTailorTool
-  cvId={cv.id}
   currentSummary={cv.summary ?? ""}
   cvTitle={cv.title}
   initialJobDescription={initialJobDescription}

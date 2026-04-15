@@ -466,103 +466,27 @@ export default async function ApplicationsPage() {
           </Link>
         </div>
       </section>
+     {safeApplications.map((app) => {
+  const cvSummary = app.tailored_cv?.trim() || app.cv_profiles?.summary || ""
 
-      {safeApplications.length === 0 ? (
-        <div className="rounded-2xl border border-white/20 bg-white/5 p-10 text-center">
-          <h2 className="text-2xl font-semibold">No applications yet</h2>
-          <p className="mt-2 text-sm text-white/60">
-            Save an application from Job Match and it will appear here.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {safeApplications.map((app) => {
-            const cvSummary = app.tailored_cv?.trim() || app.cv_profiles?.summary || ""
-            const tailoredSummary =
-  app.job_description && cvSummary
-    ? generateTailoredSummary(cvSummary, app.job_description, true)
-    : null
+  const tailoredSummary =
+    app.job_description && cvSummary
+      ? generateTailoredSummary(cvSummary, app.job_description, true)
+      : null
 
-            const feedbackPreview =
-  tailoredSummary
+  const feedbackPreview = tailoredSummary
     ? "Tailored CV ready for this application."
     : getFeedbackPreview(app.feedback)
 
-            return (
-              <div
-                key={app.id}
-                className="rounded-2xl border border-white/20 bg-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.35)]"
-              >
-                <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0 flex-1 space-y-3">
-                    <div>
-                      <h2 className="text-2xl font-semibold">
-                        {app.company} — {app.role}
-                      </h2>
-                      <p className="mt-1 text-sm text-gray-400">
-                        Saved on {formatDate(app.created_at)}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <span className={getStatusBadgeClass(app.status)}>
-                        {app.status}
-                      </span>
-
-                      {app.cv_profiles?.title ? (
-                        <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-3 py-1 text-sm text-blue-300">
-                          CV: {app.cv_profiles.title}
-                        </span>
-                      ) : (
-                        <span className="rounded-full border border-zinc-500/40 bg-zinc-500/10 px-3 py-1 text-sm text-zinc-300">
-                          No CV attached
-                        </span>
-                      )}
-                    </div>
-
-                    {feedbackPreview ? (
-                      <p className="text-sm text-blue-300">{feedbackPreview}</p>
-                    ) : null}
-
-                    {tailoredSummary ? (
-                      <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-4">
-                        <p className="mb-2 text-xs uppercase tracking-wide text-cyan-300/80">
-                          ✨ Tailored summary
-                        </p>
-                        <p className="line-clamp-3 text-sm leading-6 text-white/85">
-                          {tailoredSummary}
-                        </p>
-                      </div>
-                    ) : app.job_description ? (
-                      <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                        <p className="text-sm text-white/60">
-                          Add a CV summary to show a tailored preview here.
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="flex shrink-0 flex-wrap gap-3 lg:flex-col lg:items-end">
-                    <Link
-  href={`/dashboard/applications/${app.id}`}
-  className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
->
-  View Details
-</Link>
-
-                    {app.cv_id ? (
-  <Link
-    href={`/dashboard/cvs/${app.cv_id}?applicationId=${app.id}`}
-    className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
-  >
-    View CV
-  </Link>
-) : null}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+  return (
+    <ApplicationCard
+      key={app.id}
+      app={app}
+      feedbackPreview={feedbackPreview}
+      tailoredSummary={tailoredSummary}
+    />
+  )
+})}
         </div>
       )}
     </div>

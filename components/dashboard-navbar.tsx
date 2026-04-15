@@ -80,11 +80,11 @@ export default function DashboardNavbar({
 
       {isAdmin && (
         <Link
-          href="/dashboard/admin"
-          className={getLinkClass(pathname, "/dashboard/admin")}
-        >
-          Admin
-        </Link>
+  href="/dashboard/admin"
+  className={getLinkClass(pathname, "/dashboard/admin")}
+>
+  Admin TEST
+</Link>
       )}
 
       <Link
