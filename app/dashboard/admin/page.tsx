@@ -251,8 +251,54 @@ if (!profiles || profiles.length === 0) {
         </div>
       </section>
 
-     <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
+    <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
   <h2 className="text-2xl font-semibold">Recent Activity</h2>
   <p className="mt-1 text-muted-foreground">
     The latest job applications added to your app
   </p>
+
+  <div className="mt-6 space-y-3">
+    {recentActivity.length === 0 ? (
+      <p className="text-sm text-white/60">No recent activity yet.</p>
+    ) : (
+      recentActivity.map((item) => {
+        const profile = profileById.get(item.user_id)
+
+        return (
+          <div
+            key={item.id}
+            className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 transition hover:bg-white/[0.08]"
+          >
+            <div>
+              <p className="text-sm font-medium text-white">
+                {profile?.email ?? "Unknown user"}
+              </p>
+              <p className="text-xs text-white/70">
+                Added{" "}
+                <span className="font-medium">
+                  {item.role ?? "Unknown role"}
+                </span>{" "}
+                at{" "}
+                <span className="font-medium">
+                  {item.company ?? "Unknown company"}
+                </span>
+              </p>
+              <p className="text-xs text-white/50">
+                {new Date(item.created_at).toLocaleString()}
+              </p>
+            </div>
+
+            <span
+              className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${getStatusClasses(
+                item.status
+              )}`}
+            >
+              <span>{getStatusIcon(item.status)}</span>
+              <span>{formatStatusLabel(item.status)}</span>
+            </span>
+          </div>
+        )
+      })
+    )}
+  </div>
+</section>
