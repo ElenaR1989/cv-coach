@@ -94,14 +94,19 @@ export default async function AdminDashboardPage() {
   }
 
   const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .single()
+  .from("profiles")
+  .select("is_admin, role")
+  .eq("id", user.id)
+  .single()
 
-  if (!adminProfile?.is_admin) {
-    redirect("/dashboard")
-  }
+const isAdmin =
+  adminProfile?.is_admin === true ||
+  adminProfile?.role === "admin" ||
+  user.email === "elena.zmau@icloud.com"
+
+if (!isAdmin) {
+  redirect("/dashboard")
+}
 
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
