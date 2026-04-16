@@ -42,9 +42,10 @@ type Props = {
     role?: string | null
     tailored_cv?: string | null
   } | null
+  isPrint?: boolean
 }
 
-export default function CVPreview({ cv, applicationId, application }: Props) {
+export default function CVPreview({ cv, applicationId, application, isPrint = false }: Props) {
   const contactItems = [
     cv.email,
     cv.phone,
@@ -89,9 +90,10 @@ export default function CVPreview({ cv, applicationId, application }: Props) {
           }
         }
       `}</style>
-
+      
       <div className="print-page min-h-screen bg-background px-4 py-8 md:px-8">
         <div className="mx-auto w-full max-w-6xl space-y-6">
+          {!isPrint && (
           <div className="no-print flex flex-wrap items-center justify-between gap-3">
             <Link
               href="/dashboard/cvs"
@@ -122,13 +124,10 @@ export default function CVPreview({ cv, applicationId, application }: Props) {
               >
                 Dashboard
               </Link>
+              
 
               <Link
-                href={
-                  applicationId
-                    ? `/dashboard/cvs/${cv.id}/print?applicationId=${applicationId}`
-                    : `/dashboard/cvs/${cv.id}/print`
-                }
+               href={`/cv/${cv.id}/print`}
                 target="_blank"
                 className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
               >
@@ -136,6 +135,7 @@ export default function CVPreview({ cv, applicationId, application }: Props) {
               </Link>
             </div>
           </div>
+          )}
 
           <div className="print-card mx-auto w-full max-w-4xl rounded-2xl bg-white p-10 pt-16 text-black shadow-2xl md:p-12 md:pt-20">
             {application?.company && application?.role ? (

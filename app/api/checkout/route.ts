@@ -1,24 +1,44 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@/lib/supabase/server"
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY
-const stripePriceId = process.env.STRIPE_PRICE_ID
+function getBaseUrl(req: NextRequest) {
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL
 
-if (!stripeSecretKey) {
-  throw new Error("Missing STRIPE_SECRET_KEY in environment variables")
+  if (envUrl) return envUrl
+
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host")
+  const protocol = req.headers.get("x-forwarded-proto") ?? "https"
+
+  if (!host) {
+    throw new Error("Could not determine app URL")
+  }
+
+  return `${protocol}://${host}`
 }
 
-if (!stripePriceId) {
-  throw new Error("Missing STRIPE_PRICE_ID in environment variables")
-}
-
-const stripe = new Stripe(stripeSecretKey)
-
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY
+    const stripePriceId = process.env.STRIPE_PRICE_ID
 
+    if (!stripeSecretKey) {
+      return NextResponse.json(
+        { error: "Missing STRIPE_SECRET_KEY" },
+        { status: 500 }
+      )
+    }
+
+    if (!stripePriceId) {
+      return NextResponse.json(
+        { error: "Missing STRIPE_PRICE_ID" },
+        { status: 500 }
+      )
+    }
+
+    const stripe = new Stripe(stripeSecretKey)
+
+    const supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -26,6 +46,14 @@ export async function POST() {
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+
+    const baseUrl = getBaseUrl(req)
+
+    console.log("STRIPE DEBUG PRICE:", stripePriceId)
+    console.log("STRIPE DEBUG KEY PREFIX:", stripeSecretKey.slice(0, 12))
+
+    const price = await stripe.prices.retrieve(stripePriceId)
+    console.log("STRIPE DEBUG FOUND PRICE:", price.id)
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -43,8 +71,11 @@ export async function POST() {
           user_id: user.id,
         },
       },
-      success_url: "http://localhost:3000/dashboard?success=true",
-      cancel_url: "http://localhost:3000/dashboard?canceled=true",
+      metadata: {
+        user_id: user.id,
+      },
+      success_url: `${baseUrl}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/dashboard?canceled=true`,
     })
 
     if (!session.url) {
