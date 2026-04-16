@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import CVPreview from "../CVPreview"
+import CVPreview from "@/app/dashboard/cvs/[id]/CVPreview"
 
 type PageProps = {
   params: { id: string }
@@ -22,10 +22,7 @@ export default async function CvPrintPage({ params }: PageProps) {
 
   return (
     <div style={{ background: "white", padding: "20px" }}>
-      <CVPreview
-        cv={cv}
-        isPrint={true}
-      />
+      <CVPreview cv={cv} isPrint={true} />
     </div>
   )
 }
