@@ -1,13 +1,13 @@
-import CVPreview from "@/app/dashboard/cvs/[id]/CVPreview"
-import { createClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+import CVPreview from "../CVPreview"
 
 type PageProps = {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export default async function CvPrintPage({ params }: PageProps) {
-  const { id } = await params
+  const { id } = params
   const supabase = await createClient()
 
   const { data: cv, error } = await supabase
@@ -24,8 +24,6 @@ export default async function CvPrintPage({ params }: PageProps) {
     <div style={{ background: "white", padding: "20px" }}>
       <CVPreview
         cv={cv}
-        applicationId=""
-        application={null}
         isPrint={true}
       />
     </div>
