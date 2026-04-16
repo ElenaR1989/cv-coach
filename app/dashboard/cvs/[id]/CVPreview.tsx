@@ -12,6 +12,9 @@ type Props = {
 export default function CVPreviewActions({ cvId, template, theme }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const openCleanPdfPage = () => {
+  window.open(`/cv/${cvId}/print`, "_blank")
+}
 
   const changeTemplate = (newTemplate: string) => {
     startTransition(async () => {

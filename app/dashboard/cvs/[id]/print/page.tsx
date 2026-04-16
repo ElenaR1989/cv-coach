@@ -178,7 +178,7 @@ export default async function CVPrintPage({
         <div className="print-actions">
           <button
             className="print-button"
-            onClick={() => window.print()}
+           onClick={() => window.print()}
           >
             Save as PDF
           </button>
