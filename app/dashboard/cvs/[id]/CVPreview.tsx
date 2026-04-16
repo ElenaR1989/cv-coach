@@ -64,10 +64,6 @@ export default function CVPreviewActions({ cvId, template, theme }: Props) {
     })
   }
 
-  const openCleanPdfPage = () => {
-    window.open(`/cv/${cvId}/print`, "_blank", "noopener,noreferrer")
-  }
-
   return (
     <div className="print-hide flex flex-wrap items-center gap-2">
       <a
