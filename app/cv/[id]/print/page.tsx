@@ -1,29 +1,30 @@
 import CVPreview from "@/app/dashboard/cvs/[id]/CVPreview"
+import { createClient } from "@/lib/supabase/server"
+import { notFound } from "next/navigation"
 
-export default function CvPrintPage() {
-  const fakeCV = {
-    id: "123",
-    full_name: "Elena Rahimi",
-    title: "Professional Profile",
-    summary:
-      "Experienced professional with a background in security, safety, and frontline operations.",
-    email: "test@test.com",
-    phone: "123456789",
-    location: "London",
-    website: null,
-    linkedin: null,
-    github: null,
-    skills: "React, Next.js, TypeScript",
-    education: "My University",
-    experience: [],
-    education_entries: [],
+type PageProps = {
+  params: Promise<{ id: string }>
+}
+
+export default async function CvPrintPage({ params }: PageProps) {
+  const { id } = await params
+  const supabase = await createClient()
+
+  const { data: cv, error } = await supabase
+    .from("cvs")
+    .select("*")
+    .eq("id", id)
+    .single()
+
+  if (error || !cv) {
+    notFound()
   }
 
   return (
     <div style={{ background: "white", padding: "20px" }}>
       <CVPreview
-        cv={fakeCV}
-        applicationId="test-app-id"
+        cv={cv}
+        applicationId=""
         application={null}
         isPrint={true}
       />

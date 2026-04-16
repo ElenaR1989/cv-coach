@@ -77,13 +77,14 @@ export default function CVPreviewActions({ cvId, template, theme }: Props) {
         Edit
       </a>
 
-      <button
-        type="button"
-        onClick={() => window.print()}
+      <a
+        href={`/cv/${cvId}/print`}
+        target="_blank"
+        rel="noopener noreferrer"
         className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
       >
         Export PDF
-      </button>
+      </a>
 
       <button
         type="button"
