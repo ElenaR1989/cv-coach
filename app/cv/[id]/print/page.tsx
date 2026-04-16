@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import CVPreview from "@/app/dashboard/cvs/[id]/CVPreview"
+import CVPreview from "@/app/dashboard/cvs/[id]/cv-preview"
 
 type PageProps = {
   params: { id: string }
