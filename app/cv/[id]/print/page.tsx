@@ -5,6 +5,7 @@ export default function CvPrintPage() {
     id: "123",
     full_name: "Elena Rahimi",
     title: "Professional Profile",
+    summary: "Experienced professional with a background in security, safety, and frontline operations.",
     email: "test@test.com",
     phone: "123456789",
     location: "London",
