@@ -1,304 +1,172 @@
 "use client"
 
-import Link from "next/link"
-
-type ExperienceItem = {
-  title: string
-  company: string
-  dates: string
-  description: string
-}
-
-type EducationItem = {
-  school: string
-  qualification: string
-  dates: string
-  description: string
-}
-
-type CV = {
-  id: string
-  title: string
-  full_name: string | null
-  summary: string | null
-  email: string | null
-  phone: string | null
-  location: string | null
-  website: string | null
-  linkedin: string | null
-  github: string | null
-  skills: string | null
-  education: string | null
-  experience: ExperienceItem[] | null
-  education_entries: EducationItem[] | null
-}
+import { useTransition } from "react"
+import { useRouter } from "next/navigation"
 
 type Props = {
-  cv: CV
-  applicationId?: string
-  application?: {
-    id?: string
-    company?: string | null
-    role?: string | null
-    tailored_cv?: string | null
-  } | null
-  isPrint?: boolean
+  cvId: string
+  template: string
+  theme: string
 }
 
-export default function CVPreview({ cv, applicationId, application, isPrint = false }: Props) {
-  const contactItems = [
-    cv.email,
-    cv.phone,
-    cv.location,
-    cv.website,
-    cv.linkedin,
-    cv.github,
-  ].filter(Boolean)
+export default function CVPreviewActions({ cvId, template, theme }: Props) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
 
-  const skills = cv.skills
-    ? cv.skills
-        .split(",")
-        .map((skill) => skill.trim())
-        .filter(Boolean)
-    : []
+  const changeTemplate = (newTemplate: string) => {
+    startTransition(async () => {
+      const response = await fetch("/api/cv-template", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          cvId,
+          template: newTemplate,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        alert(data?.error || "Failed to save template")
+        return
+      }
+
+      router.push(`/dashboard/cvs/${cvId}?template=${newTemplate}&theme=${theme}`)
+      router.refresh()
+    })
+  }
+
+  const changeTheme = (newTheme: string) => {
+    startTransition(async () => {
+      const response = await fetch("/api/cv-theme", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          cvId,
+          theme: newTheme,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        alert(data?.error || "Failed to save theme")
+        return
+      }
+
+      router.push(`/dashboard/cvs/${cvId}?template=${template}&theme=${newTheme}`)
+      router.refresh()
+    })
+  }
+
+  const openCleanPdfPage = () => {
+    window.open(`/cv/${cvId}/print`, "_blank", "noopener,noreferrer")
+  }
 
   return (
-    <>
-      <style jsx global>{`
-        @media print {
-          body {
-            background: white !important;
-          }
+    <div className="print-hide flex flex-wrap items-center gap-2">
+      <a
+        href="/dashboard/cvs"
+        className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
+      >
+        Back
+      </a>
 
-          .no-print {
-            display: none !important;
-          }
+      <a
+        href={`/dashboard/cvs/${cvId}/edit`}
+        className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
+      >
+        Edit
+      </a>
 
-          .print-page {
-            background: white !important;
-            padding: 0 !important;
-            margin: 0 !important;
-          }
+      <button
+        type="button"
+        onClick={openCleanPdfPage}
+        className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
+      >
+        Export PDF
+      </button>
 
-          .print-card {
-            box-shadow: none !important;
-            border-radius: 0 !important;
-            max-width: 100% !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 48px 40px !important;
-          }
-        }
-      `}</style>
-      
-      <div className="print-page min-h-screen bg-background px-4 py-8 md:px-8">
-        <div className="mx-auto w-full max-w-6xl space-y-6">
-          {!isPrint && (
-          <div className="no-print flex flex-wrap items-center justify-between gap-3">
-            <Link
-              href="/dashboard/cvs"
-              className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-            >
-              Back to CVs
-            </Link>
+      <button
+        type="button"
+        onClick={() => changeTemplate("classic")}
+        disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${
+          template === "classic" ? "bg-black text-white" : "hover:bg-muted"
+        }`}
+      >
+        Classic
+      </button>
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-              >
-                Export PDF
-              </button>
+      <button
+        type="button"
+        onClick={() => changeTemplate("sidebar")}
+        disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${
+          template === "sidebar" ? "bg-black text-white" : "hover:bg-muted"
+        }`}
+      >
+        Sidebar
+      </button>
 
-              <Link
-                href={`/dashboard/cvs/${cv.id}/edit`}
-                className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-              >
-                Edit CV
-              </Link>
+      <button
+        type="button"
+        onClick={() => changeTemplate("minimal")}
+        disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${
+          template === "minimal" ? "bg-black text-white" : "hover:bg-muted"
+        }`}
+      >
+        Minimal
+      </button>
 
-              <Link
-                href="/dashboard"
-                className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-              >
-                Dashboard
-              </Link>
-              
+      <span className="ml-2 text-sm text-gray-500">Theme:</span>
 
-              <Link
-               href={`/cv/${cv.id}/print`}
-                target="_blank"
-                className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-              >
-                Download PDF
-              </Link>
-            </div>
-          </div>
-          )}
+      <button
+        type="button"
+        onClick={() => changeTheme("default")}
+        disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${
+          theme === "default" ? "bg-black text-white" : "hover:bg-muted"
+        }`}
+      >
+        Default
+      </button>
 
-          <div className="print-card mx-auto w-full max-w-4xl rounded-2xl bg-white p-10 pt-16 text-black shadow-2xl md:p-12 md:pt-20">
-            {application?.company && application?.role ? (
-              <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
-                Tailored for {application.company} — {application.role}
-              </div>
-            ) : null}
+      <button
+        type="button"
+        onClick={() => changeTheme("blue")}
+        disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${
+          theme === "blue" ? "bg-black text-white" : "hover:bg-muted"
+        }`}
+      >
+        Blue
+      </button>
 
-            <header className="border-b border-gray-200 pb-8">
-              <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
-                {cv.full_name || cv.title}
-              </h1>
+      <button
+        type="button"
+        onClick={() => changeTheme("emerald")}
+        disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${
+          theme === "emerald" ? "bg-black text-white" : "hover:bg-muted"
+        }`}
+      >
+        Emerald
+      </button>
 
-              <p className="mt-2 text-lg text-gray-500">Professional Profile</p>
-            </header>
-
-            <main className="mt-10 grid gap-10 md:grid-cols-3">
-              <aside className="space-y-8 md:col-span-1">
-                {contactItems.length > 0 && (
-                  <section>
-                    <h2 className="mb-3 text-lg font-semibold uppercase tracking-wide text-gray-500">
-                      Contact
-                    </h2>
-                    <div className="space-y-1 text-sm text-gray-700">
-                      {cv.email && <div>{cv.email}</div>}
-                      {cv.phone && <div>{cv.phone}</div>}
-                      {cv.location && <div>{cv.location}</div>}
-                      {cv.website && <div>{cv.website}</div>}
-                      {cv.linkedin && <div>{cv.linkedin}</div>}
-                      {cv.github && <div>{cv.github}</div>}
-                    </div>
-                  </section>
-                )}
-
-                {skills.length > 0 && (
-                  <section>
-                    <h2 className="mb-3 text-lg font-semibold uppercase tracking-wide text-gray-500">
-                      Skills
-                    </h2>
-                    <div className="space-y-1 text-sm text-gray-700">
-                      {skills.map((skill, index) => (
-                        <div key={index}>• {skill}</div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-              </aside>
-
-              <section className="space-y-8 md:col-span-2">
-                {cv.summary && (
-                  <section>
-                    <h2 className="mb-3 text-xl font-semibold">Profile</h2>
-                    <p className="whitespace-pre-line leading-7 text-gray-700">
-                      {cv.summary}
-                    </p>
-                  </section>
-                )}
-
-                {Array.isArray(cv.experience) && cv.experience.length > 0 && (
-                  <section>
-                    <h2 className="mb-4 text-xl font-semibold">Experience</h2>
-
-                    <div className="space-y-6">
-                      {cv.experience.map((job, index) => (
-                        <div
-                          key={index}
-                          className="border-b border-gray-200 pb-6"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              {job.title && (
-                                <h3 className="text-lg font-semibold capitalize text-gray-900">
-                                  {job.title}
-                                </h3>
-                              )}
-
-                              {job.company && (
-                                <p className="text-sm text-gray-600">
-                                  {job.company}
-                                </p>
-                              )}
-                            </div>
-
-                            {job.dates && (
-                              <p className="whitespace-nowrap text-sm text-gray-500">
-                                {job.dates}
-                              </p>
-                            )}
-                          </div>
-
-                          {job.description && (
-                            <ul className="mt-3 list-disc space-y-1 pl-5 text-gray-700">
-                              {job.description
-                                .split("\n")
-                                .filter(Boolean)
-                                .map((line, i) => (
-                                  <li key={i}>{line}</li>
-                                ))}
-                            </ul>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {Array.isArray(cv.education_entries) &&
-                  cv.education_entries.length > 0 && (
-                    <section>
-                      <h2 className="mb-4 text-xl font-semibold">Education</h2>
-
-                      <div className="space-y-6">
-                        {cv.education_entries.map((item, index) => (
-                          <div
-                            key={index}
-                            className="border-b border-gray-200 pb-6"
-                          >
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                {item.qualification && (
-                                  <h3 className="text-lg font-semibold text-gray-900">
-                                    {item.qualification}
-                                  </h3>
-                                )}
-
-                                {item.school && (
-                                  <p className="text-sm text-gray-600">
-                                    {item.school}
-                                  </p>
-                                )}
-                              </div>
-
-                              {item.dates && (
-                                <p className="whitespace-nowrap text-sm text-gray-500">
-                                  {item.dates}
-                                </p>
-                              )}
-                            </div>
-
-                            {item.description && (
-                              <div className="mt-3 whitespace-pre-line text-gray-700">
-                                {item.description}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
-
-                {!cv.education_entries?.length && cv.education && (
-                  <section>
-                    <h2 className="mb-3 text-xl font-semibold">Education</h2>
-                    <div className="whitespace-pre-line leading-7 text-gray-700">
-                      {cv.education}
-                    </div>
-                  </section>
-                )}
-              </section>
-            </main>
-          </div>
-        </div>
-      </div>
-    </>
+      <button
+        type="button"
+        onClick={() => changeTheme("burgundy")}
+        disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${
+          theme === "burgundy" ? "bg-black text-white" : "hover:bg-muted"
+        }`}
+      >
+        Burgundy
+      </button>
+    </div>
   )
 }
