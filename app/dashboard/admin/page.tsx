@@ -251,6 +251,8 @@ if (!profiles || profiles.length === 0) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
-        <h2 className="text-2xl font-semibold">Recent Activity</h2>
-        <p className="mt-1
+     <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
+  <h2 className="text-2xl font-semibold">Recent Activity</h2>
+  <p className="mt-1 text-muted-foreground">
+    The latest job applications added to your app
+  </p>
