@@ -335,41 +335,42 @@ const signupsChartData = last7Days.map((day) => {
         </div>
 
         {recentApplications.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
-            No applications found.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] border-separate border-spacing-y-3">
-              <thead>
-                <tr className="text-left text-sm text-muted-foreground">
-                  <th className="pb-2 font-medium">Company</th>
-                  <th className="pb-2 font-medium">Role</th>
-                  <th className="pb-2 font-medium">User</th>
-                  <th className="pb-2 font-medium">Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentApplications.map((item) => (
-                  <tr key={item.id}>
-                    <td className="rounded-l-xl border-y border-l bg-background/50 px-4 py-4 font-medium">
-                      {item.company || "Unknown company"}
-                    </td>
-                    <td className="border-y bg-background/50 px-4 py-4">
-                      {item.role || "Unknown role"}
-                    </td>
-                    <td className="border-y bg-background/50 px-4 py-4 text-sm text-muted-foreground">
-                      {emailByUserId.get(item.user_id) ?? item.user_id}
-                    </td>
-                    <td className="rounded-r-xl border-y border-r bg-background/50 px-4 py-4 text-sm text-muted-foreground">
-                      {formatDate(item.created_at)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+  <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
+    No applications found.
+  </div>
+) : (
+  <div className="overflow-x-auto">
+    <table className="w-full min-w-[720px] border-separate border-spacing-y-3">
+      <thead>
+        <tr className="text-left text-sm text-muted-foreground">
+          <th className="pb-2 font-medium">Company</th>
+          <th className="pb-2 font-medium">Role</th>
+          <th className="pb-2 font-medium">User</th>
+          <th className="pb-2 font-medium">Created</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {recentApplications.map((item) => (
+          <tr key={item.id}>
+            <td className="rounded-l-xl border-y border-l bg-background/50 px-4 py-4">
+              {item.company || "Unknown company"}
+            </td>
+            <td className="border-y bg-background/50 px-4 py-4">
+              {item.role || "Unknown role"}
+            </td>
+            <td className="border-y bg-background/50 px-4 py-4 text-sm text-muted-foreground">
+              {emailByUserId.get(item.user_id) ?? item.user_id}
+            </td>
+            <td className="rounded-r-xl border-y border-r bg-background/50 px-4 py-4 text-sm text-muted-foreground">
+              {formatDate(item.created_at)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+}
       </section>
     </div>
   )
