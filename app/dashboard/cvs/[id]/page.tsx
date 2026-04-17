@@ -13,7 +13,9 @@ type CVPageProps = {
 
 export default async function CVPage({ params, searchParams }: CVPageProps) {
   const { id } = await params
-  const { applicationId } = await searchParams
+  const resolvedSearchParams = (await searchParams) ?? {}
+  const { applicationId } = resolvedSearchParams
+
   const supabase = await createClient()
 
   const {
