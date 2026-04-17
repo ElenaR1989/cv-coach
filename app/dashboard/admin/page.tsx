@@ -370,7 +370,7 @@ const signupsChartData = last7Days.map((day) => {
       </tbody>
     </table>
   </div>
-}
+)}
       </section>
     </div>
   )
