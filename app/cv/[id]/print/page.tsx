@@ -4,11 +4,13 @@ import CVPreview from "@/app/dashboard/cvs/[id]/cv-preview"
 import PrintTrigger from "./PrintTrigger"
 
 type PageProps = {
-  params: { id: string }
+  params: Promise<{
+    id: string
+  }>
 }
 
 export default async function CvPrintPage({ params }: PageProps) {
-  const { id } = params
+  const { id } = await params
   const supabase = await createClient()
 
   const { data: cv, error } = await supabase
