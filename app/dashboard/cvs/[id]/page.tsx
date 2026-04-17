@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import CVPreview from "./cv-preview"
 
 type CVPageProps = {
   params: Promise<{
@@ -30,38 +29,22 @@ export default async function CVPage({ params, searchParams }: CVPageProps) {
     .from("cv_profiles")
     .select("*")
     .eq("id", id)
+    .eq("user_id", user.id)
     .single()
 
   if (cvError || !cv) {
     notFound()
   }
 
-  let cvToShow = cv
-  let application = null
-
-  if (applicationId) {
-    const { data } = await supabase
-      .from("job_applications")
-      .select("id, company, role, tailored_cv")
-      .eq("id", applicationId)
-      .eq("user_id", user.id)
-      .single()
-
-    application = data
-
-    if (application?.tailored_cv?.trim()) {
-      cvToShow = {
-        ...cv,
-        summary: application.tailored_cv,
-      }
-    }
-  }
-
   return (
-    <CVPreview
-      cv={cvToShow}
-      applicationId={applicationId}
-      application={application}
-    />
+    <div style={{ padding: "24px", background: "white", color: "black" }}>
+      <h1>CV PAGE DEBUG</h1>
+      <p>Route works.</p>
+      <p>id: {id}</p>
+      <p>cv.id: {cv.id}</p>
+      <p>full_name: {cv.full_name ?? "none"}</p>
+      <p>title: {cv.title ?? "none"}</p>
+      <p>applicationId: {applicationId ?? "none"}</p>
+    </div>
   )
 }
