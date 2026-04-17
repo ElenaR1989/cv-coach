@@ -3,17 +3,17 @@ import { createClient } from "@/lib/supabase/server"
 import CVPreview from "./cv-preview"
 
 type CVPageProps = {
-  params: Promise<{
+  params: {
     id: string
-  }>
-  searchParams: Promise<{
+  }
+  searchParams: {
     applicationId?: string
-  }>
+  }
 }
 
 export default async function CVPage({ params, searchParams }: CVPageProps) {
-  const { id } = await params
-  const { applicationId } = await searchParams
+  const { id } = params
+  const { applicationId } = searchParams
   const supabase = await createClient()
 
   const {
@@ -36,31 +36,31 @@ export default async function CVPage({ params, searchParams }: CVPageProps) {
   }
 
   let cvToShow = cv
-let application = null
+  let application = null
 
-if (applicationId) {
-  const { data } = await supabase
-    .from("job_applications")
-    .select("id, company, role, tailored_cv")
-    .eq("id", applicationId)
-    .eq("user_id", user.id)
-    .single()
+  if (applicationId) {
+    const { data } = await supabase
+      .from("job_applications")
+      .select("id, company, role, tailored_cv")
+      .eq("id", applicationId)
+      .eq("user_id", user.id)
+      .single()
 
-  application = data
+    application = data
 
-  if (application?.tailored_cv?.trim()) {
-    cvToShow = {
-      ...cv,
-      summary: application.tailored_cv,
+    if (application?.tailored_cv?.trim()) {
+      cvToShow = {
+        ...cv,
+        summary: application.tailored_cv,
+      }
     }
   }
-}
 
-return (
-  <CVPreview
-    cv={cvToShow}
-    applicationId={applicationId}
-    application={application}
-  />
-)
+  return (
+    <CVPreview
+      cv={cvToShow}
+      applicationId={applicationId}
+      application={application}
+    />
+  )
 }
