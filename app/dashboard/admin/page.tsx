@@ -1,7 +1,23 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
+import AdminApplicationsChart from "@/components/admin-applications-chart"
 
+function getLast7Days() {
+  const days: { key: string; label: string }[] = []
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+
+    const key = d.toISOString().slice(0, 10)
+    const label = d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+
+    days.push({ key, label })
+  }
+
+  return days
+}
 function formatDate(value?: string | null) {
   if (!value) return "—"
   return new Date(value).toLocaleString()
@@ -50,14 +66,15 @@ export default async function AdminDashboardPage() {
 
   const sevenDaysAgo = startOfLast7Days()
 
-  const [
-    authUsersResult,
-    applicationsResult,
-    cvsResult,
-    coverLettersResult,
-    recentApplicationsResult,
-    applicationsThisWeekResult,
-  ] = await Promise.all([
+const [
+  authUsersResult,
+  applicationsResult,
+  cvsResult,
+  coverLettersResult,
+  recentApplicationsResult,
+  applicationsThisWeekResult,
+  recentApplicationsForChartResult,
+] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers(),
     supabase.from("job_applications").select("*", { count: "exact", head: true }),
     supabase.from("cv_profiles").select("*", { count: "exact", head: true }),
@@ -71,6 +88,10 @@ export default async function AdminDashboardPage() {
       .from("job_applications")
       .select("*", { count: "exact", head: true })
       .gte("created_at", sevenDaysAgo),
+      supabase
+  .from("job_applications")
+  .select("id, created_at")
+  .gte("created_at", startOfLast7Days()),
   ])
 
   const authUsers = authUsersResult.data?.users ?? []
@@ -100,6 +121,21 @@ export default async function AdminDashboardPage() {
     }))
 
   const recentApplications = recentApplicationsResult.data ?? []
+  const recentApplicationsForChart = recentApplicationsForChartResult.data ?? []
+
+const last7Days = getLast7Days()
+
+const applicationsChartData = last7Days.map((day) => {
+  const count = recentApplicationsForChart.filter((item) => {
+    if (!item.created_at) return false
+    return item.created_at.slice(0, 10) === day.key
+  }).length
+
+  return {
+    date: day.label,
+    applications: count,
+  }
+})
 
   const emailByUserId = new Map(authUsers.map((u) => [u.id, u.email ?? "Unknown email"]))
 
@@ -169,6 +205,18 @@ export default async function AdminDashboardPage() {
           tone="bg-amber-500/10 border-amber-500/20"
         />
       </section>
+      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+  <div className="mb-5">
+    <h2 className="text-xl font-semibold">Applications in the Last 7 Days</h2>
+    <p className="text-sm text-muted-foreground">
+      Daily application activity across the platform
+    </p>
+  </div>
+
+ <div className="rounded-xl border border-red-500 p-6 text-white">
+  TEST CHART BLOCK
+</div>
+</section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
