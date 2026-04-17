@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import CVPreview from "./CVPreview"
+import CVPreview from "./cv-preview"
 
 type CVPageProps = {
   params: Promise<{
