@@ -34,6 +34,18 @@ function getLast7Days() {
   return days
 }
 
+function getPercentChange(current: number, previous: number) {
+  if (previous === 0 && current === 0) return 0
+  if (previous === 0) return 100
+  return Math.round(((current - previous) / previous) * 100)
+}
+
+function getTrendColor(value: number) {
+  if (value > 0) return "text-emerald-400"
+  if (value < 0) return "text-red-400"
+  return "text-foreground"
+}
+
 type StatCardProps = {
   title: string
   value: number
@@ -53,6 +65,38 @@ function StatCard({ title, value, subtext, icon, tone }: StatCardProps) {
         </div>
 
         <div className="text-2xl">{icon}</div>
+      </div>
+    </div>
+  )
+}
+
+type InsightCardProps = {
+  title: string
+  value: string
+  subtext: string
+  icon: string
+  valueClassName?: string
+}
+
+function InsightCard({
+  title,
+  value,
+  subtext,
+  icon,
+  valueClassName,
+}: InsightCardProps) {
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <div className={`mt-2 text-3xl font-bold ${valueClassName ?? ""}`}>
+            {value}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">{subtext}</p>
+        </div>
+
+        <div className="text-xl">{icon}</div>
       </div>
     </div>
   )
@@ -93,6 +137,8 @@ export default async function AdminDashboardPage() {
     recentApplicationsResult,
     applicationsThisWeekResult,
     recentApplicationsForChartResult,
+    allApplicationsForInsightsResult,
+    allApplicationsLast14DaysResult,
   ] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers(),
     supabase.from("job_applications").select("*", { count: "exact", head: true }),
@@ -111,6 +157,12 @@ export default async function AdminDashboardPage() {
       .from("job_applications")
       .select("id, created_at")
       .gte("created_at", sevenDaysAgo),
+    supabase
+      .from("job_applications")
+      .select("company, role, user_id"),
+    supabase
+      .from("job_applications")
+      .select("id, created_at, user_id"),
   ])
 
   const authUsers: AuthUser[] = authUsersResult.data?.users ?? []
@@ -193,67 +245,95 @@ export default async function AdminDashboardPage() {
       return bTime - aTime
     })
     .slice(0, 8)
-    const fourteenDaysAgo = new Date()
-fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
 
-const applicationsLastWeekResult = await supabase
-  .from("job_applications")
-  .select("id, created_at")
+  const fourteenDaysAgo = new Date()
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
 
-const applicationsLast14Days =
-  applicationsLastWeekResult.data?.filter((item) => {
+  const now = new Date()
+  const sevenDaysAgoDate = new Date()
+  sevenDaysAgoDate.setDate(now.getDate() - 7)
+
+  const allApplicationsLast14Days =
+    allApplicationsLast14DaysResult.data?.filter((item) => {
+      if (!item.created_at) return false
+      return new Date(item.created_at) >= fourteenDaysAgo
+    }) ?? []
+
+  const applicationsThisWeekCount = allApplicationsLast14Days.filter((item) => {
     if (!item.created_at) return false
-    return new Date(item.created_at) >= fourteenDaysAgo
-  }) ?? []
+    return new Date(item.created_at) >= sevenDaysAgoDate
+  }).length
 
-const now = new Date()
-const sevenDaysAgoDate = new Date()
-sevenDaysAgoDate.setDate(now.getDate() - 7)
+  const applicationsPreviousWeekCount = allApplicationsLast14Days.filter((item) => {
+    if (!item.created_at) return false
+    const created = new Date(item.created_at)
+    return created < sevenDaysAgoDate && created >= fourteenDaysAgo
+  }).length
 
-const applicationsThisWeekCount = applicationsLast14Days.filter((item) => {
-  if (!item.created_at) return false
-  return new Date(item.created_at) >= sevenDaysAgoDate
-}).length
+  const signupsThisWeekCount = authUsers.filter((u) => {
+    if (!u.created_at) return false
+    return new Date(u.created_at) >= sevenDaysAgoDate
+  }).length
 
-const applicationsPreviousWeekCount = applicationsLast14Days.filter((item) => {
-  if (!item.created_at) return false
-  const created = new Date(item.created_at)
-  return created < sevenDaysAgoDate && created >= fourteenDaysAgo
-}).length
+  const signupsPreviousWeekCount = authUsers.filter((u) => {
+    if (!u.created_at) return false
+    const created = new Date(u.created_at)
+    return created < sevenDaysAgoDate && created >= fourteenDaysAgo
+  }).length
 
-const signupsThisWeekCount = authUsers.filter((u) => {
-  if (!u.created_at) return false
-  return new Date(u.created_at) >= sevenDaysAgoDate
-}).length
+  const applicationsGrowth = getPercentChange(
+    applicationsThisWeekCount,
+    applicationsPreviousWeekCount
+  )
 
-const signupsPreviousWeekCount = authUsers.filter((u) => {
-  if (!u.created_at) return false
-  const created = new Date(u.created_at)
-  return created < sevenDaysAgoDate && created >= fourteenDaysAgo
-}).length
+  const signupsGrowth = getPercentChange(
+    signupsThisWeekCount,
+    signupsPreviousWeekCount
+  )
 
-function getPercentChange(current: number, previous: number) {
-  if (previous === 0 && current === 0) return 0
-  if (previous === 0) return 100
-  return Math.round(((current - previous) / previous) * 100)
-}
+  const allApplicationsForInsights = allApplicationsForInsightsResult.data ?? []
 
-const applicationsGrowth = getPercentChange(
-  applicationsThisWeekCount,
-  applicationsPreviousWeekCount
-)
+  const companyCounts = new Map<string, number>()
+  const roleCounts = new Map<string, number>()
+  const allActiveUserIds = new Set<string>()
 
-const signupsGrowth = getPercentChange(
-  signupsThisWeekCount,
-  signupsPreviousWeekCount
-)
+  for (const item of allApplicationsForInsights) {
+    const company = item.company?.trim()
+    const role = item.role?.trim()
 
-const conversionRate =
-  totalUsers === 0 ? 0 : Math.round((totalApplications / totalUsers) * 100)
+    if (company) {
+      companyCounts.set(company, (companyCounts.get(company) ?? 0) + 1)
+    }
 
-const activeUserIds = new Set(recentApplications.map((item) => item.user_id))
-const activeUserShare =
-  totalUsers === 0 ? 0 : Math.round((activeUserIds.size / totalUsers) * 100)
+    if (role) {
+      roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1)
+    }
+
+    if (item.user_id) {
+      allActiveUserIds.add(item.user_id)
+    }
+  }
+
+  const topCompanies = Array.from(companyCounts.entries())
+    .map(([company, count]) => ({
+      company,
+      count,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+
+  const topRoles = Array.from(roleCounts.entries())
+    .map(([role, count]) => ({
+      role,
+      count,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+
+  const activeUserShare =
+    totalUsers === 0 ? 0 : Math.round((allActiveUserIds.size / totalUsers) * 100)
+
+  const engagementRate = activeUserShare
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-8">
@@ -301,45 +381,35 @@ const activeUserShare =
           tone="bg-amber-500/10 border-amber-500/20"
         />
       </section>
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-  <div className="rounded-2xl border bg-card p-5 shadow-sm">
-    <p className="text-sm text-muted-foreground">Applications Growth</p>
-    <div className="mt-2 text-3xl font-bold">
-      {applicationsGrowth > 0 ? "+" : ""}
-      {applicationsGrowth}%
-    </div>
-    <p className="mt-2 text-xs text-muted-foreground">
-      Compared with previous 7 days
-    </p>
-  </div>
-
-  <div className="rounded-2xl border bg-card p-5 shadow-sm">
-    <p className="text-sm text-muted-foreground">Signups Growth</p>
-    <div className="mt-2 text-3xl font-bold">
-      {signupsGrowth > 0 ? "+" : ""}
-      {signupsGrowth}%
-    </div>
-    <p className="mt-2 text-xs text-muted-foreground">
-      Compared with previous 7 days
-    </p>
-  </div>
-
-  <div className="rounded-2xl border bg-card p-5 shadow-sm">
-    <p className="text-sm text-muted-foreground">Conversion Rate</p>
-    <div className="mt-2 text-3xl font-bold">{conversionRate}%</div>
-    <p className="mt-2 text-xs text-muted-foreground">
-      Applications per total users
-    </p>
-  </div>
-
-  <div className="rounded-2xl border bg-card p-5 shadow-sm">
-    <p className="text-sm text-muted-foreground">Active User Share</p>
-    <div className="mt-2 text-3xl font-bold">{activeUserShare}%</div>
-    <p className="mt-2 text-xs text-muted-foreground">
-      Users with at least one application
-    </p>
-  </div>
-</section>
+        <InsightCard
+          title="Applications Growth"
+          value={`${applicationsGrowth > 0 ? "+" : ""}${applicationsGrowth}%`}
+          subtext={`${applicationsThisWeekCount} this week vs ${applicationsPreviousWeekCount} previous week`}
+          icon="📉"
+          valueClassName={getTrendColor(applicationsGrowth)}
+        />
+        <InsightCard
+          title="Signups Growth"
+          value={`${signupsGrowth > 0 ? "+" : ""}${signupsGrowth}%`}
+          subtext={`${signupsThisWeekCount} this week vs ${signupsPreviousWeekCount} previous week`}
+          icon="👤"
+          valueClassName={getTrendColor(signupsGrowth)}
+        />
+        <InsightCard
+          title="Engagement Rate"
+          value={`${engagementRate}%`}
+          subtext="Users with at least one application"
+          icon="⚡"
+        />
+        <InsightCard
+          title="Active User Share"
+          value={`${activeUserShare}%`}
+          subtext={`${allActiveUserIds.size} active users across ${totalUsers} total users`}
+          icon="🔥"
+        />
+      </section>
 
       <section className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
@@ -366,6 +436,102 @@ const activeUserShare =
           </div>
 
           <AdminSignupsChart data={signupsChartData} />
+        </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-2">
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Top Companies</h2>
+              <p className="text-sm text-muted-foreground">
+                Most applied-to companies across the platform
+              </p>
+            </div>
+
+            <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+              {topCompanies.length} shown
+            </div>
+          </div>
+
+          {topCompanies.length === 0 ? (
+            <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
+              No company data yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {topCompanies.map((item, index) => (
+                <div
+                  key={item.company}
+                  className="rounded-xl border bg-background/50 p-4 transition hover:bg-background/80"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold text-muted-foreground">
+                        #{index + 1}
+                      </div>
+
+                      <div>
+                        <div className="font-medium">{item.company}</div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          {item.count} application{item.count === 1 ? "" : "s"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-lg">🏢</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Top Roles</h2>
+              <p className="text-sm text-muted-foreground">
+                Most applied-to roles across the platform
+              </p>
+            </div>
+
+            <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+              {topRoles.length} shown
+            </div>
+          </div>
+
+          {topRoles.length === 0 ? (
+            <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
+              No role data yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {topRoles.map((item, index) => (
+                <div
+                  key={item.role}
+                  className="rounded-xl border bg-background/50 p-4 transition hover:bg-background/80"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold text-muted-foreground">
+                        #{index + 1}
+                      </div>
+
+                      <div>
+                        <div className="font-medium">{item.role}</div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          {item.count} application{item.count === 1 ? "" : "s"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-lg">💼</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
