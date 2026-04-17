@@ -7,10 +7,20 @@ type PageProps = {
   params: Promise<{
     id: string
   }>
+  searchParams: Promise<{
+    template?: string
+    theme?: string
+  }>
 }
 
-export default async function CvPrintPage({ params }: PageProps) {
+export default async function CvPrintPage({ params, searchParams }: PageProps) {
   const { id } = await params
+  const resolvedSearchParams = (await searchParams) ?? {}
+  const { template, theme } = resolvedSearchParams
+
+  const selectedTemplate = template ?? "classic"
+  const selectedTheme = theme ?? "default"
+
   const supabase = await createClient()
 
   const { data: cv, error } = await supabase
@@ -26,7 +36,12 @@ export default async function CvPrintPage({ params }: PageProps) {
   return (
     <div style={{ background: "white", padding: "20px" }}>
       <PrintTrigger />
-      <CVPreview cv={cv} isPrint={true} />
+      <CVPreview
+        cv={cv}
+        isPrint={true}
+        template={selectedTemplate}
+        theme={selectedTheme}
+      />
     </div>
   )
 }
