@@ -3,11 +3,11 @@ import { createClient } from "@/lib/supabase/server"
 import CVPreview from "@/app/dashboard/cvs/[id]/cv-preview"
 
 type PageProps = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function CvPrintPage({ params }: PageProps) {
-  const { id } = params
+  const { id } = await params
   const supabase = await createClient()
 
   const { data: cv, error } = await supabase
@@ -15,6 +15,10 @@ export default async function CvPrintPage({ params }: PageProps) {
     .select("*")
     .eq("id", id)
     .single()
+
+  if (error || !cv) {
+    notFound()
+  }
 
   return (
     <div style={{ background: "white", padding: "20px" }}>

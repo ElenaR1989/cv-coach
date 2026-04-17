@@ -1,19 +1,19 @@
-import { redirect } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import CVPreview from "./cv-preview"
 
 type CVPageProps = {
-  params: {
+  params: Promise<{
     id: string
-  }
-  searchParams: {
+  }>
+  searchParams: Promise<{
     applicationId?: string
-  }
+  }>
 }
 
 export default async function CVPage({ params, searchParams }: CVPageProps) {
-  const { id } = params
-  const { applicationId } = searchParams
+  const { id } = await params
+  const { applicationId } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -31,25 +31,7 @@ export default async function CVPage({ params, searchParams }: CVPageProps) {
     .single()
 
   if (cvError || !cv) {
-    return (
-      <div style={{ padding: "24px", color: "white", background: "black" }}>
-        <h1>CV debug</h1>
-        <p>CV not found.</p>
-        <pre style={{ whiteSpace: "pre-wrap" }}>
-{JSON.stringify(
-  {
-    id,
-    applicationId,
-    userId: user.id,
-    cvError,
-    cv,
-  },
-  null,
-  2
-)}
-        </pre>
-      </div>
-    )
+    notFound()
   }
 
   let cvToShow = cv
