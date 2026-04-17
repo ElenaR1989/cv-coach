@@ -3,130 +3,300 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 
-type ProfileRow = {
-  id: string
-  email: string | null
-  created_at: string
-  plan: string | null
-  is_admin: boolean
+function formatDate(value?: string | null) {
+  if (!value) return "—"
+  return new Date(value).toLocaleString()
 }
 
-type ApplicationRow = {
-  id: string
-  user_id: string
-  company: string | null
-  role: string | null
-  status: string | null
-  created_at: string
+function startOfLast7Days() {
+  const d = new Date()
+  d.setDate(d.getDate() - 7)
+  return d.toISOString()
 }
 
-export default async function AdminDashboardPage() {
+type StatCardProps = {
+  title: string
+  value: number
+  subtext: string
+  icon: string
+  tone: string
+}
+
+function StatCard({ title, value, subtext, icon, tone }: StatCardProps) {
+  return (
+    <div className={`rounded-2xl border p-6 shadow-sm ${tone}`}>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <div className="mt-3 text-4xl font-bold tracking-tight">{value}</div>
+          <p className="mt-2 text-xs text-muted-foreground">{subtext}</p>
+        </div>
+
+        <div className="text-2xl">{icon}</div>
+      </div>
+    </div>
+  )
+}
+
+export default async function AdminPage() {
   const supabase = await createClient()
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) redirect("/login")
+  if (!user) {
+    redirect("/login")
+  }
 
-  const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("is_admin, role")
-    .eq("id", user.id)
-    .single()
+  const sevenDaysAgo = startOfLast7Days()
 
-  const isAdmin =
-    adminProfile?.is_admin === true ||
-    adminProfile?.role === "admin" ||
-    user.email === "elena.zmau@icloud.com"
+  const [
+    usersResult,
+    applicationsResult,
+    cvsResult,
+    coverLettersResult,
+    recentUsersResult,
+    recentApplicationsResult,
+    usersThisWeekResult,
+    applicationsThisWeekResult,
+  ] = await Promise.all([
+    supabase.from("profiles").select("*", { count: "exact", head: true }),
+    supabase.from("job_applications").select("*", { count: "exact", head: true }),
+    supabase.from("cv_profiles").select("*", { count: "exact", head: true }),
+    supabase.from("cover_letters").select("*", { count: "exact", head: true }),
 
-  if (!isAdmin) redirect("/dashboard")
+    supabase
+      .from("profiles")
+      .select("id, email, created_at")
+      .order("created_at", { ascending: false })
+      .limit(6),
 
-  const { data: profiles } = await supabaseAdmin
-    .from("profiles")
-    .select("*")
-    .order("created_at", { ascending: false })
+    supabase
+      .from("job_applications")
+      .select("id, company, role, created_at, user_id")
+      .order("created_at", { ascending: false })
+      .limit(8),
 
-  const { data: applications } = await supabaseAdmin
-    .from("job_applications")
-    .select("*")
-    .order("created_at", { ascending: false })
+    supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", sevenDaysAgo),
 
-  const totalUsers = profiles?.length ?? 0
-  const totalApplications = applications?.length ?? 0
+    supabase
+      .from("job_applications")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", sevenDaysAgo),
+  ])
 
-  const recentSignups = profiles?.slice(0, 5) ?? []
-  const recentActivity = applications?.slice(0, 5) ?? []
+  const totalUsers = usersResult.count ?? 0
+  const totalApplications = applicationsResult.count ?? 0
+  const totalCVs = cvsResult.count ?? 0
+  const totalCoverLetters = coverLettersResult.count ?? 0
+  const usersThisWeek = usersThisWeekResult.count ?? 0
+  const applicationsThisWeek = applicationsThisWeekResult.count ?? 0
 
-  const profileMap = new Map(
-    (profiles ?? []).map((p: ProfileRow) => [p.id, p])
-  )
+  const recentUsers = recentUsersResult.data ?? []
+  const recentApplications = recentApplicationsResult.data ?? []
+
+  const recentActivity = [
+    ...recentUsers.map((item) => ({
+      id: `user-${item.id}`,
+      type: "New signup",
+      label: item.email || "Unknown user",
+      created_at: item.created_at,
+    })),
+    ...recentApplications.map((item) => ({
+      id: `application-${item.id}`,
+      type: "New application",
+      label: `${item.company || "Unknown company"} — ${item.role || "Unknown role"}`,
+      created_at: item.created_at,
+    })),
+  ]
+    .sort((a, b) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0
+      return bTime - aTime
+    })
+    .slice(0, 8)
 
   return (
-    <div className="space-y-8 p-6">
-      <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-
-      {/* STATS */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="p-6 border rounded-xl">
-          <p>Total Users</p>
-          <p className="text-3xl">{totalUsers}</p>
+    <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-8">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight">Admin Dashboard</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Monitor platform usage, users, CV activity, and applications.
+          </p>
         </div>
 
-        <div className="p-6 border rounded-xl">
-          <p>Total Applications</p>
-          <p className="text-3xl">{totalApplications}</p>
+        <div className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground shadow-sm">
+          Signed in as <span className="font-medium text-foreground">{user.email}</span>
         </div>
       </div>
 
-      {/* SIGNUPS */}
-      <section className="p-6 border rounded-xl">
-        <h2 className="text-2xl font-semibold">Recent Signups</h2>
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Total Users"
+          value={totalUsers}
+          subtext={`${usersThisWeek} new in the last 7 days`}
+          icon="👥"
+          tone="bg-blue-500/10 border-blue-500/20"
+        />
+        <StatCard
+          title="Applications"
+          value={totalApplications}
+          subtext={`${applicationsThisWeek} submitted in the last 7 days`}
+          icon="📨"
+          tone="bg-emerald-500/10 border-emerald-500/20"
+        />
+        <StatCard
+          title="CV Profiles"
+          value={totalCVs}
+          subtext="CVs currently stored in the system"
+          icon="📄"
+          tone="bg-violet-500/10 border-violet-500/20"
+        />
+        <StatCard
+          title="Cover Letters"
+          value={totalCoverLetters}
+          subtext="Generated cover letters across users"
+          icon="✍️"
+          tone="bg-amber-500/10 border-amber-500/20"
+        />
+      </section>
 
-        {recentSignups.length === 0 ? (
-          <p>No users yet</p>
-        ) : (
-          <div className="mt-4 space-y-2">
-            {recentSignups.map((p: ProfileRow) => (
-              <div key={p.id} className="border p-3 rounded">
-                <p>{p.email}</p>
-                <p className="text-sm text-gray-400">
-                  {new Date(p.created_at).toLocaleString()}
-                </p>
+      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Recent Signups</h2>
+              <p className="text-sm text-muted-foreground">
+                Latest users who created accounts
+              </p>
+            </div>
+            <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+              {recentUsers.length} shown
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {recentUsers.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
+                No recent signups found.
               </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ACTIVITY */}
-      <section className="p-6 border rounded-xl">
-        <h2 className="text-2xl font-semibold">Recent Activity</h2>
-
-        {recentActivity.length === 0 ? (
-          <p>No activity yet</p>
-        ) : (
-          <div className="mt-4 space-y-2">
-            {recentActivity.map((a: ApplicationRow) => {
-              const user = profileMap.get(a.user_id)
-
-              return (
-                <div key={a.id} className="border p-3 rounded">
-                  <p>{user?.email ?? "Unknown user"}</p>
-                  <p className="text-sm">
-                    {a.role} @ {a.company}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(a.created_at).toLocaleString()}
-                  </p>
+            ) : (
+              recentUsers.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border bg-background/50 p-4 transition hover:bg-background"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="font-medium">{item.email || "Unknown email"}</div>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        Joined {formatDate(item.created_at)}
+                      </div>
+                    </div>
+                    <div className="text-lg">👤</div>
+                  </div>
                 </div>
-              )
-            })}
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Recent Activity</h2>
+              <p className="text-sm text-muted-foreground">
+                Latest signups and applications
+              </p>
+            </div>
+            <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+              Live snapshot
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {recentActivity.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
+                No recent activity found.
+              </div>
+            ) : (
+              recentActivity.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-start justify-between gap-4 rounded-xl border bg-background/50 p-4 transition hover:bg-background"
+                >
+                  <div>
+                    <div className="font-medium">{item.type}</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      {item.label}
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-xs text-muted-foreground">
+                    {formatDate(item.created_at)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">Latest Applications</h2>
+            <p className="text-sm text-muted-foreground">
+              Most recent applications submitted on the platform
+            </p>
+          </div>
+
+          <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+            {recentApplications.length} latest records
+          </div>
+        </div>
+
+        {recentApplications.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
+            No applications found.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] border-separate border-spacing-y-3">
+              <thead>
+                <tr className="text-left text-sm text-muted-foreground">
+                  <th className="pb-2 font-medium">Company</th>
+                  <th className="pb-2 font-medium">Role</th>
+                  <th className="pb-2 font-medium">User ID</th>
+                  <th className="pb-2 font-medium">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentApplications.map((item) => (
+                  <tr key={item.id}>
+                    <td className="rounded-l-xl border-y border-l bg-background/50 px-4 py-4 font-medium">
+                      {item.company || "Unknown company"}
+                    </td>
+                    <td className="border-y bg-background/50 px-4 py-4">
+                      {item.role || "Unknown role"}
+                    </td>
+                    <td className="border-y bg-background/50 px-4 py-4 text-sm text-muted-foreground">
+                      {item.user_id}
+                    </td>
+                    <td className="rounded-r-xl border-y border-r bg-background/50 px-4 py-4 text-sm text-muted-foreground">
+                      {formatDate(item.created_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>
-
-      <Link href="/dashboard">← Back</Link>
     </div>
   )
 }
