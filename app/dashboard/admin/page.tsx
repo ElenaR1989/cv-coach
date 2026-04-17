@@ -213,9 +213,7 @@ const applicationsChartData = last7Days.map((day) => {
     </p>
   </div>
 
- <div className="rounded-xl border border-red-500 p-6 text-white">
-  TEST CHART BLOCK
-</div>
+ <AdminApplicationsChart data={applicationsChartData} />
 </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
