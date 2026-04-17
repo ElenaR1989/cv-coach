@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation"
+import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import CVPreview from "./cv-preview"
 
@@ -31,7 +31,25 @@ export default async function CVPage({ params, searchParams }: CVPageProps) {
     .single()
 
   if (cvError || !cv) {
-    notFound()
+    return (
+      <div style={{ padding: "24px", color: "white", background: "black" }}>
+        <h1>CV debug</h1>
+        <p>CV not found.</p>
+        <pre style={{ whiteSpace: "pre-wrap" }}>
+{JSON.stringify(
+  {
+    id,
+    applicationId,
+    userId: user.id,
+    cvError,
+    cv,
+  },
+  null,
+  2
+)}
+        </pre>
+      </div>
+    )
   }
 
   let cvToShow = cv
