@@ -2,7 +2,7 @@ import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import EditCVForm from "@/components/edit-cv-form"
-import { updateCVAction } from "./actions"
+import { updateCVAction } from "../actions"
 
 type ExperienceItem = {
   title?: string
