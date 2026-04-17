@@ -25,7 +25,7 @@ export default async function CVPage({ params, searchParams }: CVPageProps) {
   }
 
   const { data: cv, error: cvError } = await supabase
-    .from("cv_profiles")
+    .from("cvs")
     .select("*")
     .eq("id", id)
     .single()
