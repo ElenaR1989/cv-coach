@@ -8,13 +8,18 @@ type CVPageProps = {
   }>
   searchParams: Promise<{
     applicationId?: string
+    template?: string
+    theme?: string
   }>
 }
 
 export default async function CVPage({ params, searchParams }: CVPageProps) {
   const { id } = await params
   const resolvedSearchParams = (await searchParams) ?? {}
-  const { applicationId } = resolvedSearchParams
+  const { applicationId, template, theme } = resolvedSearchParams
+
+  const selectedTemplate = template ?? "classic"
+  const selectedTheme = theme ?? "default"
 
   const supabase = await createClient()
 
@@ -63,6 +68,8 @@ export default async function CVPage({ params, searchParams }: CVPageProps) {
       cv={cvToShow}
       applicationId={applicationId}
       application={application}
+      template={selectedTemplate}
+      theme={selectedTheme}
     />
   )
 }
