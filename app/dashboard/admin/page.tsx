@@ -4,21 +4,6 @@ import { supabaseAdmin } from "@/lib/supabase/admin"
 import AdminApplicationsChart from "@/components/admin-applications-chart"
 import AdminSignupsChart from "@/components/admin-signups-chart"
 
-function getLast7Days() {
-  const days: { key: string; label: string }[] = []
-
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-
-    const key = d.toISOString().slice(0, 10)
-    const label = d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-
-    days.push({ key, label })
-  }
-
-  return days
-}
 function formatDate(value?: string | null) {
   if (!value) return "—"
   return new Date(value).toLocaleString()
@@ -28,6 +13,25 @@ function startOfLast7Days() {
   const d = new Date()
   d.setDate(d.getDate() - 7)
   return d.toISOString()
+}
+
+function getLast7Days() {
+  const days: { key: string; label: string }[] = []
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+
+    const key = d.toISOString().slice(0, 10)
+    const label = d.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+    })
+
+    days.push({ key, label })
+  }
+
+  return days
 }
 
 type StatCardProps = {
@@ -54,6 +58,20 @@ function StatCard({ title, value, subtext, icon, tone }: StatCardProps) {
   )
 }
 
+type AuthUser = {
+  id: string
+  email?: string | null
+  created_at?: string | null
+}
+
+type ApplicationRow = {
+  id: string
+  company?: string | null
+  role?: string | null
+  created_at?: string | null
+  user_id: string
+}
+
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
 
@@ -67,15 +85,15 @@ export default async function AdminDashboardPage() {
 
   const sevenDaysAgo = startOfLast7Days()
 
-const [
-  authUsersResult,
-  applicationsResult,
-  cvsResult,
-  coverLettersResult,
-  recentApplicationsResult,
-  applicationsThisWeekResult,
-  recentApplicationsForChartResult,
-] = await Promise.all([
+  const [
+    authUsersResult,
+    applicationsResult,
+    cvsResult,
+    coverLettersResult,
+    recentApplicationsResult,
+    applicationsThisWeekResult,
+    recentApplicationsForChartResult,
+  ] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers(),
     supabase.from("job_applications").select("*", { count: "exact", head: true }),
     supabase.from("cv_profiles").select("*", { count: "exact", head: true }),
@@ -89,13 +107,13 @@ const [
       .from("job_applications")
       .select("*", { count: "exact", head: true })
       .gte("created_at", sevenDaysAgo),
-      supabase
-  .from("job_applications")
-  .select("id, created_at")
-  .gte("created_at", startOfLast7Days()),
+    supabase
+      .from("job_applications")
+      .select("id, created_at")
+      .gte("created_at", sevenDaysAgo),
   ])
 
-  const authUsers = authUsersResult.data?.users ?? []
+  const authUsers: AuthUser[] = authUsersResult.data?.users ?? []
 
   const totalUsers = authUsers.length
   const totalApplications = applicationsResult.count ?? 0
@@ -121,35 +139,39 @@ const [
       created_at: u.created_at ?? null,
     }))
 
-  const recentApplications = recentApplicationsResult.data ?? []
-  const recentApplicationsForChart = recentApplicationsForChartResult.data ?? []
+  const recentApplications: ApplicationRow[] = recentApplicationsResult.data ?? []
+  const recentApplicationsForChart =
+    recentApplicationsForChartResult.data ?? []
 
-const last7Days = getLast7Days()
+  const last7Days = getLast7Days()
 
-const applicationsChartData = last7Days.map((day) => {
-  const count = recentApplicationsForChart.filter((item) => {
-    if (!item.created_at) return false
-    return item.created_at.slice(0, 10) === day.key
-  }).length
+  const applicationsChartData = last7Days.map((day) => {
+    const count = recentApplicationsForChart.filter((item) => {
+      if (!item.created_at) return false
+      return item.created_at.slice(0, 10) === day.key
+    }).length
 
-  return {
-    date: day.label,
-    applications: count,
-  }
-})
-const signupsChartData = last7Days.map((day) => {
-  const count = authUsers.filter((user) => {
-    if (!user.created_at) return false
-    return user.created_at.slice(0, 10) === day.key
-  }).length
+    return {
+      date: day.label,
+      applications: count,
+    }
+  })
 
-  return {
-    date: day.label,
-    signups: count,
-  }
-})
+  const signupsChartData = last7Days.map((day) => {
+    const count = authUsers.filter((u) => {
+      if (!u.created_at) return false
+      return u.created_at.slice(0, 10) === day.key
+    }).length
 
-  const emailByUserId = new Map(authUsers.map((u) => [u.id, u.email ?? "Unknown email"]))
+    return {
+      date: day.label,
+      signups: count,
+    }
+  })
+
+  const emailByUserId = new Map(
+    authUsers.map((u) => [u.id, u.email ?? "Unknown email"])
+  )
 
   const recentActivity = [
     ...recentUsers.map((item) => ({
@@ -161,7 +183,7 @@ const signupsChartData = last7Days.map((day) => {
     ...recentApplications.map((item) => ({
       id: `application-${item.id}`,
       type: "New application",
-      label: `${emailByUserId.get(item.user_id) ?? "Unknown user"} — ${item.company || "Unknown company"} / ${item.role || "Unknown role"}`,
+      label: `${emailByUserId.get(item.user_id) ?? "Unknown user"} — ${item.company ?? "Unknown company"} / ${item.role ?? "Unknown role"}`,
       created_at: item.created_at,
     })),
   ]
@@ -182,8 +204,9 @@ const signupsChartData = last7Days.map((day) => {
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground shadow-sm">
-          Signed in as <span className="font-medium text-foreground">{user.email}</span>
+        <div className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">
+          Signed in as{" "}
+          <span className="font-medium text-foreground">{user.email}</span>
         </div>
       </div>
 
@@ -216,29 +239,35 @@ const signupsChartData = last7Days.map((day) => {
           icon="✍️"
           tone="bg-amber-500/10 border-amber-500/20"
         />
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-2">
-  <div className="rounded-2xl border bg-card p-6 shadow-sm">
-    <div className="mb-5">
-      <h2 className="text-xl font-semibold">Applications in the Last 7 Days</h2>
-      <p className="text-sm text-muted-foreground">
-        Daily application activity across the platform
-      </p>
-    </div>
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="mb-5">
+            <h2 className="text-xl font-semibold">
+              Applications in the Last 7 Days
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Daily application activity across the platform
+            </p>
+          </div>
 
-    <AdminApplicationsChart data={applicationsChartData} />
-  </div>
+          <AdminApplicationsChart data={applicationsChartData} />
+        </div>
 
-  <div className="rounded-2xl border bg-card p-6 shadow-sm">
-    <div className="mb-5">
-      <h2 className="text-xl font-semibold">Signups in the Last 7 Days</h2>
-      <p className="text-sm text-muted-foreground">
-        Daily user growth across the platform
-      </p>
-    </div>
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="mb-5">
+            <h2 className="text-xl font-semibold">
+              Signups in the Last 7 Days
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Daily user growth across the platform
+            </p>
+          </div>
 
-    <AdminSignupsChart data={signupsChartData} />
-  </div>
-</section>
+          <AdminSignupsChart data={signupsChartData} />
+        </div>
+      </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
@@ -249,6 +278,7 @@ const signupsChartData = last7Days.map((day) => {
                 Latest users who created accounts
               </p>
             </div>
+
             <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
               {recentUsers.length} shown
             </div>
@@ -263,7 +293,7 @@ const signupsChartData = last7Days.map((day) => {
               recentUsers.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-xl border bg-background/50 p-4 transition hover:bg-background"
+                  className="rounded-xl border bg-background/50 p-4 transition hover:bg-background/80"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -272,6 +302,7 @@ const signupsChartData = last7Days.map((day) => {
                         Joined {formatDate(item.created_at)}
                       </div>
                     </div>
+
                     <div className="text-lg">👤</div>
                   </div>
                 </div>
@@ -288,6 +319,7 @@ const signupsChartData = last7Days.map((day) => {
                 Latest signups and applications
               </p>
             </div>
+
             <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
               Live snapshot
             </div>
@@ -296,22 +328,25 @@ const signupsChartData = last7Days.map((day) => {
           <div className="space-y-3">
             {recentActivity.length === 0 ? (
               <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
-                No recent activity found.
+                No activity yet.
               </div>
             ) : (
               recentActivity.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-start justify-between gap-4 rounded-xl border bg-background/50 p-4 transition hover:bg-background"
+                  className="rounded-xl border bg-background/50 p-4 transition hover:bg-background/80"
                 >
-                  <div>
-                    <div className="font-medium">{item.type}</div>
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      {item.label}
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="font-medium">{item.type}</div>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        {item.label}
+                      </div>
                     </div>
-                  </div>
-                  <div className="shrink-0 text-xs text-muted-foreground">
-                    {formatDate(item.created_at)}
+
+                    <div className="text-right text-xs text-muted-foreground">
+                      {formatDate(item.created_at)}
+                    </div>
                   </div>
                 </div>
               ))
@@ -321,7 +356,7 @@ const signupsChartData = last7Days.map((day) => {
       </section>
 
       <section className="rounded-2xl border bg-card p-6 shadow-sm">
-        <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div className="mb-5 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold">Latest Applications</h2>
             <p className="text-sm text-muted-foreground">
@@ -335,42 +370,42 @@ const signupsChartData = last7Days.map((day) => {
         </div>
 
         {recentApplications.length === 0 ? (
-  <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
-    No applications found.
-  </div>
-) : (
-  <div className="overflow-x-auto">
-    <table className="w-full min-w-[720px] border-separate border-spacing-y-3">
-      <thead>
-        <tr className="text-left text-sm text-muted-foreground">
-          <th className="pb-2 font-medium">Company</th>
-          <th className="pb-2 font-medium">Role</th>
-          <th className="pb-2 font-medium">User</th>
-          <th className="pb-2 font-medium">Created</th>
-        </tr>
-      </thead>
+          <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
+            No applications found.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] border-separate border-spacing-y-3">
+              <thead>
+                <tr className="text-left text-sm text-muted-foreground">
+                  <th className="pb-2 font-medium">Company</th>
+                  <th className="pb-2 font-medium">Role</th>
+                  <th className="pb-2 font-medium">User</th>
+                  <th className="pb-2 font-medium">Created</th>
+                </tr>
+              </thead>
 
-      <tbody>
-        {recentApplications.map((item) => (
-          <tr key={item.id}>
-            <td className="rounded-l-xl border-y border-l bg-background/50 px-4 py-4">
-              {item.company || "Unknown company"}
-            </td>
-            <td className="border-y bg-background/50 px-4 py-4">
-              {item.role || "Unknown role"}
-            </td>
-            <td className="border-y bg-background/50 px-4 py-4 text-sm text-muted-foreground">
-              {emailByUserId.get(item.user_id) ?? item.user_id}
-            </td>
-            <td className="rounded-r-xl border-y border-r bg-background/50 px-4 py-4 text-sm text-muted-foreground">
-              {formatDate(item.created_at)}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-)}
+              <tbody>
+                {recentApplications.map((item) => (
+                  <tr key={item.id}>
+                    <td className="rounded-l-xl border-y border-l bg-background/50 px-4 py-4">
+                      {item.company || "Unknown company"}
+                    </td>
+                    <td className="border-y bg-background/50 px-4 py-4">
+                      {item.role || "Unknown role"}
+                    </td>
+                    <td className="border-y bg-background/50 px-4 py-4 text-sm text-muted-foreground">
+                      {emailByUserId.get(item.user_id) ?? item.user_id}
+                    </td>
+                    <td className="rounded-r-xl border-y border-r bg-background/50 px-4 py-4 text-sm text-muted-foreground">
+                      {formatDate(item.created_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   )
