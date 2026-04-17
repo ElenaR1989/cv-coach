@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
@@ -7,31 +8,6 @@ import AdminSignupsChart from "@/components/admin-signups-chart"
 function formatDate(value?: string | null) {
   if (!value) return "—"
   return new Date(value).toLocaleString()
-}
-
-function startOfLast7Days() {
-  const d = new Date()
-  d.setDate(d.getDate() - 7)
-  return d.toISOString()
-}
-
-function getLast7Days() {
-  const days: { key: string; label: string }[] = []
-
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-
-    const key = d.toISOString().slice(0, 10)
-    const label = d.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-    })
-
-    days.push({ key, label })
-  }
-
-  return days
 }
 
 function getPercentChange(current: number, previous: number) {
@@ -44,6 +20,82 @@ function getTrendColor(value: number) {
   if (value > 0) return "text-emerald-400"
   if (value < 0) return "text-red-400"
   return "text-foreground"
+}
+
+function startOfDaysAgo(days: number) {
+  const d = new Date()
+  d.setDate(d.getDate() - days)
+  return d.toISOString()
+}
+
+function getLastNDays(days: number) {
+  const items: { key: string; label: string }[] = []
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+
+    items.push({
+      key: d.toISOString().slice(0, 10),
+      label: d.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+      }),
+    })
+  }
+
+  return items
+}
+
+function normalizeRole(role?: string | null) {
+  if (!role) return null
+
+  const trimmed = role.trim().replace(/\s+/g, " ")
+  if (!trimmed) return null
+
+  const lower = trimmed.toLowerCase()
+
+  const dictionary: Record<string, string> = {
+    "night porter": "Night Porter",
+    "night porters": "Night Porter",
+    "night receptionist": "Night Receptionist",
+    "night receptionists": "Night Receptionist",
+    reception: "Reception",
+    receptionist: "Receptionist",
+    "general practitioner": "General Practitioner",
+    motorist: "Motorist",
+    "customer service": "Customer Service",
+    recruiter: "Recruiter",
+    developer: "Developer",
+    doctor: "Doctor",
+  }
+
+  if (dictionary[lower]) {
+    return dictionary[lower]
+  }
+
+  return trimmed
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+}
+
+function buildAdminHref(params: {
+  range: string
+  company?: string | null
+  role?: string | null
+  user?: string | null
+}) {
+  const query = new URLSearchParams()
+
+  query.set("range", params.range)
+
+  if (params.company) query.set("company", params.company)
+  if (params.role) query.set("role", params.role)
+  if (params.user) query.set("user", params.user)
+
+  return `/dashboard/admin?${query.toString()}`
 }
 
 type StatCardProps = {
@@ -116,7 +168,33 @@ type ApplicationRow = {
   user_id: string
 }
 
-export default async function AdminDashboardPage() {
+type AdminSearchParams = Promise<{
+  range?: string
+  company?: string
+  role?: string
+  user?: string
+}>
+
+type AdminPageProps = {
+  searchParams?: AdminSearchParams
+}
+
+export default async function AdminDashboardPage({
+  searchParams,
+}: AdminPageProps) {
+  const resolvedSearchParams = (await searchParams) ?? {}
+
+  const selectedRange =
+    resolvedSearchParams.range === "30d" || resolvedSearchParams.range === "90d"
+      ? resolvedSearchParams.range
+      : "7d"
+
+  const rangeDays = selectedRange === "30d" ? 30 : selectedRange === "90d" ? 90 : 7
+
+  const companyFilter = resolvedSearchParams.company?.trim() || null
+  const roleFilter = normalizeRole(resolvedSearchParams.role) || null
+  const userFilter = resolvedSearchParams.user?.trim() || null
+
   const supabase = await createClient()
 
   const {
@@ -127,7 +205,9 @@ export default async function AdminDashboardPage() {
     redirect("/login")
   }
 
-  const sevenDaysAgo = startOfLast7Days()
+  const currentPeriodStart = startOfDaysAgo(rangeDays)
+  const previousPeriodStart = startOfDaysAgo(rangeDays * 2)
+  const chartDays = getLastNDays(rangeDays)
 
   const [
     authUsersResult,
@@ -135,10 +215,11 @@ export default async function AdminDashboardPage() {
     cvsResult,
     coverLettersResult,
     recentApplicationsResult,
-    applicationsThisWeekResult,
-    recentApplicationsForChartResult,
+    applicationsThisPeriodResult,
+    applicationsForCurrentPeriodChartResult,
     allApplicationsForInsightsResult,
-    allApplicationsLast14DaysResult,
+    allCvProfilesResult,
+    allCoverLettersResult,
   ] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers(),
     supabase.from("job_applications").select("*", { count: "exact", head: true }),
@@ -148,21 +229,20 @@ export default async function AdminDashboardPage() {
       .from("job_applications")
       .select("id, company, role, created_at, user_id")
       .order("created_at", { ascending: false })
-      .limit(8),
+      .limit(100),
     supabase
       .from("job_applications")
       .select("*", { count: "exact", head: true })
-      .gte("created_at", sevenDaysAgo),
+      .gte("created_at", currentPeriodStart),
     supabase
       .from("job_applications")
       .select("id, created_at")
-      .gte("created_at", sevenDaysAgo),
+      .gte("created_at", currentPeriodStart),
     supabase
       .from("job_applications")
-      .select("company, role, user_id"),
-    supabase
-      .from("job_applications")
-      .select("id, created_at, user_id"),
+      .select("id, company, role, created_at, user_id"),
+    supabase.from("cv_profiles").select("user_id"),
+    supabase.from("cover_letters").select("user_id"),
   ])
 
   const authUsers: AuthUser[] = authUsersResult.data?.users ?? []
@@ -171,11 +251,11 @@ export default async function AdminDashboardPage() {
   const totalApplications = applicationsResult.count ?? 0
   const totalCVs = cvsResult.count ?? 0
   const totalCoverLetters = coverLettersResult.count ?? 0
-  const applicationsThisWeek = applicationsThisWeekResult.count ?? 0
+  const applicationsThisPeriod = applicationsThisPeriodResult.count ?? 0
 
-  const usersThisWeek = authUsers.filter((u) => {
+  const usersThisPeriod = authUsers.filter((u) => {
     if (!u.created_at) return false
-    return new Date(u.created_at).getTime() >= new Date(sevenDaysAgo).getTime()
+    return new Date(u.created_at).getTime() >= new Date(currentPeriodStart).getTime()
   }).length
 
   const recentUsers = [...authUsers]
@@ -191,14 +271,15 @@ export default async function AdminDashboardPage() {
       created_at: u.created_at ?? null,
     }))
 
-  const recentApplications: ApplicationRow[] = recentApplicationsResult.data ?? []
-  const recentApplicationsForChart =
-    recentApplicationsForChartResult.data ?? []
+  const allApplicationsForInsights: ApplicationRow[] =
+    allApplicationsForInsightsResult.data ?? []
 
-  const last7Days = getLast7Days()
+  const recentApplicationsSource: ApplicationRow[] = recentApplicationsResult.data ?? []
+  const applicationsForCurrentPeriodChart =
+    applicationsForCurrentPeriodChartResult.data ?? []
 
-  const applicationsChartData = last7Days.map((day) => {
-    const count = recentApplicationsForChart.filter((item) => {
+  const applicationsChartData = chartDays.map((day) => {
+    const count = applicationsForCurrentPeriodChart.filter((item) => {
       if (!item.created_at) return false
       return item.created_at.slice(0, 10) === day.key
     }).length
@@ -209,7 +290,7 @@ export default async function AdminDashboardPage() {
     }
   })
 
-  const signupsChartData = last7Days.map((day) => {
+  const signupsChartData = chartDays.map((day) => {
     const count = authUsers.filter((u) => {
       if (!u.created_at) return false
       return u.created_at.slice(0, 10) === day.key
@@ -232,10 +313,10 @@ export default async function AdminDashboardPage() {
       label: item.email,
       created_at: item.created_at,
     })),
-    ...recentApplications.map((item) => ({
+    ...recentApplicationsSource.slice(0, 12).map((item) => ({
       id: `application-${item.id}`,
       type: "New application",
-      label: `${emailByUserId.get(item.user_id) ?? "Unknown user"} — ${item.company ?? "Unknown company"} / ${item.role ?? "Unknown role"}`,
+      label: `${emailByUserId.get(item.user_id) ?? "Unknown user"} — ${item.company ?? "Unknown company"} / ${normalizeRole(item.role) ?? "Unknown role"}`,
       created_at: item.created_at,
     })),
   ]
@@ -246,60 +327,52 @@ export default async function AdminDashboardPage() {
     })
     .slice(0, 8)
 
-  const fourteenDaysAgo = new Date()
-  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+  const currentPeriodStartDate = new Date()
+  currentPeriodStartDate.setDate(currentPeriodStartDate.getDate() - rangeDays)
 
-  const now = new Date()
-  const sevenDaysAgoDate = new Date()
-  sevenDaysAgoDate.setDate(now.getDate() - 7)
+  const previousPeriodStartDate = new Date()
+  previousPeriodStartDate.setDate(previousPeriodStartDate.getDate() - rangeDays * 2)
 
-  const allApplicationsLast14Days =
-    allApplicationsLast14DaysResult.data?.filter((item) => {
-      if (!item.created_at) return false
-      return new Date(item.created_at) >= fourteenDaysAgo
-    }) ?? []
-
-  const applicationsThisWeekCount = allApplicationsLast14Days.filter((item) => {
+  const applicationsThisPeriodCount = allApplicationsForInsights.filter((item) => {
     if (!item.created_at) return false
-    return new Date(item.created_at) >= sevenDaysAgoDate
+    return new Date(item.created_at) >= currentPeriodStartDate
   }).length
 
-  const applicationsPreviousWeekCount = allApplicationsLast14Days.filter((item) => {
+  const applicationsPreviousPeriodCount = allApplicationsForInsights.filter((item) => {
     if (!item.created_at) return false
     const created = new Date(item.created_at)
-    return created < sevenDaysAgoDate && created >= fourteenDaysAgo
+    return created >= previousPeriodStartDate && created < currentPeriodStartDate
   }).length
 
-  const signupsThisWeekCount = authUsers.filter((u) => {
+  const signupsThisPeriodCount = authUsers.filter((u) => {
     if (!u.created_at) return false
-    return new Date(u.created_at) >= sevenDaysAgoDate
+    return new Date(u.created_at) >= currentPeriodStartDate
   }).length
 
-  const signupsPreviousWeekCount = authUsers.filter((u) => {
+  const signupsPreviousPeriodCount = authUsers.filter((u) => {
     if (!u.created_at) return false
     const created = new Date(u.created_at)
-    return created < sevenDaysAgoDate && created >= fourteenDaysAgo
+    return created >= previousPeriodStartDate && created < currentPeriodStartDate
   }).length
 
   const applicationsGrowth = getPercentChange(
-    applicationsThisWeekCount,
-    applicationsPreviousWeekCount
+    applicationsThisPeriodCount,
+    applicationsPreviousPeriodCount
   )
 
   const signupsGrowth = getPercentChange(
-    signupsThisWeekCount,
-    signupsPreviousWeekCount
+    signupsThisPeriodCount,
+    signupsPreviousPeriodCount
   )
-
-  const allApplicationsForInsights = allApplicationsForInsightsResult.data ?? []
 
   const companyCounts = new Map<string, number>()
   const roleCounts = new Map<string, number>()
   const allActiveUserIds = new Set<string>()
+  const userApplicationCounts = new Map<string, number>()
 
   for (const item of allApplicationsForInsights) {
     const company = item.company?.trim()
-    const role = item.role?.trim()
+    const role = normalizeRole(item.role)
 
     if (company) {
       companyCounts.set(company, (companyCounts.get(company) ?? 0) + 1)
@@ -311,6 +384,10 @@ export default async function AdminDashboardPage() {
 
     if (item.user_id) {
       allActiveUserIds.add(item.user_id)
+      userApplicationCounts.set(
+        item.user_id,
+        (userApplicationCounts.get(item.user_id) ?? 0) + 1
+      )
     }
   }
 
@@ -330,14 +407,67 @@ export default async function AdminDashboardPage() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 5)
 
+  const topActiveUsers = Array.from(userApplicationCounts.entries())
+    .map(([userId, count]) => ({
+      userId,
+      email: emailByUserId.get(userId) ?? userId,
+      count,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+
+  const cvUserIds = new Set(
+    (allCvProfilesResult.data ?? [])
+      .map((item) => item.user_id)
+      .filter(Boolean)
+  )
+
+  const coverLetterUserIds = new Set(
+    (allCoverLettersResult.data ?? [])
+      .map((item) => item.user_id)
+      .filter(Boolean)
+  )
+
+  const applicationUserIds = new Set(
+    allApplicationsForInsights.map((item) => item.user_id).filter(Boolean)
+  )
+
+  const funnelData = [
+    { label: "Users", value: totalUsers, icon: "👥" },
+    { label: "With CV", value: cvUserIds.size, icon: "📄" },
+    { label: "Applied", value: applicationUserIds.size, icon: "📨" },
+    { label: "Cover Letters", value: coverLetterUserIds.size, icon: "✍️" },
+  ]
+
   const activeUserShare =
     totalUsers === 0 ? 0 : Math.round((allActiveUserIds.size / totalUsers) * 100)
 
   const engagementRate = activeUserShare
 
+  const filteredApplications = recentApplicationsSource
+    .map((item) => ({
+      ...item,
+      normalizedRole: normalizeRole(item.role),
+    }))
+    .filter((item) => {
+      const matchesCompany = companyFilter ? item.company === companyFilter : true
+      const matchesRole = roleFilter ? item.normalizedRole === roleFilter : true
+      const matchesUser = userFilter ? item.user_id === userFilter : true
+      return matchesCompany && matchesRole && matchesUser
+    })
+    .slice(0, 12)
+
+  const hasFilters = Boolean(companyFilter || roleFilter || userFilter)
+
+  const rangeOptions = [
+    { label: "7d", value: "7d" },
+    { label: "30d", value: "30d" },
+    { label: "90d", value: "90d" },
+  ]
+
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-8">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-4xl font-bold tracking-tight">Admin Dashboard</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -345,24 +475,85 @@ export default async function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">
-          Signed in as{" "}
-          <span className="font-medium text-foreground">{user.email}</span>
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+          <div className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">
+            Signed in as{" "}
+            <span className="font-medium text-foreground">{user.email}</span>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-xl border bg-card p-1">
+            {rangeOptions.map((option) => {
+              const href = buildAdminHref({
+                range: option.value,
+                company: companyFilter,
+                role: roleFilter,
+                user: userFilter,
+              })
+
+              const isActive = selectedRange === option.value
+
+              return (
+                <Link
+                  key={option.value}
+                  href={href}
+                  className={`rounded-lg px-3 py-2 text-sm transition ${
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-background/80 hover:text-foreground"
+                  }`}
+                >
+                  {option.label}
+                </Link>
+              )
+            })}
+          </div>
         </div>
       </div>
+
+      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="mb-5">
+          <h2 className="text-xl font-semibold">User Funnel</h2>
+          <p className="text-sm text-muted-foreground">
+            Track how users move through the platform journey
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {funnelData.map((item, index) => (
+            <div
+              key={item.label}
+              className="rounded-xl border bg-background/50 p-5"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">{item.label}</p>
+                  <div className="mt-2 text-3xl font-bold">{item.value}</div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {index === 0
+                      ? "Total registered users"
+                      : `${totalUsers === 0 ? 0 : Math.round((item.value / totalUsers) * 100)}% of total users`}
+                  </p>
+                </div>
+
+                <div className="text-2xl">{item.icon}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Total Users"
           value={totalUsers}
-          subtext={`${usersThisWeek} new in the last 7 days`}
+          subtext={`${usersThisPeriod} new in the last ${rangeDays} days`}
           icon="👥"
           tone="bg-blue-500/10 border-blue-500/20"
         />
         <StatCard
           title="Applications"
           value={totalApplications}
-          subtext={`${applicationsThisWeek} submitted in the last 7 days`}
+          subtext={`${applicationsThisPeriod} submitted in the last ${rangeDays} days`}
           icon="📨"
           tone="bg-emerald-500/10 border-emerald-500/20"
         />
@@ -386,14 +577,14 @@ export default async function AdminDashboardPage() {
         <InsightCard
           title="Applications Growth"
           value={`${applicationsGrowth > 0 ? "+" : ""}${applicationsGrowth}%`}
-          subtext={`${applicationsThisWeekCount} this week vs ${applicationsPreviousWeekCount} previous week`}
+          subtext={`${applicationsThisPeriodCount} this period vs ${applicationsPreviousPeriodCount} previous period`}
           icon="📉"
           valueClassName={getTrendColor(applicationsGrowth)}
         />
         <InsightCard
           title="Signups Growth"
           value={`${signupsGrowth > 0 ? "+" : ""}${signupsGrowth}%`}
-          subtext={`${signupsThisWeekCount} this week vs ${signupsPreviousWeekCount} previous week`}
+          subtext={`${signupsThisPeriodCount} this period vs ${signupsPreviousPeriodCount} previous period`}
           icon="👤"
           valueClassName={getTrendColor(signupsGrowth)}
         />
@@ -415,7 +606,7 @@ export default async function AdminDashboardPage() {
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
           <div className="mb-5">
             <h2 className="text-xl font-semibold">
-              Applications in the Last 7 Days
+              Applications in the Last {rangeDays} Days
             </h2>
             <p className="text-sm text-muted-foreground">
               Daily application activity across the platform
@@ -428,7 +619,7 @@ export default async function AdminDashboardPage() {
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
           <div className="mb-5">
             <h2 className="text-xl font-semibold">
-              Signups in the Last 7 Days
+              Signups in the Last {rangeDays} Days
             </h2>
             <p className="text-sm text-muted-foreground">
               Daily user growth across the platform
@@ -439,7 +630,7 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-2">
+      <section className="grid gap-6 xl:grid-cols-3">
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
             <div>
@@ -461,9 +652,15 @@ export default async function AdminDashboardPage() {
           ) : (
             <div className="space-y-3">
               {topCompanies.map((item, index) => (
-                <div
+                <Link
                   key={item.company}
-                  className="rounded-xl border bg-background/50 p-4 transition hover:bg-background/80"
+                  href={buildAdminHref({
+                    range: selectedRange,
+                    company: item.company,
+                    role: roleFilter,
+                    user: userFilter,
+                  })}
+                  className="block rounded-xl border bg-background/50 p-4 transition hover:bg-background/80"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -481,7 +678,7 @@ export default async function AdminDashboardPage() {
 
                     <div className="text-lg">🏢</div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -508,9 +705,15 @@ export default async function AdminDashboardPage() {
           ) : (
             <div className="space-y-3">
               {topRoles.map((item, index) => (
-                <div
+                <Link
                   key={item.role}
-                  className="rounded-xl border bg-background/50 p-4 transition hover:bg-background/80"
+                  href={buildAdminHref({
+                    range: selectedRange,
+                    company: companyFilter,
+                    role: item.role,
+                    user: userFilter,
+                  })}
+                  className="block rounded-xl border bg-background/50 p-4 transition hover:bg-background/80"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -528,7 +731,60 @@ export default async function AdminDashboardPage() {
 
                     <div className="text-lg">💼</div>
                   </div>
-                </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Top Active Users</h2>
+              <p className="text-sm text-muted-foreground">
+                Users with the most applications
+              </p>
+            </div>
+
+            <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+              {topActiveUsers.length} shown
+            </div>
+          </div>
+
+          {topActiveUsers.length === 0 ? (
+            <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
+              No user activity yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {topActiveUsers.map((item, index) => (
+                <Link
+                  key={item.userId}
+                  href={buildAdminHref({
+                    range: selectedRange,
+                    company: companyFilter,
+                    role: roleFilter,
+                    user: item.userId,
+                  })}
+                  className="block rounded-xl border bg-background/50 p-4 transition hover:bg-background/80"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold text-muted-foreground">
+                        #{index + 1}
+                      </div>
+
+                      <div>
+                        <div className="font-medium">{item.email}</div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          {item.count} application{item.count === 1 ? "" : "s"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-lg">🏆</div>
+                  </div>
+                </Link>
               ))}
             </div>
           )}
@@ -622,7 +878,7 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="rounded-2xl border bg-card p-6 shadow-sm">
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-xl font-semibold">Latest Applications</h2>
             <p className="text-sm text-muted-foreground">
@@ -630,14 +886,42 @@ export default async function AdminDashboardPage() {
             </p>
           </div>
 
-          <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
-            {recentApplications.length} latest records
+          <div className="flex flex-wrap items-center gap-2">
+            {hasFilters && (
+              <>
+                {companyFilter && (
+                  <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+                    Company: {companyFilter}
+                  </div>
+                )}
+                {roleFilter && (
+                  <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+                    Role: {roleFilter}
+                  </div>
+                )}
+                {userFilter && (
+                  <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+                    User: {emailByUserId.get(userFilter) ?? userFilter}
+                  </div>
+                )}
+                <Link
+                  href={buildAdminHref({ range: selectedRange })}
+                  className="rounded-full border px-3 py-1 text-xs text-muted-foreground transition hover:bg-background/80 hover:text-foreground"
+                >
+                  Clear filters
+                </Link>
+              </>
+            )}
+
+            <div className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+              {filteredApplications.length} latest records
+            </div>
           </div>
         </div>
 
-        {recentApplications.length === 0 ? (
+        {filteredApplications.length === 0 ? (
           <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
-            No applications found.
+            No applications found for the selected filters.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -652,13 +936,13 @@ export default async function AdminDashboardPage() {
               </thead>
 
               <tbody>
-                {recentApplications.map((item) => (
+                {filteredApplications.map((item) => (
                   <tr key={item.id}>
                     <td className="rounded-l-xl border-y border-l bg-background/50 px-4 py-4">
                       {item.company || "Unknown company"}
                     </td>
                     <td className="border-y bg-background/50 px-4 py-4">
-                      {item.role || "Unknown role"}
+                      {item.normalizedRole || "Unknown role"}
                     </td>
                     <td className="border-y bg-background/50 px-4 py-4 text-sm text-muted-foreground">
                       {emailByUserId.get(item.user_id) ?? item.user_id}
