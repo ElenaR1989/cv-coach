@@ -11,14 +11,10 @@ export default async function CvPrintPage({ params }: PageProps) {
   const supabase = await createClient()
 
   const { data: cv, error } = await supabase
-    .from("cvs")
+    .from("cv_profiles")
     .select("*")
     .eq("id", id)
     .single()
-
-  if (error || !cv) {
-    notFound()
-  }
 
   return (
     <div style={{ background: "white", padding: "20px" }}>
