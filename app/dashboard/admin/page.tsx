@@ -193,6 +193,67 @@ export default async function AdminDashboardPage() {
       return bTime - aTime
     })
     .slice(0, 8)
+    const fourteenDaysAgo = new Date()
+fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+
+const applicationsLastWeekResult = await supabase
+  .from("job_applications")
+  .select("id, created_at")
+
+const applicationsLast14Days =
+  applicationsLastWeekResult.data?.filter((item) => {
+    if (!item.created_at) return false
+    return new Date(item.created_at) >= fourteenDaysAgo
+  }) ?? []
+
+const now = new Date()
+const sevenDaysAgoDate = new Date()
+sevenDaysAgoDate.setDate(now.getDate() - 7)
+
+const applicationsThisWeekCount = applicationsLast14Days.filter((item) => {
+  if (!item.created_at) return false
+  return new Date(item.created_at) >= sevenDaysAgoDate
+}).length
+
+const applicationsPreviousWeekCount = applicationsLast14Days.filter((item) => {
+  if (!item.created_at) return false
+  const created = new Date(item.created_at)
+  return created < sevenDaysAgoDate && created >= fourteenDaysAgo
+}).length
+
+const signupsThisWeekCount = authUsers.filter((u) => {
+  if (!u.created_at) return false
+  return new Date(u.created_at) >= sevenDaysAgoDate
+}).length
+
+const signupsPreviousWeekCount = authUsers.filter((u) => {
+  if (!u.created_at) return false
+  const created = new Date(u.created_at)
+  return created < sevenDaysAgoDate && created >= fourteenDaysAgo
+}).length
+
+function getPercentChange(current: number, previous: number) {
+  if (previous === 0 && current === 0) return 0
+  if (previous === 0) return 100
+  return Math.round(((current - previous) / previous) * 100)
+}
+
+const applicationsGrowth = getPercentChange(
+  applicationsThisWeekCount,
+  applicationsPreviousWeekCount
+)
+
+const signupsGrowth = getPercentChange(
+  signupsThisWeekCount,
+  signupsPreviousWeekCount
+)
+
+const conversionRate =
+  totalUsers === 0 ? 0 : Math.round((totalApplications / totalUsers) * 100)
+
+const activeUserIds = new Set(recentApplications.map((item) => item.user_id))
+const activeUserShare =
+  totalUsers === 0 ? 0 : Math.round((activeUserIds.size / totalUsers) * 100)
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-8">
@@ -240,6 +301,45 @@ export default async function AdminDashboardPage() {
           tone="bg-amber-500/10 border-amber-500/20"
         />
       </section>
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+  <div className="rounded-2xl border bg-card p-5 shadow-sm">
+    <p className="text-sm text-muted-foreground">Applications Growth</p>
+    <div className="mt-2 text-3xl font-bold">
+      {applicationsGrowth > 0 ? "+" : ""}
+      {applicationsGrowth}%
+    </div>
+    <p className="mt-2 text-xs text-muted-foreground">
+      Compared with previous 7 days
+    </p>
+  </div>
+
+  <div className="rounded-2xl border bg-card p-5 shadow-sm">
+    <p className="text-sm text-muted-foreground">Signups Growth</p>
+    <div className="mt-2 text-3xl font-bold">
+      {signupsGrowth > 0 ? "+" : ""}
+      {signupsGrowth}%
+    </div>
+    <p className="mt-2 text-xs text-muted-foreground">
+      Compared with previous 7 days
+    </p>
+  </div>
+
+  <div className="rounded-2xl border bg-card p-5 shadow-sm">
+    <p className="text-sm text-muted-foreground">Conversion Rate</p>
+    <div className="mt-2 text-3xl font-bold">{conversionRate}%</div>
+    <p className="mt-2 text-xs text-muted-foreground">
+      Applications per total users
+    </p>
+  </div>
+
+  <div className="rounded-2xl border bg-card p-5 shadow-sm">
+    <p className="text-sm text-muted-foreground">Active User Share</p>
+    <div className="mt-2 text-3xl font-bold">{activeUserShare}%</div>
+    <p className="mt-2 text-xs text-muted-foreground">
+      Users with at least one application
+    </p>
+  </div>
+</section>
 
       <section className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
