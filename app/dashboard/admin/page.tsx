@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation"
-import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 
@@ -38,7 +37,7 @@ function StatCard({ title, value, subtext, icon, tone }: StatCardProps) {
   )
 }
 
-export default async function AdminPage() {
+export default async function AdminDashboardPage() {
   const supabase = await createClient()
 
   const {
@@ -52,64 +51,69 @@ export default async function AdminPage() {
   const sevenDaysAgo = startOfLast7Days()
 
   const [
-    usersResult,
+    authUsersResult,
     applicationsResult,
     cvsResult,
     coverLettersResult,
-    recentUsersResult,
     recentApplicationsResult,
-    usersThisWeekResult,
     applicationsThisWeekResult,
   ] = await Promise.all([
-    supabase.from("profiles").select("*", { count: "exact", head: true }),
+    supabaseAdmin.auth.admin.listUsers(),
     supabase.from("job_applications").select("*", { count: "exact", head: true }),
     supabase.from("cv_profiles").select("*", { count: "exact", head: true }),
     supabase.from("cover_letters").select("*", { count: "exact", head: true }),
-
-    supabase
-      .from("profiles")
-      .select("id, email, created_at")
-      .order("created_at", { ascending: false })
-      .limit(6),
-
     supabase
       .from("job_applications")
       .select("id, company, role, created_at, user_id")
       .order("created_at", { ascending: false })
       .limit(8),
-
-    supabase
-      .from("profiles")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", sevenDaysAgo),
-
     supabase
       .from("job_applications")
       .select("*", { count: "exact", head: true })
       .gte("created_at", sevenDaysAgo),
   ])
 
-  const totalUsers = usersResult.count ?? 0
+  const authUsers = authUsersResult.data?.users ?? []
+
+  const totalUsers = authUsers.length
   const totalApplications = applicationsResult.count ?? 0
   const totalCVs = cvsResult.count ?? 0
   const totalCoverLetters = coverLettersResult.count ?? 0
-  const usersThisWeek = usersThisWeekResult.count ?? 0
   const applicationsThisWeek = applicationsThisWeekResult.count ?? 0
 
-  const recentUsers = recentUsersResult.data ?? []
+  const usersThisWeek = authUsers.filter((u) => {
+    if (!u.created_at) return false
+    return new Date(u.created_at).getTime() >= new Date(sevenDaysAgo).getTime()
+  }).length
+
+  const recentUsers = [...authUsers]
+    .sort((a, b) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0
+      return bTime - aTime
+    })
+    .slice(0, 6)
+    .map((u) => ({
+      id: u.id,
+      email: u.email ?? "Unknown email",
+      created_at: u.created_at ?? null,
+    }))
+
   const recentApplications = recentApplicationsResult.data ?? []
+
+  const emailByUserId = new Map(authUsers.map((u) => [u.id, u.email ?? "Unknown email"]))
 
   const recentActivity = [
     ...recentUsers.map((item) => ({
       id: `user-${item.id}`,
       type: "New signup",
-      label: item.email || "Unknown user",
+      label: item.email,
       created_at: item.created_at,
     })),
     ...recentApplications.map((item) => ({
       id: `application-${item.id}`,
       type: "New application",
-      label: `${item.company || "Unknown company"} — ${item.role || "Unknown role"}`,
+      label: `${emailByUserId.get(item.user_id) ?? "Unknown user"} — ${item.company || "Unknown company"} / ${item.role || "Unknown role"}`,
       created_at: item.created_at,
     })),
   ]
@@ -193,7 +197,7 @@ export default async function AdminPage() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <div className="font-medium">{item.email || "Unknown email"}</div>
+                      <div className="font-medium">{item.email}</div>
                       <div className="mt-1 text-sm text-muted-foreground">
                         Joined {formatDate(item.created_at)}
                       </div>
@@ -271,7 +275,7 @@ export default async function AdminPage() {
                 <tr className="text-left text-sm text-muted-foreground">
                   <th className="pb-2 font-medium">Company</th>
                   <th className="pb-2 font-medium">Role</th>
-                  <th className="pb-2 font-medium">User ID</th>
+                  <th className="pb-2 font-medium">User</th>
                   <th className="pb-2 font-medium">Created</th>
                 </tr>
               </thead>
@@ -285,7 +289,7 @@ export default async function AdminPage() {
                       {item.role || "Unknown role"}
                     </td>
                     <td className="border-y bg-background/50 px-4 py-4 text-sm text-muted-foreground">
-                      {item.user_id}
+                      {emailByUserId.get(item.user_id) ?? item.user_id}
                     </td>
                     <td className="rounded-r-xl border-y border-r bg-background/50 px-4 py-4 text-sm text-muted-foreground">
                       {formatDate(item.created_at)}
