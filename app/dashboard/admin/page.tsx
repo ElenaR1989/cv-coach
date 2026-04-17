@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import AdminApplicationsChart from "@/components/admin-applications-chart"
+import AdminSignupsChart from "@/components/admin-signups-chart"
 
 function getLast7Days() {
   const days: { key: string; label: string }[] = []
@@ -136,6 +137,17 @@ const applicationsChartData = last7Days.map((day) => {
     applications: count,
   }
 })
+const signupsChartData = last7Days.map((day) => {
+  const count = authUsers.filter((user) => {
+    if (!user.created_at) return false
+    return user.created_at.slice(0, 10) === day.key
+  }).length
+
+  return {
+    date: day.label,
+    signups: count,
+  }
+})
 
   const emailByUserId = new Map(authUsers.map((u) => [u.id, u.email ?? "Unknown email"]))
 
@@ -204,16 +216,28 @@ const applicationsChartData = last7Days.map((day) => {
           icon="✍️"
           tone="bg-amber-500/10 border-amber-500/20"
         />
-      </section>
-      <section className="rounded-2xl border bg-card p-6 shadow-sm">
-  <div className="mb-5">
-    <h2 className="text-xl font-semibold">Applications in the Last 7 Days</h2>
-    <p className="text-sm text-muted-foreground">
-      Daily application activity across the platform
-    </p>
+      <section className="grid gap-6 xl:grid-cols-2">
+  <div className="rounded-2xl border bg-card p-6 shadow-sm">
+    <div className="mb-5">
+      <h2 className="text-xl font-semibold">Applications in the Last 7 Days</h2>
+      <p className="text-sm text-muted-foreground">
+        Daily application activity across the platform
+      </p>
+    </div>
+
+    <AdminApplicationsChart data={applicationsChartData} />
   </div>
 
- <AdminApplicationsChart data={applicationsChartData} />
+  <div className="rounded-2xl border bg-card p-6 shadow-sm">
+    <div className="mb-5">
+      <h2 className="text-xl font-semibold">Signups in the Last 7 Days</h2>
+      <p className="text-sm text-muted-foreground">
+        Daily user growth across the platform
+      </p>
+    </div>
+
+    <AdminSignupsChart data={signupsChartData} />
+  </div>
 </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
