@@ -96,7 +96,7 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      stripeWebhookSecret
+      stripeWebhookSecret!
     )
   } catch (error) {
     const message =
