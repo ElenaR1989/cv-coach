@@ -5,6 +5,7 @@ import ApplicationStatusSelect from "@/components/application-status-select"
 import DeleteApplicationButton from "@/components/delete-application-button"
 import SaveTailoredCVButton from "@/components/save-tailored-cv-button"
 import AutoImproveCVButton from "@/components/auto-improve-cv-button"
+import { getIsPro } from "@/lib/billing/is-pro"
 
 type ApplicationDetailsPageProps = {
   params: Promise<{
@@ -234,7 +235,11 @@ function pickBaseHeadline(summary: string, jobDescription: string) {
   return "Experienced professional with a strong background and adaptable skill set."
 }
 
-function buildImpactLines(jobDescription: string, matched: string[], missing: string[]) {
+function buildImpactLines(
+  jobDescription: string,
+  matched: string[],
+  missing: string[]
+) {
   const jobText = jobDescription.toLowerCase()
   const lines: string[] = []
 
@@ -360,7 +365,8 @@ function buildSmartCoachMessages(
   matched: string[],
   missing: string[],
   hasCv: boolean,
-  hasJobDescription: boolean
+  hasJobDescription: boolean,
+  isPro: boolean
 ) {
   const messages: string[] = []
 
@@ -369,7 +375,9 @@ function buildSmartCoachMessages(
   }
 
   if (!hasJobDescription) {
-    messages.push("⚠️ Add a job description to compare your CV against the role.")
+    messages.push(
+      "⚠️ Add a job description to compare your CV against the role."
+    )
   }
 
   if (!hasCv || !hasJobDescription) {
@@ -382,11 +390,17 @@ function buildSmartCoachMessages(
   }
 
   if (score >= 80) {
-    messages.push("✅ Strong fit overall based on your linked CV and this job description.")
+    messages.push(
+      "✅ Strong fit overall based on your linked CV and this job description."
+    )
   } else if (score >= 50) {
-    messages.push("📊 Partial fit found. You match some of the core role keywords.")
+    messages.push(
+      "📊 Partial fit found. You match some of the core role keywords."
+    )
   } else {
-    messages.push("❌ Low keyword match so far. Your CV may not clearly reflect this role yet.")
+    messages.push(
+      "❌ Low keyword match so far. Your CV may not clearly reflect this role yet."
+    )
   }
 
   if (matched.length > 0) {
@@ -394,7 +408,16 @@ function buildSmartCoachMessages(
   }
 
   if (missing.length > 0) {
-    messages.push(`❌ Missing keywords: ${missing.join(", ")}`)
+    messages.push(
+      `❌ Missing keywords: ${(isPro ? missing : missing.slice(0, 2)).join(", ")}`
+    )
+
+    if (!isPro && missing.length > 2) {
+      messages.push(
+        `🔒 Upgrade to Pro to unlock ${missing.length - 2} more keyword${missing.length - 2 === 1 ? "" : "s"}`
+      )
+    }
+
     messages.push(
       `✍️ CV Improvement Suggestions: Highlight ${missing
         .slice(0, 3)
@@ -410,10 +433,7 @@ function getSmartCoachLineClass(text: string) {
     return "rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300"
   }
 
-  if (
-    text.includes("⚠️") ||
-    text.includes("📊")
-  ) {
+  if (text.includes("⚠️") || text.includes("📊")) {
     return "rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300"
   }
 
@@ -425,6 +445,10 @@ function getSmartCoachLineClass(text: string) {
     return "rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm text-violet-300"
   }
 
+  if (text.includes("🔒")) {
+    return "rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300"
+  }
+
   return "rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/90"
 }
 
@@ -434,13 +458,17 @@ function SmartCoachCard({
   missing,
   messages,
   tailoredSummary,
+  isPro,
 }: {
   score: number | null
   matched: string[]
   missing: string[]
   messages: string[]
   tailoredSummary: string | null
+  isPro: boolean
 }) {
+  const upgradeHref = "/pricing"
+
   return (
     <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -466,6 +494,17 @@ function SmartCoachCard({
             </div>
           )}
 
+          {!isPro ? (
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href={upgradeHref}
+                className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-300 transition hover:bg-amber-500/20"
+              >
+                Upgrade to Pro
+              </Link>
+            </div>
+          ) : null}
+
           {tailoredSummary ? (
             <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-4">
               <div className="flex items-center justify-between gap-3">
@@ -478,15 +517,53 @@ function SmartCoachCard({
                   </p>
                 </div>
 
-                <span className={getScoreBadgeClass(score)}>
-                  {score !== null ? `${score}%` : "N/A"}
-                </span>
+                {isPro ? (
+                  <span className={getScoreBadgeClass(score)}>
+                    {score !== null ? `${score}%` : "N/A"}
+                  </span>
+                ) : (
+                  <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300">
+                    Pro
+                  </span>
+                )}
               </div>
 
-              <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-4">
-                <p className="whitespace-pre-wrap text-sm leading-7 text-white/90">
-                  {tailoredSummary}
-                </p>
+              <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-4 relative overflow-hidden">
+                {isPro ? (
+                  <p className="whitespace-pre-wrap text-sm leading-7 text-white/90">
+                    {tailoredSummary}
+                  </p>
+                ) : (
+                  <>
+                    <div className="pointer-events-none max-h-[220px] overflow-hidden opacity-40 blur-sm">
+                      <p className="whitespace-pre-wrap text-sm leading-7 text-white/90">
+                        {tailoredSummary}
+                      </p>
+                    </div>
+
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/35 to-black/70" />
+
+                    <div className="absolute inset-0 flex items-center justify-center px-6 text-center">
+                      <div className="max-w-md rounded-2xl border border-amber-500/30 bg-black/85 px-5 py-4 shadow-lg">
+                        <div className="text-sm font-semibold text-amber-300">
+                          🔒 Upgrade to Pro to unlock the full tailored summary
+                        </div>
+                        <div className="mt-1 text-xs text-white/60">
+                          See the full AI-tailored version for this application
+                        </div>
+
+                        <div className="mt-4">
+                          <Link
+                            href={upgradeHref}
+                            className="inline-flex rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-300 transition hover:bg-amber-500/20"
+                          >
+                            Upgrade now
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="mt-3 flex flex-wrap gap-3">
@@ -505,58 +582,90 @@ function SmartCoachCard({
           )}
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-white/60">Match score</span>
-            <span className={getScoreBadgeClass(score)}>
-              {score !== null ? `${score}%` : "N/A"}
-            </span>
+        {isPro ? (
+          <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-white/60">Match score</span>
+              <span className={getScoreBadgeClass(score)}>
+                {score !== null ? `${score}%` : "N/A"}
+              </span>
+            </div>
+
+            <div className="mt-4 h-4 w-full overflow-hidden rounded-full bg-white/10">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${getScoreBarClass(score)}`}
+                style={{ width: `${score ?? 0}%` }}
+              />
+            </div>
+
+            <p className="mt-3 text-xs text-white/60">
+              {getScoreLabel(score)} • {matched.length} matched / {missing.length} missing
+            </p>
+
+            <div className="mt-4 grid gap-3">
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                <p className="text-xs uppercase tracking-wide text-white/50">
+                  Score
+                </p>
+                <p className="mt-1 text-xl font-semibold text-white">
+                  {score ?? 0}%
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+                <p className="text-xs uppercase tracking-wide text-emerald-300/70">
+                  Matched
+                </p>
+                <p className="mt-1 text-xl font-semibold text-emerald-300">
+                  {matched.length}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3">
+                <p className="text-xs uppercase tracking-wide text-rose-300/70">
+                  Missing
+                </p>
+                <p className="mt-1 text-xl font-semibold text-rose-300">
+                  {missing.length}
+                </p>
+              </div>
+            </div>
           </div>
+        ) : (
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5">
+            <p className="text-sm font-medium text-amber-300">Pro insights</p>
+            <div className="mt-3 text-xl font-semibold text-white">
+              Unlock full match analysis
+            </div>
+            <p className="mt-2 text-sm text-white/65">
+              See your full score, matched keywords, missing keywords, and detailed breakdown.
+            </p>
 
-          <div className="mt-4 h-4 w-full overflow-hidden rounded-full bg-white/10">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${getScoreBarClass(score)}`}
-              style={{ width: `${score ?? 0}%` }}
-            />
-          </div>
-
-          <p className="mt-3 text-xs text-white/60">
-            {getScoreLabel(score)} • {matched.length} matched / {missing.length} missing
-          </p>
-
-          <div className="mt-4 grid gap-3">
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-              <p className="text-xs uppercase tracking-wide text-white/50">
-                Score
+            <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs text-white/50">Preview</p>
+              <p className="mt-2 text-sm text-white/80">
+                Partial fit detected
               </p>
-              <p className="mt-1 text-xl font-semibold text-white">
-                {score ?? 0}%
+              <p className="mt-1 text-xs text-white/50">
+                Detailed score available in Pro
               </p>
             </div>
 
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
-              <p className="text-xs uppercase tracking-wide text-emerald-300/70">
-                Matched
-              </p>
-              <p className="mt-1 text-xl font-semibold text-emerald-300">
-                {matched.length}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3">
-              <p className="text-xs uppercase tracking-wide text-rose-300/70">
-                Missing
-              </p>
-              <p className="mt-1 text-xl font-semibold text-rose-300">
-                {missing.length}
-              </p>
+            <div className="mt-4">
+              <Link
+                href={upgradeHref}
+                className="inline-flex rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-300 transition hover:bg-amber-500/20"
+              >
+                Upgrade to Pro
+              </Link>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   )
 }
+
 export default async function ApplicationDetailsPage({
   params,
 }: ApplicationDetailsPageProps) {
@@ -570,6 +679,14 @@ export default async function ApplicationDetailsPage({
   if (!user) {
     redirect("/login")
   }
+
+  const { data: profile, error: profileError } = await supabase
+  .from("profiles")
+  .select("is_pro, plan")
+  .eq("id", user.id)
+  .single()
+
+const isPro = getIsPro(profile)
 
   const { data: application, error } = await supabase
     .from("job_applications")
@@ -618,59 +735,58 @@ export default async function ApplicationDetailsPage({
       : rawJob.cv_profiles ?? null,
   }
 
-const baseCvText = [
-  job.cv_profiles?.summary ?? "",
-  job.cv_profiles?.content ?? "",
-  job.cv_profiles?.skills ?? "",
-  job.cv_profiles?.experience ?? "",
-].join("\n")
+  const baseCvText = [
+    job.cv_profiles?.summary ?? "",
+    job.cv_profiles?.content ?? "",
+    job.cv_profiles?.skills ?? "",
+    job.cv_profiles?.experience ?? "",
+  ].join("\n")
 
-const cvText = job.tailored_cv?.trim()
-  ? job.tailored_cv
-  : baseCvText
+  const cvText = job.tailored_cv?.trim() ? job.tailored_cv : baseCvText
 
-const matchResult =
-  cvText.trim() && job.job_description?.trim()
-    ? getMatchResult(cvText, job.job_description)
-    : null
+  const matchResult =
+    cvText.trim() && job.job_description?.trim()
+      ? getMatchResult(cvText, job.job_description)
+      : null
 
-const score = matchResult?.score ?? null
-const matched = matchResult?.matched ?? []
-const missing = matchResult?.missing ?? []
+  const score = matchResult?.score ?? null
+  const matched = matchResult?.matched ?? []
+  const missing = matchResult?.missing ?? []
 
-const tailoredSummary = job.tailored_cv?.trim()
-  ? job.tailored_cv
-  : generateTailoredSummaryPreview(
-      job.cv_profiles?.summary ?? null,
-      job.job_description ?? null,
-      matched,
-      missing
-    )
-const messages = buildSmartCoachMessages(
-  score,
-  matched,
-  missing,
-  Boolean(job.cv_profiles),
-  Boolean(job.job_description?.trim())
-)
+  const tailoredSummary = job.tailored_cv?.trim()
+    ? job.tailored_cv
+    : generateTailoredSummaryPreview(
+        job.cv_profiles?.summary ?? null,
+        job.job_description ?? null,
+        matched,
+        missing
+      )
 
-const originalMatchResult =
-  job.original_tailored_cv?.trim() && job.job_description?.trim()
-    ? getMatchResult(job.original_tailored_cv, job.job_description)
-    : null
+  const messages = buildSmartCoachMessages(
+    score,
+    matched,
+    missing,
+    Boolean(job.cv_profiles),
+    Boolean(job.job_description?.trim()),
+    isPro
+  )
 
-const originalScore = originalMatchResult?.score ?? null
+  const originalMatchResult =
+    job.original_tailored_cv?.trim() && job.job_description?.trim()
+      ? getMatchResult(job.original_tailored_cv, job.job_description)
+      : null
 
-const scoreImprovement =
-  score !== null && originalScore !== null
-    ? score - originalScore
-    : null
+  const originalScore = originalMatchResult?.score ?? null
 
-const aiSourceText =
-  job.original_tailored_cv?.trim() ||
-  job.tailored_cv?.trim() ||
-  tailoredSummary ||
-  ""
+  const scoreImprovement =
+    score !== null && originalScore !== null ? score - originalScore : null
+
+  const aiSourceText =
+    job.original_tailored_cv?.trim() ||
+    job.tailored_cv?.trim() ||
+    tailoredSummary ||
+    ""
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
       <div className="flex justify-end">
@@ -728,53 +844,64 @@ const aiSourceText =
 
           <div className="flex flex-col gap-3 lg:items-end">
             <ApplicationStatusSelect
-  applicationId={job.id}
-  currentStatus={job.status}
-  currentInterviewDate={job.interview_date ?? ""}
-/>
-<div className="flex flex-wrap gap-2">
-  {job.cv_id ? (
-    <Link
-      href={`/dashboard/cvs/${job.cv_id}?applicationId=${job.id}`}
-      className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
-    >
-      View CV
-    </Link>
-  ) : null}
+              applicationId={job.id}
+              currentStatus={job.status}
+              currentInterviewDate={job.interview_date ?? ""}
+            />
 
-  {job.cv_id ? (
-    <SaveTailoredCVButton
-      applicationId={job.id}
-      tailoredSummary={tailoredSummary}
-      hasTailoredCv={Boolean(job.tailored_cv?.trim())}
-    />
-  ) : null}
+            <div className="flex flex-wrap gap-2">
+              {job.cv_id ? (
+                <Link
+                  href={`/dashboard/cvs/${job.cv_id}?applicationId=${job.id}`}
+                  className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
+                >
+                  View CV
+                </Link>
+              ) : null}
 
-  {job.cv_id ? (
-  <AutoImproveCVButton
+              {job.cv_id ? (
+                <SaveTailoredCVButton
+                  applicationId={job.id}
+                  tailoredSummary={tailoredSummary}
+                  hasTailoredCv={Boolean(job.tailored_cv?.trim())}
+                />
+              ) : null}
+
+              {job.cv_id ? (
+              <AutoImproveCVButton
   applicationId={job.id}
   currentText={aiSourceText}
   missingKeywords={missing}
   jobDescription={job.job_description}
   hasExistingTailoredCv={Boolean(job.tailored_cv?.trim())}
+  isPro={isPro}
 />
-) : null}
+              ) : null}
 
-  {job.cv_id ? (
+         {job.cv_id ? (
+  isPro ? (
     <Link
       href={`/dashboard/cover-letters?cvId=${job.cv_id}&applicationId=${job.id}`}
       className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300 transition hover:bg-cyan-500/20"
     >
       Generate Cover Letter
     </Link>
-  ) : null}
+  ) : (
+    <Link
+      href="/pricing"
+      className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-300 transition hover:bg-amber-500/20"
+    >
+      Upgrade to Pro
+    </Link>
+  )
+) : null}
 
-  <DeleteApplicationButton
-    applicationId={job.id}
-    company={job.company}
-    role={job.role}
-  />
-</div>
+              <DeleteApplicationButton
+                applicationId={job.id}
+                company={job.company}
+                role={job.role}
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -785,59 +912,102 @@ const aiSourceText =
         missing={missing}
         messages={messages}
         tailoredSummary={tailoredSummary}
+        isPro={isPro}
       />
-     {job.tailored_cv?.trim() ? (
-  <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
-    <div className="flex items-start justify-between gap-4">
-      <div>
-        <h2 className="text-2xl font-semibold">Before vs After</h2>
-        <p className="mt-1 text-sm text-white/60">
-          Compare your original tailored CV with the AI-improved version.
-        </p>
-      </div>
 
-      {scoreImprovement !== null ? (
-        <span
-          className={`rounded-full px-3 py-1 text-sm font-medium ${
-            scoreImprovement > 0
-              ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-              : scoreImprovement < 0
-              ? "border border-rose-500/30 bg-rose-500/10 text-rose-300"
-              : "border border-white/20 bg-white/10 text-white/70"
-          }`}
-        >
-          {scoreImprovement > 0 ? "+" : ""}
-          {scoreImprovement}%
-        </span>
+      {job.tailored_cv?.trim() ? (
+        <section className="rounded-2xl border border-white/20 bg-white/5 p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold">Before vs After</h2>
+              <p className="mt-1 text-sm text-white/60">
+                Compare your original tailored CV with the AI-improved version.
+              </p>
+            </div>
+
+            {scoreImprovement !== null ? (
+              isPro ? (
+                <span
+                  className={`rounded-full px-3 py-1 text-sm font-medium ${
+                    scoreImprovement > 0
+                      ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                      : scoreImprovement < 0
+                        ? "border border-rose-500/30 bg-rose-500/10 text-rose-300"
+                        : "border border-white/20 bg-white/10 text-white/70"
+                  }`}
+                >
+                  {scoreImprovement > 0 ? "+" : ""}
+                  {scoreImprovement}%
+                </span>
+              ) : (
+                <Link
+                  href={upgradeHref}
+                  className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs text-amber-300 transition hover:bg-amber-500/20"
+                >
+                  🔒 Pro
+                </Link>
+              )
+            ) : null}
+          </div>
+
+          <div className="mt-4 grid gap-4 xl:grid-cols-2">
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-white/50">
+                Before AI
+              </p>
+              <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+                <p className="whitespace-pre-wrap text-sm leading-7 text-white/80">
+                  {job.original_tailored_cv ?? "No original tailored CV saved."}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 relative overflow-hidden">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-emerald-300/80">
+                After AI
+              </p>
+
+              {isPro ? (
+                <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+                  <p className="whitespace-pre-wrap text-sm leading-7 text-white/90">
+                    {job.tailored_cv}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="pointer-events-none max-h-[200px] overflow-hidden opacity-40 blur-sm rounded-lg border border-white/10 bg-black/20 p-4">
+                    <p className="whitespace-pre-wrap text-sm leading-7 text-white/90">
+                      {job.tailored_cv}
+                    </p>
+                  </div>
+
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black/80" />
+
+                  <div className="absolute inset-0 flex items-center justify-center px-6 text-center">
+                    <div className="max-w-md rounded-2xl border border-amber-500/30 bg-black/85 px-5 py-4 shadow-lg">
+                      <div className="text-sm font-semibold text-amber-300">
+                        🔒 Unlock your improved CV
+                      </div>
+                      <div className="mt-1 text-xs text-white/60">
+                        See your full AI-enhanced version and improvements
+                      </div>
+
+                      <Link
+                        href={upgradeHref}
+                        className="mt-4 inline-flex rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-medium text-amber-300 transition hover:bg-amber-500/20"
+                      >
+                        Upgrade to Pro
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
       ) : null}
-    </div>
 
-    <div className="mt-4 grid gap-4 xl:grid-cols-2">
-      <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-white/50">
-          Before AI
-        </p>
-        <div className="rounded-lg border border-white/10 bg-black/20 p-4">
-          <p className="whitespace-pre-wrap text-sm leading-7 text-white/80">
-            {JSON.stringify(job.original_tailored_cv)}
-          </p>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-emerald-300/80">
-          After AI
-        </p>
-        <div className="rounded-lg border border-white/10 bg-black/20 p-4">
-          <p className="whitespace-pre-wrap text-sm leading-7 text-white/90">
-            {job.tailored_cv}
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-) : null}
-<div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-2">
         <section
           id="job-description"
           className="rounded-2xl border border-white/20 bg-white/5 p-6"

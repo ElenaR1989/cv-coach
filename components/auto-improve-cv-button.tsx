@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 type AutoImproveCVButtonProps = {
   applicationId: string
@@ -9,6 +10,7 @@ type AutoImproveCVButtonProps = {
   missingKeywords: string[]
   jobDescription: string | null
   hasExistingTailoredCv?: boolean
+  isPro: boolean
 }
 
 export default function AutoImproveCVButton({
@@ -17,6 +19,7 @@ export default function AutoImproveCVButton({
   missingKeywords,
   jobDescription,
   hasExistingTailoredCv = false,
+  isPro,
 }: AutoImproveCVButtonProps) {
   const router = useRouter()
 
@@ -71,18 +74,27 @@ export default function AutoImproveCVButton({
 
   return (
     <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={handleAutoImprove}
-        disabled={loading || !currentText?.trim() || !jobDescription?.trim()}
-        className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-sm text-violet-300 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {loading
-          ? "AI improving..."
-          : hasExistingTailoredCv
-          ? "Try another AI version"
-          : "AI rewrite CV"}
-      </button>
+    {isPro ? (
+  <button
+    type="button"
+    onClick={handleAutoImprove}
+    disabled={loading || !currentText?.trim() || !jobDescription?.trim()}
+    className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-sm text-violet-300 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+  >
+    {loading
+      ? "AI improving..."
+      : hasExistingTailoredCv
+      ? "Try another AI version"
+      : "AI rewrite CV"}
+  </button>
+) : (
+  <Link
+  href="/pricing"
+  className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-300 transition hover:bg-amber-500/20 text-center"
+>
+  Upgrade to Pro
+</Link>
+)}
 
       {message ? <p className="text-xs text-emerald-300">{message}</p> : null}
       {error ? <p className="text-xs text-rose-300">{error}</p> : null}

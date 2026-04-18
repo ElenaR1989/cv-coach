@@ -78,21 +78,23 @@ export default function HomePage() {
             </div>
 
             <h1 className="max-w-3xl text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-              HireFlow helps job seekers apply smarter
-            </h1>
+  Stop guessing your job applications. Start improving them.
+</h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
-              Track applications, tailor CVs to job descriptions, identify
-              missing skills and qualifications, and get practical support with
-              Smart Coach.
-            </p>
+<p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
+  Track every application, tailor your CV to real job descriptions, and understand exactly what you're missing — before you hit apply.
+</p>
+
+<p className="mt-4 text-sm text-white/50">
+  Built for job seekers who want clarity, not guesswork.
+</p>
 
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
                 href="/dashboard"
                 className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:opacity-90"
               >
-                Get started
+                Start improving your applications
               </Link>
 
               <a
@@ -102,6 +104,9 @@ export default function HomePage() {
                 Request a demo
               </a>
             </div>
+            <p className="mt-4 text-xs text-white/40">
+  No guesswork. No wasted applications. Just better results — faster.
+</p>
 
             <div className="mt-8 flex flex-wrap gap-6 text-sm text-white/55">
               <div>Application tracking</div>

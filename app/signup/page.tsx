@@ -17,13 +17,13 @@ export default function SignupPage() {
       password,
     })
 
-    if (error) {
-      alert(error.message)
-      return
-    }
+   if (error) {
+  alert(error.message)
+  return
+}
 
-    alert("Account created! You can now log in.")
-    router.push("/login")
+// ✅ redirect to verify email page
+router.push("/verify-email")
   }
 
   return (

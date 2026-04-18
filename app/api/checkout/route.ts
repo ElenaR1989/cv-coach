@@ -49,11 +49,9 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = getBaseUrl(req)
 
-    console.log("STRIPE DEBUG PRICE:", stripePriceId)
-    console.log("STRIPE DEBUG KEY PREFIX:", stripeSecretKey.slice(0, 12))
-
+  
     const price = await stripe.prices.retrieve(stripePriceId)
-    console.log("STRIPE DEBUG FOUND PRICE:", price.id)
+    
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",

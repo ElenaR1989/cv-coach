@@ -1,10 +1,11 @@
 import Stripe from "stripe"
-import { headers } from "next/headers"
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!stripeSecretKey) {
   throw new Error("Missing STRIPE_SECRET_KEY in environment variables")
@@ -14,13 +15,75 @@ if (!stripeWebhookSecret) {
   throw new Error("Missing STRIPE_WEBHOOK_SECRET in environment variables")
 }
 
+if (!supabaseUrl) {
+  throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL in environment variables")
+}
+
+if (!supabaseServiceRoleKey) {
+  throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY in environment variables")
+}
+
 const stripe = new Stripe(stripeSecretKey)
+const supabase = createSupabaseClient(supabaseUrl, supabaseServiceRoleKey)
+
+async function upgradeUserById(params: {
+  userId: string
+  customerId?: string | null
+  subscriptionId?: string | null
+}) {
+  const { userId, customerId = null, subscriptionId = null } = params
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      is_pro: true,
+      plan: "pro",
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscriptionId,
+    })
+    .eq("id", userId)
+
+  if (error) {
+    console.error("Failed to upgrade user:", error)
+  } else {
+    console.log("User upgraded to Pro:", userId)
+  }
+}
+
+async function updateUserByCustomerId(params: {
+  customerId: string
+  isActive: boolean
+  subscriptionId?: string | null
+}) {
+  const { customerId, isActive, subscriptionId = null } = params
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      is_pro: isActive,
+      plan: isActive ? "pro" : "free",
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscriptionId,
+    })
+    .eq("stripe_customer_id", customerId)
+
+  if (error) {
+    console.error("Failed to update user by customer id:", error)
+  } else {
+    console.log(
+      `Customer ${customerId} updated. Active: ${isActive ? "yes" : "no"}`
+    )
+  }
+}
 
 export async function POST(req: Request) {
+  console.log("WEBHOOK HIT")
+
   const body = await req.text()
-  const signature = (await headers()).get("stripe-signature")
+  const signature = req.headers.get("stripe-signature")
 
   if (!signature) {
+    console.error("Missing Stripe signature")
     return NextResponse.json(
       { error: "Missing Stripe signature" },
       { status: 400 }
@@ -33,7 +96,7 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      stripeWebhookSecret!
+      stripeWebhookSecret
     )
   } catch (error) {
     const message =
@@ -41,53 +104,77 @@ export async function POST(req: Request) {
         ? error.message
         : "Webhook signature verification failed"
 
+    console.error("Webhook signature error:", message)
     return NextResponse.json({ error: message }, { status: 400 })
   }
 
   try {
-    const supabase = await createClient()
+    console.log("Stripe event type:", event.type)
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session
 
       const userId =
         session.client_reference_id ||
-        (session as any).subscription_details?.metadata?.user_id ||
+        session.metadata?.user_id ||
+        session.metadata?.userId ||
         null
 
       const customerId =
         typeof session.customer === "string"
           ? session.customer
-          : session.customer?.id
+          : session.customer?.id ?? null
 
       const subscriptionId =
         typeof session.subscription === "string"
           ? session.subscription
-          : session.subscription?.id
+          : session.subscription?.id ?? null
+
+      console.log("checkout.session.completed")
+      console.log("resolved userId:", userId)
+      console.log("customerId:", customerId)
+      console.log("subscriptionId:", subscriptionId)
 
       if (userId) {
-        const { error } = await supabase
-          .from("profiles")
-          .update({
-            is_pro: true,
-            plan: "pro",
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscriptionId,
-          })
-          .eq("id", userId)
+        await upgradeUserById({
+          userId,
+          customerId,
+          subscriptionId,
+        })
+      } else {
+        console.error("No userId found in checkout session")
+      }
+    }
 
-        if (error) {
-          console.error(
-            "Supabase update error on checkout.session.completed:",
-            error.message
-          )
-        }
+    if (event.type === "invoice.payment_succeeded") {
+      const invoice = event.data.object as Stripe.Invoice
+
+      const customerId =
+        typeof invoice.customer === "string"
+          ? invoice.customer
+          : invoice.customer?.id ?? null
+
+      const subscriptionId =
+        typeof invoice.subscription === "string"
+          ? invoice.subscription
+          : invoice.subscription?.id ?? null
+
+      console.log("invoice.payment_succeeded")
+      console.log("customerId:", customerId)
+      console.log("subscriptionId:", subscriptionId)
+
+      if (customerId) {
+        await updateUserByCustomerId({
+          customerId,
+          isActive: true,
+          subscriptionId,
+        })
       }
     }
 
     if (
-      event.type === "customer.subscription.deleted" ||
-      event.type === "customer.subscription.updated"
+      event.type === "customer.subscription.updated" ||
+      event.type === "customer.subscription.deleted"
     ) {
       const subscription = event.data.object as Stripe.Subscription
 
@@ -100,21 +187,15 @@ export async function POST(req: Request) {
         subscription.status === "active" ||
         subscription.status === "trialing"
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          is_pro: isActive,
-          stripe_customer_id: customerId ?? null,
-          stripe_subscription_id: subscription.id,
-        })
-        .eq("stripe_customer_id", customerId)
+      console.log("customer.subscription.updated/deleted")
+      console.log("subscription.status:", subscription.status)
+      console.log("customerId:", customerId)
 
-      if (error) {
-        console.error(
-          "Supabase update error on subscription event:",
-          error.message
-        )
-      }
+      await updateUserByCustomerId({
+        customerId,
+        isActive,
+        subscriptionId: subscription.id,
+      })
     }
 
     return NextResponse.json({ received: true })

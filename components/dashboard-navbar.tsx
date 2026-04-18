@@ -63,6 +63,12 @@ export default function DashboardNavbar({
       >
         CVs
       </Link>
+      <Link
+  href="/account"
+  className={getLinkClass(pathname, "/account")}
+>
+  Account
+</Link>
 
       <Link
         href="/dashboard/cover-letters"

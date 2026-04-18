@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server"
 import StatusChart from "@/components/status-chart"
 import ApplicationsOverTimeChart from "@/components/applications-over-time-chart"
 import DeleteApplicationButton from "@/components/delete-application-button"
+import { getIsPro } from "@/lib/billing/is-pro"
+export const dynamic = "force-dynamic"
 
 type JobApplication = {
   id: string
@@ -178,13 +180,14 @@ export default async function DashboardPage({
     redirect("/login")
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_pro")
-    .eq("id", user.id)
-    .single()
+ const { data: profile, error: profileError } = await supabase
+  .from("profiles")
+  .select("is_pro, plan")
+  .eq("id", user.id)
+  .single()
 
-  const isPro = profile?.is_pro ?? false
+const isPro = getIsPro(profile)
+const upgradeHref = "/pricing"
 
   const params = await searchParams
   const selectedCvId = params.cv_id ?? ""

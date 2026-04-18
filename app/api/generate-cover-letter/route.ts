@@ -1,6 +1,7 @@
 import OpenAI from "openai"
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { getIsPro } from "@/lib/billing/is-pro"
 
 const FREE_COVER_LETTER_LIMIT = 3
 
@@ -30,9 +31,7 @@ export async function POST(req: Request) {
       console.error("Error loading profile:", profileError.message)
     }
 
-    const isPro =
-      profile?.is_pro === true ||
-      profile?.plan === "pro"
+    const isPro = getIsPro(profile)
 
     if (!isPro) {
       const { count, error: countError } = await supabase

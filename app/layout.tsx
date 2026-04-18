@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
+import PostHogProvider from "@/components/posthog-provider"
+import { Analytics } from "@vercel/analytics/react"
 
 export const metadata: Metadata = {
   title: "CV Integration in Job Form",
@@ -21,6 +23,8 @@ export default function RootLayout({
         </div>
 
         <main>{children}</main>
+
+        <Analytics />
       </body>
     </html>
   )
