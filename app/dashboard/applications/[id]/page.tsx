@@ -993,7 +993,7 @@ const isPro = getIsPro(profile)
                       </div>
 
                       <Link
-                        href={upgradeHref}
+                        href="/pricing"
                         className="mt-4 inline-flex rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-medium text-amber-300 transition hover:bg-amber-500/20"
                       >
                         Upgrade to Pro
