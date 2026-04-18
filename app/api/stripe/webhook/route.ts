@@ -155,9 +155,9 @@ export async function POST(req: Request) {
           : invoice.customer?.id ?? null
 
       const subscriptionId =
-        typeof invoice.subscription === "string"
-          ? invoice.subscription
-          : invoice.subscription?.id ?? null
+  typeof invoice.parent?.subscription_details?.subscription === "string"
+    ? invoice.parent.subscription_details.subscription
+    : invoice.parent?.subscription_details?.subscription?.id ?? null
 
       console.log("invoice.payment_succeeded")
       console.log("customerId:", customerId)
