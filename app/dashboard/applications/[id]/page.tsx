@@ -941,7 +941,7 @@ const isPro = getIsPro(profile)
                 </span>
               ) : (
                 <Link
-                  href={upgradeHref}
+                  href="/pricing"
                   className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs text-amber-300 transition hover:bg-amber-500/20"
                 >
                   🔒 Pro
