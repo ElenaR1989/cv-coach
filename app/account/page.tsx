@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation"
+import Link from "next/link"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/server"
 import AccountForm from "./profile-form"
 import { getIsPro } from "@/lib/billing/is-pro"
 import AccountBillingButtons from "./subscription-buttons"
-import Image from "next/image"
-import Link from "next/link"
 
 export default async function AccountPage() {
   const supabase = await createClient()
@@ -45,8 +45,15 @@ export default async function AccountPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10 space-y-8">
+      <div className="mb-6">
+        <Link
+          href="/dashboard"
+          className="text-sm text-white/70 hover:text-white transition"
+        >
+          ← Back to Dashboard
+        </Link>
+      </div>
 
-      {/* ✅ Logo / Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
           href="/dashboard"
@@ -63,7 +70,6 @@ export default async function AccountPage() {
         </Link>
       </div>
 
-      {/* Page title */}
       <div>
         <h1 className="text-4xl font-bold">Account</h1>
         <p className="text-sm text-white/60 mt-2">
@@ -72,8 +78,6 @@ export default async function AccountPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-
-        {/* Profile */}
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-2xl font-semibold mb-4">Profile</h2>
 
@@ -93,16 +97,13 @@ export default async function AccountPage() {
           />
         </div>
 
-        {/* Billing */}
         <div className="rounded-2xl border border-violet-500/30 bg-violet-500/10 p-6">
           <h2 className="text-2xl font-semibold mb-4">Billing</h2>
 
           <div className="space-y-3 text-sm">
             <p>
               <span className="text-white/60">Current plan:</span>{" "}
-              <span className="font-semibold">
-                {isPro ? "Pro" : "Free"}
-              </span>
+              <span className="font-semibold">{isPro ? "Pro" : "Free"}</span>
             </p>
 
             <p>
@@ -110,7 +111,6 @@ export default async function AccountPage() {
               <span>{profile?.email ?? user.email}</span>
             </p>
 
-            {/* ✅ Clean billing buttons component */}
             <AccountBillingButtons isPro={isPro} />
 
             {isPro ? (
@@ -124,7 +124,6 @@ export default async function AccountPage() {
             )}
           </div>
         </div>
-
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 
 export default function PricingPage() {
   const [loading, setLoading] = useState(false)
@@ -33,11 +34,23 @@ export default function PricingPage() {
     }
   }
 
-  return (
-    <div className="max-w-5xl mx-auto px-6 py-16">
-      <h1 className="text-3xl font-bold mb-10 text-center">
-        Simple pricing
-      </h1>
+ return (
+  <div className="max-w-5xl mx-auto px-6 py-16">
+    
+    {/* Back button */}
+    <div className="mb-6">
+      <Link
+        href="/dashboard"
+        className="text-sm text-white/70 hover:text-white transition"
+      >
+        ← Back to Dashboard
+      </Link>
+    </div>
+
+    {/* Title */}
+    <h1 className="text-3xl font-bold mb-10 text-center">
+      Simple pricing
+    </h1>
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="rounded-xl border border-white/10 p-6 bg-white/5">
