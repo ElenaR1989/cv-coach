@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import PostHogProvider from "@/components/posthog-provider"
 import { Analytics } from "@vercel/analytics/react"
+import Script from "next/script"
 
 export const metadata: Metadata = {
   title: "CV Integration in Job Form",
@@ -15,6 +16,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18110827801"
+          strategy="afterInteractive"
+        />
+        <Script id="google-ads" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            window.gtag = gtag;
+            gtag('js', new Date());
+            gtag('config', 'AW-18110827801');
+          `}
+        </Script>
+      </head>
+
       <body className="relative min-h-screen overflow-x-hidden bg-black text-white">
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-blue-500/30 blur-[120px]" />
@@ -23,7 +40,6 @@ export default function RootLayout({
         </div>
 
         <main>{children}</main>
-
         <Analytics />
       </body>
     </html>
