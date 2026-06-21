@@ -479,7 +479,6 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
                 <th className="pb-2 text-left font-medium">User</th>
                 <th className="pb-2 text-left font-medium">Joined</th>
                 <th className="pb-2 text-left font-medium">Applications</th>
-                <th className="pb-2 text-left font-medium">Email</th>
               </tr>
             </thead>
             <tbody>
@@ -500,19 +499,11 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
                       <td className="border-y border-white/8 bg-white/3 px-4 py-3 text-xs text-white/40 group-hover:bg-white/5">
                         {formatDate(u.created_at)}
                       </td>
-                      <td className="border-y border-white/8 bg-white/3 px-4 py-3 group-hover:bg-white/5">
+                      <td className="rounded-r-xl border-y border-r border-white/8 bg-white/3 px-4 py-3 group-hover:bg-white/5">
                         {appCount > 0 ? (
                           <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-0.5 text-xs text-cyan-300">{appCount}</span>
                         ) : (
                           <span className="text-xs text-white/25">—</span>
-                        )}
-                      </td>
-                      <td className="rounded-r-xl border-y border-r border-white/8 bg-white/3 px-4 py-3 group-hover:bg-white/5">
-                        {u.email && (
-                          <a href={`mailto:${u.email}`}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1 text-xs text-white/50 transition hover:border-cyan-500/30 hover:bg-cyan-500/10 hover:text-cyan-300">
-                            ✉️ Send email
-                          </a>
                         )}
                       </td>
                     </tr>
