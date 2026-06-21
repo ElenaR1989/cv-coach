@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { supabaseAdmin } from "@/lib/supabase/admin"
 import Link from "next/link"
 import ExtensionTokenPanel from "./extension-token-panel"
 
@@ -9,7 +8,7 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: profile } = await supabaseAdmin
+  const { data: profile } = await supabase
     .from("profiles")
     .select("extension_token")
     .eq("id", user.id)
@@ -27,7 +26,6 @@ export default async function SettingsPage() {
         </Link>
       </div>
 
-      {/* Account */}
       <div className="rounded-2xl border border-white/10 bg-white/4 p-6">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/40">Account</h2>
         <div className="flex items-center gap-3">
@@ -41,7 +39,6 @@ export default async function SettingsPage() {
         </div>
       </div>
 
-      {/* Chrome Extension */}
       <ExtensionTokenPanel existingToken={profile?.extension_token ?? null} />
     </div>
   )
