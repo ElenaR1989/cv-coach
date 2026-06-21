@@ -78,6 +78,9 @@ export default function DashboardNavbar({ isAdmin = false }: DashboardNavbarProp
         <Link href="/dashboard/search" className={navLinkClass(pathname, "/dashboard/search")}>
           Search Jobs
         </Link>
+        <Link href="/dashboard/analytics" className={navLinkClass(pathname, "/dashboard/analytics")}>
+          Analytics
+        </Link>
       </div>
 
       {/* Right side */}

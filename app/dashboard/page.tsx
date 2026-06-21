@@ -6,6 +6,7 @@ import StatusChart from "@/components/status-chart"
 import ApplicationsOverTimeChart from "@/components/applications-over-time-chart"
 import DeleteApplicationButton from "@/components/delete-application-button"
 import { getIsPro } from "@/lib/billing/is-pro"
+import Onboarding from "./onboarding"
 export const dynamic = "force-dynamic"
 
 type JobApplication = {
@@ -477,6 +478,7 @@ const upgradeHref = "/pricing"
 
   return (
     <div className="space-y-8 p-6">
+      {total === 0 && <Onboarding />}
       {isPro ? (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
           <p className="text-sm text-emerald-300">

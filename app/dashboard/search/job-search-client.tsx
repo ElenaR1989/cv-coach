@@ -19,6 +19,8 @@ export default function JobSearchClient() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searched, setSearched] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -42,10 +44,26 @@ export default function JobSearchClient() {
       setJobs(data.jobs)
       setSources(data.sources)
       setSearched(true)
+      setSaved(false)
     } catch {
       setError("Something went wrong. Please try again.")
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function saveSearch() {
+    if (saving || saved || !keywords.trim()) return
+    setSaving(true)
+    try {
+      const res = await fetch("/api/saved-searches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: keywords.trim(), location: location.trim() || null }),
+      })
+      if (res.ok) setSaved(true)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -123,6 +141,10 @@ export default function JobSearchClient() {
                 </span>
               ))}
             </div>
+            <button onClick={saveSearch} disabled={saving || saved}
+              className="ml-auto rounded-xl border border-white/10 px-3 py-1.5 text-xs font-medium text-white/50 transition hover:border-white/20 hover:text-white/80 disabled:opacity-50">
+              {saved ? "✓ Alert saved" : saving ? "Saving…" : "🔔 Save as job alert"}
+            </button>
           </div>
 
           {jobs.length === 0 ? (
