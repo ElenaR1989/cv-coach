@@ -9,6 +9,7 @@ type TailorPageProps = {
   }>
   searchParams: Promise<{
     applicationId?: string
+    jobDescription?: string
   }>
 }
 
@@ -24,7 +25,7 @@ export default async function TailorCVPage({
   searchParams,
 }: TailorPageProps) {
   const { id } = await params
-  const { applicationId } = await searchParams
+  const { applicationId, jobDescription } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -46,7 +47,7 @@ export default async function TailorCVPage({
     notFound()
   }
 
-  let initialJobDescription = ""
+  let initialJobDescription = jobDescription ?? ""
 
   if (applicationId) {
     const { data: application } = await supabase
@@ -54,7 +55,6 @@ export default async function TailorCVPage({
       .select("id, job_description")
       .eq("id", applicationId)
       .eq("user_id", user.id)
-      .eq("cv_id", id)
       .single()
 
     initialJobDescription = application?.job_description || ""

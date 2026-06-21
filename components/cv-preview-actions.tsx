@@ -81,9 +81,9 @@ export default function CVPreviewActions({ cvId, template, theme }: Props) {
         href={`/cv/${cvId}/print`}
         target="_blank"
         rel="noopener noreferrer"
-        className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
+        className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20 transition"
       >
-        Export PDF
+        ↓ Download PDF
       </a>
 
       <button

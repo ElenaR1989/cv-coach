@@ -896,6 +896,13 @@ const isPro = getIsPro(profile)
   )
 ) : null}
 
+              <Link
+                href={`/dashboard/applications/${job.id}/interview`}
+                className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-sm text-violet-300 transition hover:bg-violet-500/20"
+              >
+                🤖 Practice Interview
+              </Link>
+
               <DeleteApplicationButton
                 applicationId={job.id}
                 company={job.company}

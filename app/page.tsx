@@ -3,26 +3,34 @@ import Link from "next/link"
 
 const features = [
   {
+    icon: "🎯",
     title: "Track every application",
     text: "Keep applications, statuses, interview dates, notes, and follow-ups in one clear dashboard.",
   },
   {
-    title: "Tailor CVs faster",
+    icon: "✨",
+    title: "Tailor CVs with AI",
     text: "Generate job-specific CV summaries and improve applications against real job descriptions.",
   },
   {
-    title: "Spot gaps clearly",
-    text: "Highlight missing skills, experience, and qualifications before users waste time applying.",
+    icon: "🤖",
+    title: "AI Practice Interviews",
+    text: "Get 6 role-specific questions, instant scoring on every answer, and a full performance report.",
+    highlight: true,
+    link: "/demo",
   },
   {
+    icon: "📊",
     title: "Smart Coach guidance",
-    text: "Help users understand what to improve, where they are strong, and when they may be ready for higher roles.",
+    text: "Understand what to improve, where you are strong, and when you may be ready for higher roles.",
   },
   {
-    title: "Support job seekers and advisors",
-    text: "Useful for individual applicants, job centres, and anyone helping people move into work.",
+    icon: "🔍",
+    title: "Search 4 job boards at once",
+    text: "Search Reed, Adzuna, Remotive and more from one place — then add directly to your tracker.",
   },
   {
+    icon: "🗓️",
     title: "Stay organised",
     text: "See recent activity, applications over time, upcoming interviews, and actions that need attention.",
   },
@@ -58,6 +66,9 @@ export default function HomePage() {
               <a href="#who-its-for" className="transition hover:text-white">
                 Who it’s for
               </a>
+              <Link href="/demo" className="transition hover:text-white text-violet-300">
+                🤖 Demo
+              </Link>
               <a href="#contact" className="transition hover:text-white">
                 Contact
               </a>
@@ -177,8 +188,11 @@ export default function HomePage() {
             {features.map((feature) => (
               <FeatureCard
                 key={feature.title}
+                icon={feature.icon}
                 title={feature.title}
                 text={feature.text}
+                highlight={"highlight" in feature ? feature.highlight : undefined}
+                link={"link" in feature ? feature.link : undefined}
               />
             ))}
           </div>
@@ -278,16 +292,28 @@ export default function HomePage() {
 }
 
 function FeatureCard({
+  icon,
   title,
   text,
+  highlight,
+  link,
 }: {
+  icon?: string
   title: string
   text: string
+  highlight?: boolean
+  link?: string
 }) {
-  return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 transition hover:border-white/20 hover:bg-white/[0.07]">
+  const inner = (
+    <div className={`h-full rounded-3xl border p-6 transition ${highlight ? "border-violet-500/30 bg-violet-500/5 hover:border-violet-500/50 hover:bg-violet-500/10" : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/[0.07]"}`}>
+      {icon && <span className="mb-3 block text-2xl">{icon}</span>}
       <h3 className="text-lg font-semibold">{title}</h3>
       <p className="mt-3 text-sm leading-7 text-white/65">{text}</p>
+      {highlight && link && (
+        <span className="mt-4 inline-block text-xs font-medium text-violet-300">Try the demo →</span>
+      )}
     </div>
   )
+  if (link) return <Link href={link}>{inner}</Link>
+  return inner
 }

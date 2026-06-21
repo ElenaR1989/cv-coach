@@ -21,7 +21,15 @@ function formatDate(dateString: string | null) {
   return date.toLocaleDateString("en-GB")
 }
 
-export default async function CVsPage() {
+type CVsPageProps = {
+  searchParams: Promise<{
+    jobDescription?: string
+    role?: string
+    company?: string
+  }>
+}
+
+export default async function CVsPage({ searchParams }: CVsPageProps) {
   const supabase = await createClient()
 
   const {
@@ -43,6 +51,8 @@ export default async function CVsPage() {
   }
 
   const cvList = (cvs ?? []) as CVProfile[]
+  const { jobDescription, role, company } = await searchParams
+  const isAnalyseMode = !!jobDescription
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
@@ -62,10 +72,21 @@ export default async function CVsPage() {
         </Link>
       </div>
 
+      {isAnalyseMode && (
+        <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-5">
+          <p className="text-sm font-semibold text-cyan-300">
+            Analysing against: {role ? `${role}${company ? ` at ${company}` : ""}` : "job description"}
+          </p>
+          <p className="mt-1 text-sm text-white/60">
+            Pick a CV below to analyse it against this job.
+          </p>
+        </div>
+      )}
+
       <div>
         <h1 className="text-3xl font-bold">Your CVs</h1>
         <p className="text-muted-foreground">
-          Manage and preview your CV versions
+          {isAnalyseMode ? "Select a CV to analyse against this job." : "Manage and preview your CV versions"}
         </p>
       </div>
 
@@ -88,6 +109,9 @@ export default async function CVsPage() {
         <div className="space-y-4">
           {cvList.map((cv) => {
             const displayTitle = cv.title || cv.full_name || "Untitled CV"
+            const analyseHref = isAnalyseMode
+              ? `/dashboard/cvs/${cv.id}/tailor?jobDescription=${encodeURIComponent(jobDescription!)}`
+              : null
 
             return (
               <div
@@ -102,41 +126,52 @@ export default async function CVsPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/dashboard/cvs/${cv.id}`}
-                    className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-                  >
-                    Preview
-                  </Link>
-
-                  <Link
-                    href={`/dashboard/cvs/${cv.id}/edit`}
-                    className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-                  >
-                    Edit
-                  </Link>
-
-                  <Link
-                    href={`/dashboard/cvs/${cv.id}/cover-letter`}
-                    className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-                  >
-                    Cover Letter
-                  </Link>
-
-                  <form action={duplicateCV}>
-                    <input type="hidden" name="cvId" value={cv.id} />
-                    <button
-                      type="submit"
-                      className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
+                  {isAnalyseMode ? (
+                    <Link
+                      href={analyseHref!}
+                      className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20"
                     >
-                      Duplicate
-                    </button>
-                  </form>
+                      Analyse this CV
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        href={`/dashboard/cvs/${cv.id}`}
+                        className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
+                      >
+                        Preview
+                      </Link>
 
-                  <form action={deleteCV}>
-                    <input type="hidden" name="cvId" value={cv.id} />
-                    <DeleteCVButton title={displayTitle} />
-                  </form>
+                      <Link
+                        href={`/dashboard/cvs/${cv.id}/edit`}
+                        className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
+                      >
+                        Edit
+                      </Link>
+
+                      <Link
+                        href={`/dashboard/cvs/${cv.id}/cover-letter`}
+                        className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
+                      >
+                        Cover Letter
+                      </Link>
+
+                      <form action={duplicateCV}>
+                        <input type="hidden" name="cvId" value={cv.id} />
+                        <button
+                          type="submit"
+                          className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
+                        >
+                          Duplicate
+                        </button>
+                      </form>
+
+                      <form action={deleteCV}>
+                        <input type="hidden" name="cvId" value={cv.id} />
+                        <DeleteCVButton title={displayTitle} />
+                      </form>
+                    </>
+                  )}
                 </div>
               </div>
             )

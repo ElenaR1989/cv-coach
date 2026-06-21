@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { consumePrefillJob } from "@/lib/job-prefill-store"
 
 function detectSourceFromUrl(url: string) {
   const lower = url.trim().toLowerCase()
@@ -12,7 +13,10 @@ function detectSourceFromUrl(url: string) {
   if (lower.includes("indeed")) return "Indeed"
   if (lower.includes("totaljobs")) return "TotalJobs"
   if (lower.includes("linkedin")) return "LinkedIn"
-  if (lower.includes("reed")) return "Reed"
+  if (lower.includes("reed.co.uk")) return "Reed"
+  if (lower.includes("adzuna")) return "Adzuna"
+  if (lower.includes("remotive")) return "Remotive"
+  if (lower.includes("jooble")) return "Jooble"
   if (lower.includes("cv-library") || lower.includes("cvlibrary")) {
     return "CV Library"
   }
@@ -124,6 +128,7 @@ type CVProfile = {
 }
 
 type JobFormProps = {
+  prefillFromSession?: boolean
   initialData?: {
     id?: string
     company?: string | null
@@ -176,7 +181,7 @@ const textareaClass =
 const selectClass =
   "w-full rounded-2xl border border-white/15 bg-black/25 px-4 py-3 text-white outline-none transition hover:border-white/25 focus:border-cyan-400/50 focus:bg-black/35"
 
-export default function JobForm({ initialData }: JobFormProps) {
+export default function JobForm({ initialData, prefillFromSession }: JobFormProps) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -197,11 +202,23 @@ export default function JobForm({ initialData }: JobFormProps) {
     initialData?.follow_up_date ?? ""
   )
 
+  useEffect(() => {
+    if (!prefillFromSession) return
+    const data = consumePrefillJob()
+    if (!data) return
+    if (data.company) setCompany(data.company)
+    if (data.role) setRole(data.role)
+    if (data.source) setSource(data.source)
+    if (data.job_url) setJobUrl(data.job_url)
+    if (data.job_description) setJobDescription(data.job_description)
+  }, [prefillFromSession])
+
   const [cvs, setCvs] = useState<CVProfile[]>([])
   const [loadingCvs, setLoadingCvs] = useState(true)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    if (prefillFromSession) return
     setCompany(initialData?.company ?? "")
     setRole(initialData?.role ?? "")
     setStatus(initialData?.status ?? "Applied")
@@ -212,7 +229,7 @@ export default function JobForm({ initialData }: JobFormProps) {
     setJobDescription(initialData?.job_description ?? "")
     setInterviewDate(initialData?.interview_date ?? "")
     setFollowUpDate(initialData?.follow_up_date ?? "")
-  }, [initialData])
+  }, [initialData, prefillFromSession])
 
   useEffect(() => {
     let cancelled = false
@@ -417,10 +434,13 @@ export default function JobForm({ initialData }: JobFormProps) {
               className={`${selectClass} max-w-md`}
             >
               <option value="">Select source</option>
+              <option value="Adzuna">Adzuna</option>
+              <option value="Reed">Reed</option>
+              <option value="Remotive">Remotive</option>
+              <option value="Jooble">Jooble</option>
               <option value="Indeed">Indeed</option>
               <option value="TotalJobs">TotalJobs</option>
               <option value="LinkedIn">LinkedIn</option>
-              <option value="Reed">Reed</option>
               <option value="CV Library">CV Library</option>
               <option value="Glassdoor">Glassdoor</option>
               <option value="Monster">Monster</option>

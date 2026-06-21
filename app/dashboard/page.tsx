@@ -21,6 +21,7 @@ type JobApplication = {
   feedback: string | null
   tailored_cv: string | null
   original_tailored_cv?: string | null
+  job_description: string | null
   cv_profiles?: {
     id: string
     title: string
@@ -226,6 +227,7 @@ const upgradeHref = "/pricing"
       feedback,
       tailored_cv,
       original_tailored_cv,
+      job_description,
       cv_profiles (
         id,
         title
@@ -747,6 +749,29 @@ const upgradeHref = "/pricing"
                           className="rounded-lg border border-white/20 px-3 py-1 text-sm transition hover:bg-white/10"
                         >
                           Edit
+                        </Link>
+
+                        {job.cv_id ? (
+                          <Link
+                            href={`/dashboard/cvs/${job.cv_id}/tailor?applicationId=${job.id}`}
+                            className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-sm text-cyan-300 transition hover:bg-cyan-500/20"
+                          >
+                            Tailor CV
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/dashboard/cvs?jobDescription=${encodeURIComponent(job.job_description ?? "")}&role=${encodeURIComponent(job.role)}&company=${encodeURIComponent(job.company)}`}
+                            className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-sm text-cyan-300 transition hover:bg-cyan-500/20"
+                          >
+                            Tailor CV
+                          </Link>
+                        )}
+
+                        <Link
+                          href={`/dashboard/applications/${job.id}/interview`}
+                          className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-sm text-violet-300 transition hover:bg-violet-500/20"
+                        >
+                          🤖 Practice Interview
                         </Link>
 
                         <form action={deleteJob}>
