@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HireFlow</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 340px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0d1117;
+      color: #fff;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: #06b6d4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .header-text h1 { font-size: 14px; font-weight: 600; }
+    .header-text p { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+    .body { padding: 16px; }
+
+    .field { margin-bottom: 12px; }
+    .field label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 5px;
+    }
+    .field input, .field textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: #fff;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .field input:focus, .field textarea:focus {
+      border-color: rgba(6,182,212,0.5);
+    }
+    .field textarea { resize: none; }
+
+    .status-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .status-btn {
+      padding: 5px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .status-btn.active {
+      background: rgba(6,182,212,0.15);
+      border-color: rgba(6,182,212,0.4);
+      color: #06b6d4;
+    }
+
+    .save-btn {
+      width: 100%;
+      padding: 11px;
+      border-radius: 10px;
+      border: none;
+      background: #06b6d4;
+      color: #000;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      margin-top: 4px;
+    }
+    .save-btn:hover { opacity: 0.9; }
+    .save-btn:disabled { opacity: 0.4; cursor: default; }
+
+    .msg {
+      margin-top: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      text-align: center;
+    }
+    .msg.success { background: rgba(52,211,153,0.12); color: #34d399; }
+    .msg.error { background: rgba(248,113,113,0.12); color: #f87171; }
+
+    .setup-panel { padding: 16px; }
+    .setup-panel p { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 12px; line-height: 1.5; }
+    .setup-panel a { color: #06b6d4; text-decoration: none; }
+    .token-input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #fff;
+      outline: none;
+      font-family: monospace;
+      margin-bottom: 10px;
+    }
+    .token-input:focus { border-color: rgba(6,182,212,0.5); }
+    .connect-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #06b6d4;
+      color: #000;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .not-job {
+      padding: 24px 16px;
+      text-align: center;
+    }
+    .not-job p { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.6; }
+
+    .source-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(6,182,212,0.12);
+      color: #06b6d4;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .footer {
+      padding: 10px 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer a { font-size: 11px; color: rgba(255,255,255,0.25); text-decoration: none; }
+    .footer a:hover { color: rgba(255,255,255,0.5); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">⚡</div>
+    <div class="header-text">
+      <h1>HireFlow <span id="sourceBadge" class="source-badge" style="display:none"></span></h1>
+      <p>Save jobs instantly</p>
+    </div>
+  </div>
+
+  <!-- Setup screen (no token yet) -->
+  <div id="setupPanel" class="setup-panel" style="display:none">
+    <p>
+      To connect, go to your <a href="https://hire-flow.app/dashboard/settings" target="_blank">HireFlow dashboard → Settings</a> and copy your API token, then paste it below.
+    </p>
+    <input id="tokenInput" class="token-input" type="password" placeholder="Paste your API token here…" />
+    <button class="connect-btn" id="connectBtn">Connect to HireFlow</button>
+    <div id="setupMsg"></div>
+  </div>
+
+  <!-- Not a job page -->
+  <div id="notJobPanel" class="not-job" style="display:none">
+    <p>Navigate to a job listing on<br>LinkedIn, Indeed, Reed, or Glassdoor<br>then click this button to save it.</p>
+  </div>
+
+  <!-- Main save panel -->
+  <div id="mainPanel" class="body" style="display:none">
+    <div class="field">
+      <label>Job title</label>
+      <input id="jobTitle" type="text" placeholder="e.g. Product Manager" />
+    </div>
+    <div class="field">
+      <label>Company</label>
+      <input id="company" type="text" placeholder="e.g. Acme Ltd" />
+    </div>
+    <div class="field">
+      <label>Location</label>
+      <input id="location" type="text" placeholder="e.g. London" />
+    </div>
+    <div>
+      <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:rgba(255,255,255,0.35);display:block;margin-bottom:6px;">Status</label>
+      <div class="status-row">
+        <button class="status-btn active" data-status="saved">Saved</button>
+        <button class="status-btn" data-status="applied">Applied</button>
+        <button class="status-btn" data-status="interview">Interview</button>
+      </div>
+    </div>
+    <button class="save-btn" id="saveBtn">Save to HireFlow</button>
+    <div id="msg"></div>
+  </div>
+
+  <div class="footer">
+    <a href="https://hire-flow.app/dashboard" target="_blank">Open dashboard →</a>
+    <a href="#" id="resetToken">Disconnect</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

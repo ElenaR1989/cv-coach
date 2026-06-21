@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "HireFlow — Save Jobs",
+  "description": "Save any job listing to your HireFlow dashboard in one click.",
+  "version": "1.0.0",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.linkedin.com/jobs/*",
+        "*://*.indeed.com/*",
+        "*://*.reed.co.uk/*",
+        "*://*.glassdoor.com/job*",
+        "*://*.glassdoor.co.uk/job*",
+        "*://*.totaljobs.com/*",
+        "*://*.cv-library.co.uk/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://hire-flow.app/*"
+  ]
+}
