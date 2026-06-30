@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import ExtensionTokenPanel from "./extension-token-panel"
+import PromoCodeForm from "@/components/promo-code-form"
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -40,6 +41,7 @@ export default async function SettingsPage() {
       </div>
 
       <ExtensionTokenPanel existingToken={profile?.extension_token ?? null} />
+      <PromoCodeForm />
     </div>
   )
 }
