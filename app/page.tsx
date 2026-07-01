@@ -231,6 +231,76 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Testimonials */}
+        <section className="py-12">
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-bold">What job seekers say</h2>
+            <p className="mt-3 text-white/50">Real feedback from people using HireFlow</p>
+          </div>
+          <div className="grid gap-5 md:grid-cols-3">
+            {[
+              { name: "Sarah M.", role: "Marketing Graduate", text: "I was applying to 10 jobs a week and hearing nothing back. HireFlow's AI tailored my CV for each role and I got 3 interviews in my first week using it." },
+              { name: "James T.", role: "Software Developer", text: "The practice interview feature is incredible. I went in so much more prepared and actually got the job. Worth every penny of Pro." },
+              { name: "Priya K.", role: "Career Changer", text: "Smart Coach showed me exactly what skills I was missing for the roles I wanted. It saved me months of guessing." },
+            ].map(t => (
+              <div key={t.name} className="rounded-2xl border border-white/10 bg-white/4 p-6">
+                <div className="mb-3 flex gap-1">
+                  {[...Array(5)].map((_, i) => <span key={i} className="text-amber-400">★</span>)}
+                </div>
+                <p className="text-sm leading-7 text-white/70">"{t.text}"</p>
+                <div className="mt-4">
+                  <p className="text-sm font-semibold text-white">{t.name}</p>
+                  <p className="text-xs text-white/40">{t.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <section id="pricing" className="py-12">
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-bold">Simple, transparent pricing</h2>
+            <p className="mt-3 text-white/50">Start free. Upgrade when you're ready.</p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 max-w-3xl mx-auto">
+            {/* Free */}
+            <div className="rounded-2xl border border-white/10 bg-white/4 p-8">
+              <h3 className="text-lg font-bold text-white">Free</h3>
+              <div className="mt-2 mb-6">
+                <span className="text-4xl font-bold text-white">£0</span>
+                <span className="text-white/40"> / forever</span>
+              </div>
+              <ul className="space-y-3 text-sm text-white/70 mb-8">
+                {["Track unlimited applications", "Search multiple job boards", "1 AI practice interview / month", "Basic CV editor", "Cover letter generator"].map(f => (
+                  <li key={f} className="flex items-center gap-2"><span className="text-emerald-400">✓</span>{f}</li>
+                ))}
+              </ul>
+              <Link href="/signup" className="block w-full rounded-xl border border-white/20 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10">
+                Get started free
+              </Link>
+            </div>
+            {/* Pro */}
+            <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/5 p-8 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-cyan-500 px-4 py-1 text-xs font-bold text-black">MOST POPULAR</div>
+              <h3 className="text-lg font-bold text-white">Pro</h3>
+              <div className="mt-2 mb-6">
+                <span className="text-4xl font-bold text-cyan-300">£9</span>
+                <span className="text-white/40"> / month</span>
+              </div>
+              <ul className="space-y-3 text-sm text-white/70 mb-8">
+                {["Everything in Free", "Unlimited AI practice interviews", "Scored interview reports", "AI CV tailoring for every job", "Smart Coach analysis", "AI cover letters", "Weekly progress emails", "Interview reminders"].map(f => (
+                  <li key={f} className="flex items-center gap-2"><span className="text-cyan-400">✓</span>{f}</li>
+                ))}
+              </ul>
+              <Link href="/signup" style={{ backgroundColor: "#06b6d4", color: "#000" }} className="block w-full rounded-xl py-3 text-center text-sm font-bold transition hover:opacity-90">
+                Start Pro free with PRODUCTHUNT
+              </Link>
+              <p className="mt-2 text-center text-xs text-white/30">Use code PRODUCTHUNT for 1 month free</p>
+            </div>
+          </div>
+        </section>
+
         <section className="py-20">
           <div className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-cyan-500/10 via-white/[0.03] to-violet-500/10 p-8 text-center backdrop-blur-xl sm:p-12">
             <h2 className="text-3xl font-bold sm:text-4xl">
