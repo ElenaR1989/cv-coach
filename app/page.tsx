@@ -69,6 +69,9 @@ export default function HomePage() {
               <Link href="/demo" className="transition hover:text-white text-violet-300">
                 🤖 Demo
               </Link>
+              <Link href="/coaching" className="transition hover:text-white text-cyan-300">
+                💼 Coaching
+              </Link>
               <a href="#contact" className="transition hover:text-white">
                 Contact
               </a>
