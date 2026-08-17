@@ -32,6 +32,7 @@
   ],
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
-    "https://hire-flow.app/*"
+    "https://hire-flow.app/*",
+    "https://www.hire-flow.app/*"
   ]
 }

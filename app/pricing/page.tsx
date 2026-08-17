@@ -81,7 +81,7 @@ export default function PricingPage() {
           <h1 className="text-4xl font-bold">Simple, transparent pricing</h1>
           <p className="mt-3 text-lg text-white/50">Start free. Upgrade when you're ready.</p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300">
-            🎁 Use code <span className="font-bold">PRODUCTHUNT</span> for 1 month Pro free
+            🌱 Early access — free to start, no credit card needed
           </div>
         </div>
 
@@ -140,7 +140,7 @@ export default function PricingPage() {
                   type="text"
                   value={promoCode}
                   onChange={e => setPromoCode(e.target.value.toUpperCase())}
-                  placeholder="PRODUCTHUNT"
+                  placeholder="Enter promo code"
                   className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-mono text-sm text-white placeholder-white/20 outline-none focus:border-cyan-400/50"
                 />
                 <button type="submit"
@@ -163,7 +163,7 @@ export default function PricingPage() {
               { q: "Can I cancel anytime?", a: "Yes — cancel anytime with no questions asked. You keep Pro until the end of your billing period." },
               { q: "Is my CV data safe?", a: "Yes. Your data is stored securely and never shared with third parties or employers." },
               { q: "What's included in the free plan?", a: "You get full access to job tracking, job search, 1 practice interview per month, and 3 AI cover letters." },
-              { q: "How does the promo code work?", a: "Enter code PRODUCTHUNT to get 1 month of Pro completely free — no credit card required." },
+              { q: "Do you offer any discounts?", a: "We occasionally run promotions for early users. Sign up free and keep an eye on your email for special offers." },
             ].map(item => (
               <div key={item.q} className="rounded-2xl border border-white/10 bg-white/4 p-5">
                 <p className="font-semibold text-white">{item.q}</p>

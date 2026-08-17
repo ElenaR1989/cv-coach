@@ -234,29 +234,33 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Testimonials */}
+        {/* Early reviewers */}
         <section className="py-12">
-          <div className="mb-8 text-center">
-            <h2 className="text-3xl font-bold">What job seekers say</h2>
-            <p className="mt-3 text-white/50">Real feedback from people using HireFlow</p>
-          </div>
-          <div className="grid gap-5 md:grid-cols-3">
-            {[
-              { name: "Sarah M.", role: "Marketing Graduate", text: "I was applying to 10 jobs a week and hearing nothing back. HireFlow's AI tailored my CV for each role and I got 3 interviews in my first week using it." },
-              { name: "James T.", role: "Software Developer", text: "The practice interview feature is incredible. I went in so much more prepared and actually got the job. Worth every penny of Pro." },
-              { name: "Priya K.", role: "Career Changer", text: "Smart Coach showed me exactly what skills I was missing for the roles I wanted. It saved me months of guessing." },
-            ].map(t => (
-              <div key={t.name} className="rounded-2xl border border-white/10 bg-white/4 p-6">
-                <div className="mb-3 flex gap-1">
-                  {[...Array(5)].map((_, i) => <span key={i} className="text-amber-400">★</span>)}
+          <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-10 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-1.5 text-sm text-cyan-300">
+              🌱 Early access
+            </div>
+            <h2 className="text-3xl font-bold">Be one of our first reviewers</h2>
+            <p className="mx-auto mt-3 max-w-xl text-white/50">
+              HireFlow is brand new and we're looking for early users to try it free and share honest feedback. Your review helps us improve and helps other job seekers find us.
+            </p>
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {[
+                { icon: "🆓", title: "Try it free", text: "Sign up in 30 seconds — no credit card needed. Full access to all core features." },
+                { icon: "💬", title: "Share feedback", text: "Tell us what works, what doesn't, and what you'd love to see next." },
+                { icon: "⭐", title: "Leave a review", text: "Help other job seekers find HireFlow by leaving an honest review." },
+              ].map(c => (
+                <div key={c.title} className="rounded-xl border border-white/10 bg-white/4 p-5 text-left">
+                  <div className="mb-2 text-2xl">{c.icon}</div>
+                  <p className="font-semibold text-white">{c.title}</p>
+                  <p className="mt-1 text-sm text-white/50">{c.text}</p>
                 </div>
-                <p className="text-sm leading-7 text-white/70">"{t.text}"</p>
-                <div className="mt-4">
-                  <p className="text-sm font-semibold text-white">{t.name}</p>
-                  <p className="text-xs text-white/40">{t.role}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            <Link href="/signup" style={{ backgroundColor: "#06b6d4", color: "#000" }}
+              className="mt-8 inline-block rounded-xl px-8 py-3 text-sm font-bold transition hover:opacity-90">
+              Try HireFlow free →
+            </Link>
           </div>
         </section>
 
@@ -297,9 +301,8 @@ export default function HomePage() {
                 ))}
               </ul>
               <Link href="/signup" style={{ backgroundColor: "#06b6d4", color: "#000" }} className="block w-full rounded-xl py-3 text-center text-sm font-bold transition hover:opacity-90">
-                Start Pro free with PRODUCTHUNT
+                Get started with Pro
               </Link>
-              <p className="mt-2 text-center text-xs text-white/30">Use code PRODUCTHUNT for 1 month free</p>
             </div>
           </div>
         </section>

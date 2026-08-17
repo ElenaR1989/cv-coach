@@ -1,4 +1,4 @@
-const API_BASE = "https://hire-flow.app"
+const API_BASE = "https://www.hire-flow.app"
 
 let selectedStatus = "saved"
 let scrapedJob = null
