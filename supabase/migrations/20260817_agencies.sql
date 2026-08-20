@@ -16,6 +16,7 @@ create table if not exists agency_users (
   id uuid primary key default gen_random_uuid(),
   agency_id uuid references agencies(id) on delete cascade,
   user_id uuid references auth.users(id) on delete cascade,
+  role text default 'candidate', -- 'owner' or 'candidate'
   joined_at timestamptz default now(),
   unique(agency_id, user_id)
 );
