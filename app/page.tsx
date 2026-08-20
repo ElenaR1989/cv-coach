@@ -72,6 +72,9 @@ export default function HomePage() {
               <Link href="/coaching" className="transition hover:text-white text-cyan-300">
                 💼 Coaching
               </Link>
+              <Link href="/agency/new" className="transition hover:text-white text-amber-300">
+                🏢 Agencies
+              </Link>
               <a href="#contact" className="transition hover:text-white">
                 Contact
               </a>
@@ -331,6 +334,57 @@ export default function HomePage() {
               >
                 View app
               </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Agency / White-label section */}
+        <section className="mt-16 rounded-3xl border border-amber-500/20 bg-amber-500/5 p-8 sm:p-12">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
+                🏢 For recruitment agencies
+              </div>
+              <h2 className="text-3xl font-bold sm:text-4xl">Give your candidates a competitive edge</h2>
+              <p className="mt-4 text-lg text-white/60 leading-8">
+                Offer HireFlow to your candidates under your own brand — your logo, your colours, your link. They get powerful job application tools. You stand out from every other agency.
+              </p>
+              <ul className="mt-6 space-y-3 text-sm text-white/60">
+                {["Your own branded platform in minutes", "Candidates sign up via your unique link", "Track how many applications they send", "No technical setup needed"].map(item => (
+                  <li key={item} className="flex items-center gap-2">
+                    <span className="text-amber-400">✓</span> {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link href="/agency/new" className="rounded-xl px-5 py-3 text-sm font-semibold text-black transition hover:opacity-90" style={{ backgroundColor: "#f59e0b" }}>
+                  Set up your agency platform →
+                </Link>
+                <a href="mailto:hello@hire-flow.app" className="rounded-xl border border-white/20 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
+                  Talk to us first
+                </a>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-6">
+              <p className="mb-4 text-xs uppercase tracking-wide text-white/30">Example branded platform</p>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold text-black bg-blue-600">T</div>
+                <div>
+                  <p className="font-semibold text-white">Talent Bridge Recruitment</p>
+                  <p className="text-xs text-white/40">Helping our candidates land their dream job</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {[["12", "Candidates"], ["47", "Applications sent"], ["3", "Joined this week"]].map(([val, label]) => (
+                  <div key={label} className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+                    <p className="text-xl font-bold text-white">{val}</p>
+                    <p className="text-xs text-white/40 mt-1">{label}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/40">
+                hire-flow.app/agency/talent-bridge
+              </div>
             </div>
           </div>
         </section>
