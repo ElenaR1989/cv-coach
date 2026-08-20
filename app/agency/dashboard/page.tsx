@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -19,7 +19,7 @@ interface Candidate {
   applications: number
 }
 
-export default function AgencyDashboardPage() {
+function AgencyDashboardInner() {
   const searchParams = useSearchParams()
   const agencyId = searchParams.get("id")
 
@@ -73,7 +73,6 @@ export default function AgencyDashboardPage() {
     <div className="min-h-screen bg-[#050816] text-white">
       <div className="mx-auto max-w-4xl px-6 py-10">
 
-        {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
@@ -92,7 +91,6 @@ export default function AgencyDashboardPage() {
           </div>
         </div>
 
-        {/* Agency selector */}
         {agencies.length > 1 && (
           <div className="mb-6 flex gap-2 flex-wrap">
             {agencies.map(a => (
@@ -107,7 +105,6 @@ export default function AgencyDashboardPage() {
 
         {selected && (
           <>
-            {/* Agency card */}
             <div className="mb-6 rounded-2xl border border-white/10 bg-white/4 p-6">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-4">
@@ -127,12 +124,11 @@ export default function AgencyDashboardPage() {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="mb-6 grid grid-cols-3 gap-4">
               {[
                 { label: "Candidates", value: candidates.length },
                 { label: "Total applications", value: candidates.reduce((s, c) => s + c.applications, 0) },
-                { label: "Active this week", value: candidates.filter(c => new Date(c.joined_at) > new Date(Date.now() - 7 * 86400000)).length },
+                { label: "Joined this week", value: candidates.filter(c => new Date(c.joined_at) > new Date(Date.now() - 7 * 86400000)).length },
               ].map(s => (
                 <div key={s.label} className="rounded-2xl border border-white/10 bg-white/4 p-5 text-center">
                   <p className="text-3xl font-bold text-white">{s.value}</p>
@@ -141,7 +137,6 @@ export default function AgencyDashboardPage() {
               ))}
             </div>
 
-            {/* Invite link */}
             <div className="mb-6 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-5">
               <p className="mb-2 text-sm font-semibold text-cyan-300">Candidate invite link</p>
               <p className="mb-3 text-xs text-white/40">Share this link with candidates — they sign up and are automatically linked to your agency.</p>
@@ -157,7 +152,6 @@ export default function AgencyDashboardPage() {
               </div>
             </div>
 
-            {/* Candidates table */}
             <div className="rounded-2xl border border-white/10 bg-white/4 p-6">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/40">Candidates</h2>
               {candidates.length === 0 ? (
@@ -191,5 +185,13 @@ export default function AgencyDashboardPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function AgencyDashboardPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#050816] text-white/40">Loading…</div>}>
+      <AgencyDashboardInner />
+    </Suspense>
   )
 }
