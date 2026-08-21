@@ -361,10 +361,10 @@ export default function CareerQuizPage() {
                     className="block w-full rounded-xl py-3 text-sm font-bold mb-3 hover:opacity-90 transition">
                     Create free account to unlock →
                   </Link>
-                  <button onClick={() => setUnlocked(true)}
+                  <Link href="/login?next=/career-quiz"
                     className="text-xs text-white/30 hover:text-white/60 transition underline">
-                    I already have an account — show results
-                  </button>
+                    I already have an account — sign in
+                  </Link>
                 </div>
               </div>
             )}
