@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import ExtensionTokenPanel from "./extension-token-panel"
 import PromoCodeForm from "@/components/promo-code-form"
+import ProfileCard from "./profile-card"
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -11,7 +12,7 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("extension_token")
+    .select("extension_token, full_name, career_goal, location, open_to_agencies")
     .eq("id", user.id)
     .single()
 
@@ -20,7 +21,7 @@ export default async function SettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Settings</h1>
-          <p className="mt-1 text-sm text-white/40">Manage your account and integrations</p>
+          <p className="mt-1 text-sm text-white/40">Manage your account and profile</p>
         </div>
         <Link href="/dashboard" className="rounded-xl border border-white/10 px-4 py-2 text-sm text-white/60 transition hover:text-white">
           ← Dashboard
@@ -39,6 +40,13 @@ export default async function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <ProfileCard
+        initialFullName={profile?.full_name ?? null}
+        initialCareerGoal={profile?.career_goal ?? null}
+        initialLocation={profile?.location ?? null}
+        initialOpenToAgencies={profile?.open_to_agencies ?? false}
+      />
 
       <ExtensionTokenPanel existingToken={profile?.extension_token ?? null} />
       <PromoCodeForm />
