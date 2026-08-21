@@ -281,6 +281,7 @@ export default function CareerQuizPage() {
   const [selected, setSelected] = useState<string | null>(null)
   const [results, setResults] = useState<CareerMatch[] | null>(null)
   const [finalAnswers, setFinalAnswers] = useState<Record<string, string>>({})
+  const [unlocked, setUnlocked] = useState(false)
 
   const q = questions[current]
   const progress = ((current) / questions.length) * 100
@@ -323,31 +324,54 @@ export default function CareerQuizPage() {
             <p className="mt-3 text-white/50">Based on your qualifications, experience, and work preferences.</p>
           </div>
 
-          <div className="space-y-5 mb-10">
-            {results.map((r, i) => (
-              <div key={r.title} className={`rounded-2xl border p-6 ${i === 0 ? "border-cyan-500/30 bg-cyan-500/5" : "border-white/10 bg-white/4"}`}>
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div>
-                    {i === 0 && <p className="text-xs text-cyan-400 font-semibold mb-1">⭐ Best match</p>}
-                    <h2 className="text-xl font-bold text-white">{r.title}</h2>
-                    <p className="text-sm text-white/40 mt-0.5">{r.salary} / year</p>
+          <div className="relative mb-10">
+            <div className="space-y-5">
+              {results.map((r, i) => (
+                <div key={r.title} className={`rounded-2xl border p-6 transition-all ${i === 0 ? "border-cyan-500/30 bg-cyan-500/5" : "border-white/10 bg-white/4"} ${!unlocked && i > 0 ? "blur-sm select-none" : ""}`}>
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      {i === 0 && <p className="text-xs text-cyan-400 font-semibold mb-1">⭐ Best match</p>}
+                      <h2 className="text-xl font-bold text-white">{!unlocked && i > 0 ? "████████████" : r.title}</h2>
+                      <p className="text-sm text-white/40 mt-0.5">{!unlocked && i > 0 ? "£██,000 – £██,000" : `${r.salary} / year`}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-2xl font-bold" style={{ color: i === 0 ? "#06b6d4" : "#fff" }}>{r.match}%</p>
+                      <p className="text-xs text-white/30">match</p>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-2xl font-bold" style={{ color: i === 0 ? "#06b6d4" : "#fff" }}>{r.match}%</p>
-                    <p className="text-xs text-white/30">match</p>
+                  <div className="mb-3 h-1.5 w-full rounded-full bg-white/10">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${r.match}%`, backgroundColor: i === 0 ? "#06b6d4" : "#8b5cf6" }} />
                   </div>
+                  <p className="text-sm text-white/60 leading-6">{!unlocked && i > 0 ? "██████ ███ ████ ████████ ████ ████████ ██ ████████ ████ ████." : r.why}</p>
                 </div>
-                {/* Match bar */}
-                <div className="mb-3 h-1.5 w-full rounded-full bg-white/10">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${r.match}%`, backgroundColor: i === 0 ? "#06b6d4" : "#8b5cf6" }} />
+              ))}
+            </div>
+
+            {/* Unlock overlay */}
+            {!unlocked && (
+              <div className="absolute inset-0 flex items-end justify-center pb-4">
+                <div className="mx-4 w-full max-w-md rounded-2xl border border-cyan-500/30 bg-[#050816]/95 backdrop-blur-md p-6 text-center shadow-2xl">
+                  <div className="mb-2 text-2xl">🔒</div>
+                  <h3 className="text-lg font-bold text-white mb-1">Your full results are ready</h3>
+                  <p className="text-sm text-white/50 mb-5">
+                    Create your free account to unlock all 3 career matches, salary ranges, qualification routes, and your personalised next steps.
+                  </p>
+                  <Link href={`/signup?next=/career-quiz`}
+                    style={{ backgroundColor: "#06b6d4", color: "#000" }}
+                    className="block w-full rounded-xl py-3 text-sm font-bold mb-3 hover:opacity-90 transition">
+                    Create free account to unlock →
+                  </Link>
+                  <button onClick={() => setUnlocked(true)}
+                    className="text-xs text-white/30 hover:text-white/60 transition underline">
+                    I already have an account — show results
+                  </button>
                 </div>
-                <p className="text-sm text-white/60 leading-6">{r.why}</p>
               </div>
-            ))}
+            )}
           </div>
 
-          {/* Qualification routes */}
-          {results && (() => {
+          {/* Qualification routes — only shown when unlocked */}
+          {unlocked && results && (() => {
             const routes = getQualRoutes(results[0].title, finalAnswers.qualification)
             if (!routes) return null
             return (
@@ -385,7 +409,7 @@ export default function CareerQuizPage() {
             )
           })()}
 
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 mb-6 text-center">
+          {unlocked && <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 mb-6 text-center">
             <p className="font-semibold text-white mb-1">Want help landing one of these roles?</p>
             <p className="text-sm text-white/50 mb-4">HireFlow helps you tailor your CV, practise interviews with AI, and track every application.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -399,7 +423,7 @@ export default function CareerQuizPage() {
                 Get expert career coaching
               </Link>
             </div>
-          </div>
+          </div>}
 
           <div className="text-center">
             <button onClick={restart} className="text-sm text-white/30 hover:text-white transition">
