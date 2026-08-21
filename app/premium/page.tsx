@@ -11,6 +11,7 @@ export default function PremiumPage() {
     { icon: "🤖", title: "12 months HireFlow Pro", desc: "Full access to AI interview practice, CV tailoring, application tracking, and Smart Coach for a full year." },
     { icon: "📧", title: "Direct email access for 12 months", desc: "Email Elena any time with questions, feedback requests, or when you need guidance. Replies within 24 hours." },
     { icon: "🧭", title: "Career Fit assessment", desc: "Discover which careers and roles genuinely suit your personality, strengths, and working style." },
+    { icon: "🎓", title: "Full university & course application support", desc: "If your dream role needs qualifications you don't have yet, Elena will guide you through the entire process — choosing the right course, applying to universities or colleges, applying for Student Finance, and understanding your funding options. End-to-end support, not just advice." },
   ]
 
   const faqs = [

@@ -118,6 +118,67 @@ interface CareerMatch {
   match: number
 }
 
+interface QualRoute {
+  icon: string
+  name: string
+  detail: string
+  url: string
+}
+
+const qualRoutes: Record<string, QualRoute[]> = {
+  "Project Manager": [
+    { icon: "📜", name: "PRINCE2 Foundation", detail: "Online certification from ~£200 — widely recognised by UK employers", url: "https://www.axelos.com/certifications/propath/prince2-project-management" },
+    { icon: "🎓", name: "Open University — Business Degree", detail: "Part-time, study from home, from £6,000/year with Student Finance available", url: "https://www.open.ac.uk/courses/business-management" },
+    { icon: "🏫", name: "Local College — HNC in Business", detail: "Level 4 qualification, often 1 year part-time, funded options available", url: "https://nationalcareers.service.gov.uk/find-a-course" },
+  ],
+  "Data Analyst": [
+    { icon: "💻", name: "Google Data Analytics Certificate", detail: "Online via Coursera, ~6 months, ~£200 total — highly recognised", url: "https://www.coursera.org/google-certificates/data-analytics-certificate" },
+    { icon: "🎓", name: "Open University — Computing & IT", detail: "Part-time degree, Student Finance available, study from home", url: "https://www.open.ac.uk/courses/computing-and-it" },
+    { icon: "📊", name: "Microsoft Power BI Certification", detail: "Online, self-paced, from £100 — in high demand by UK employers", url: "https://learn.microsoft.com/en-us/certifications/power-bi-data-analyst-associate/" },
+  ],
+  "Software Developer": [
+    { icon: "💻", name: "Codecademy / freeCodeCamp", detail: "Free online coding courses — start with Python or JavaScript", url: "https://www.freecodecamp.org" },
+    { icon: "🎓", name: "Open University — Software Engineering", detail: "Accredited degree, part-time, Student Finance available", url: "https://www.open.ac.uk/courses/computing-and-it/degrees/bsc-computing-software-q62" },
+    { icon: "🏫", name: "Apprenticeship — Software Developer", detail: "Earn while you learn — paid role with full training, no degree needed", url: "https://www.findapprenticeship.service.gov.uk" },
+  ],
+  "Teacher / Trainer": [
+    { icon: "📜", name: "PGCE — Postgraduate Certificate in Education", detail: "1-year qualification, salaried school direct routes available", url: "https://www.gov.uk/become-teacher" },
+    { icon: "🏫", name: "Level 3 Award in Education & Training", detail: "Entry-level teaching qualification, available at most colleges", url: "https://nationalcareers.service.gov.uk/find-a-course" },
+    { icon: "🎓", name: "Open University — Education Studies", detail: "Flexible degree for aspiring teachers, Student Finance available", url: "https://www.open.ac.uk/courses/education" },
+  ],
+  "Social Worker / Care Coordinator": [
+    { icon: "🎓", name: "BA Social Work Degree", detail: "Required to become a qualified social worker — 3 years full-time or part-time options", url: "https://www.ucas.com/explore/subjects/social-work" },
+    { icon: "📜", name: "Level 3 Diploma in Health & Social Care", detail: "Entry route into care roles, available at colleges and online", url: "https://nationalcareers.service.gov.uk/find-a-course" },
+    { icon: "🏫", name: "Apprenticeship — Social Care", detail: "Work in care while studying — paid and funded by employer", url: "https://www.findapprenticeship.service.gov.uk" },
+  ],
+  "HR Administrator / HR Assistant": [
+    { icon: "📜", name: "CIPD Level 3 Foundation Certificate", detail: "The standard HR qualification — available online from ~£1,500", url: "https://www.cipd.org/en/qualifications/hr-qualifications/" },
+    { icon: "🏫", name: "Local College — Business Admin Level 3", detail: "Broad business qualification, often funded or low cost", url: "https://nationalcareers.service.gov.uk/find-a-course" },
+    { icon: "🎓", name: "Open University — Business & Management", detail: "Flexible degree with HR modules, Student Finance available", url: "https://www.open.ac.uk/courses/business-management" },
+  ],
+  "Financial Analyst / Accountant": [
+    { icon: "📜", name: "AAT Accounting Qualification", detail: "Industry-standard, levels 2–4, available online from ~£800", url: "https://www.aat.org.uk/qualifications" },
+    { icon: "📜", name: "ACCA — Association of Chartered Certified Accountants", detail: "Globally recognised, can be done alongside work", url: "https://www.accaglobal.com/uk/en/qualifications.html" },
+    { icon: "🎓", name: "Open University — Accounting & Finance Degree", detail: "Part-time, Student Finance available, study from home", url: "https://www.open.ac.uk/courses/accounting-finance" },
+  ],
+  "UX / Product Designer": [
+    { icon: "💻", name: "Google UX Design Certificate", detail: "Online via Coursera, ~6 months, ~£200 — portfolio included", url: "https://www.coursera.org/google-certificates/ux-design-certificate" },
+    { icon: "🎓", name: "Open University — Design & Innovation", detail: "Part-time degree, Student Finance available", url: "https://www.open.ac.uk/courses/design-innovation" },
+    { icon: "🏫", name: "Short course — Figma & UX Fundamentals", detail: "Online, self-paced, many free options on YouTube and Udemy", url: "https://www.udemy.com/topic/ux-design/" },
+  ],
+  "default": [
+    { icon: "🎓", name: "Open University", detail: "Study a degree from home, part-time, with Student Finance available", url: "https://www.open.ac.uk" },
+    { icon: "🏫", name: "National Careers Service — Find a Course", detail: "Free UK tool to find funded courses and qualifications near you", url: "https://nationalcareers.service.gov.uk/find-a-course" },
+    { icon: "🏫", name: "Find an Apprenticeship", detail: "Earn while you learn — government-funded, no prior qualifications needed", url: "https://www.findapprenticeship.service.gov.uk" },
+  ],
+}
+
+function getQualRoutes(topCareer: string, qual: string): QualRoute[] | null {
+  // If they already have a degree or masters, don't show this section
+  if (qual === "degree" || qual === "masters") return null
+  return qualRoutes[topCareer] || qualRoutes["default"]
+}
+
 function getResults(answers: Record<string, string>): CareerMatch[] {
   const careers: CareerMatch[] = []
 
@@ -219,6 +280,7 @@ export default function CareerQuizPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [selected, setSelected] = useState<string | null>(null)
   const [results, setResults] = useState<CareerMatch[] | null>(null)
+  const [finalAnswers, setFinalAnswers] = useState<Record<string, string>>({})
 
   const q = questions[current]
   const progress = ((current) / questions.length) * 100
@@ -231,6 +293,7 @@ export default function CareerQuizPage() {
     setAnswers(newAnswers)
     setSelected(null)
     if (current + 1 >= questions.length) {
+      setFinalAnswers(newAnswers)
       setResults(getResults(newAnswers))
     } else {
       setCurrent(c => c + 1)
@@ -282,6 +345,45 @@ export default function CareerQuizPage() {
               </div>
             ))}
           </div>
+
+          {/* Qualification routes */}
+          {results && (() => {
+            const routes = getQualRoutes(results[0].title, finalAnswers.qualification)
+            if (!routes) return null
+            return (
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 mb-6">
+                <div className="mb-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400 mb-1">🎓 Missing qualifications?</p>
+                  <h3 className="font-bold text-white text-lg">How to get there</h3>
+                  <p className="text-sm text-white/50 mt-1">
+                    If your top match requires qualifications you don&apos;t have yet, here are the best routes to get them — including free and funded options.
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {routes.map(r => (
+                    <a key={r.name} href={r.url} target="_blank" rel="noreferrer"
+                      className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/4 p-4 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition">
+                      <span className="text-xl shrink-0">{r.icon}</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-white">{r.name}</p>
+                        <p className="text-xs text-white/50 mt-0.5">{r.detail}</p>
+                      </div>
+                      <span className="text-white/20 text-sm shrink-0">↗</span>
+                    </a>
+                  ))}
+                </div>
+                <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                  <p className="text-sm font-semibold text-emerald-300 mb-1">We can support you through this too</p>
+                  <p className="text-xs text-white/50 mb-3">
+                    Our Premium coaching package includes end-to-end support — choosing the right course, applying to university or college, applying for Student Finance, and understanding all your funding options. Elena handles the entire process with you, not just the advice.
+                  </p>
+                  <Link href="/premium" className="text-xs font-semibold text-emerald-300 hover:text-white transition">
+                    Find out more about Premium coaching →
+                  </Link>
+                </div>
+              </div>
+            )
+          })()}
 
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 mb-6 text-center">
             <p className="font-semibold text-white mb-1">Want help landing one of these roles?</p>
