@@ -194,13 +194,37 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Agency CTA */}
-        <div className="mt-10 rounded-2xl border border-white/10 bg-white/4 p-6 text-center">
-          <p className="text-sm text-white/50">Are you a recruitment agency?</p>
-          <p className="mt-1 font-semibold text-white">Get a branded platform for your candidates — £500 one-time</p>
-          <Link href="/agency/new" className="mt-3 inline-block rounded-xl border border-white/20 px-5 py-2 text-sm text-white/70 transition hover:text-white">
-            Set up your agency platform →
-          </Link>
+        {/* Agency Pricing */}
+        <div className="mt-10 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8">
+          <div className="mb-6 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs text-amber-300 mb-3">
+              🏢 For recruitment agencies
+            </div>
+            <h3 className="text-2xl font-bold text-white">White-label platform for your candidates</h3>
+            <p className="mt-2 text-sm text-white/50">Give your candidates a fully branded HireFlow experience. First month free on all plans.</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3 mb-6">
+            {[
+              { name: "Starter", price: "£79", desc: "Up to 20 candidates", color: "text-cyan-300", border: "border-cyan-500/20" },
+              { name: "Growth", price: "£149", desc: "Up to 100 candidates", color: "text-violet-300", border: "border-violet-500/20", popular: true },
+              { name: "Enterprise", price: "£299", desc: "Unlimited candidates", color: "text-amber-300", border: "border-amber-500/20" },
+            ].map(p => (
+              <div key={p.name} className={`rounded-xl border ${p.border} bg-white/4 p-5 text-center relative`}>
+                {p.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-500 px-3 py-0.5 text-xs font-bold text-white">Popular</div>}
+                <p className="font-semibold text-white mb-1">{p.name}</p>
+                <p className={`text-2xl font-bold mb-0.5 ${p.color}`}>{p.price}<span className="text-sm font-normal text-white/40">/mo</span></p>
+                <p className="text-xs text-white/40">{p.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center">
+            <Link href="/agency/new"
+              style={{ backgroundColor: "#f59e0b", color: "#000" }}
+              className="inline-block rounded-xl px-8 py-3 text-sm font-bold transition hover:opacity-90">
+              Start free — first month on us →
+            </Link>
+            <p className="mt-2 text-xs text-white/30">No credit card needed · Cancel anytime</p>
+          </div>
         </div>
 
         {/* FAQ */}
@@ -213,7 +237,7 @@ export default function PricingPage() {
               { q: "What's included in the free plan?", a: "You get full access to job tracking, job search, 1 practice interview per month, and 3 AI cover letters." },
               { q: "Do you offer any discounts?", a: "We occasionally run promotions for early users. Sign up free and keep an eye on your email for special offers." },
               { q: "What is the Premium package?", a: "A full done-with-you career service — CV rewrite, 3 coaching sessions, LinkedIn review, career roadmap, and 12 months of HireFlow Pro. Limited spots available." },
-              { q: "How does the affiliate programme work?", a: "Refer someone to the Premium package and earn £100 when they pay. Apply to become an affiliate and get your unique link." },
+              { q: "How does agency pricing work?", a: "Agencies pay monthly — Starter £79, Growth £149, or Enterprise £299. All plans include the first month free and you can cancel anytime. No credit card needed to start." },
             ].map(item => (
               <div key={item.q} className="rounded-2xl border border-white/10 bg-white/4 p-5">
                 <p className="font-semibold text-white">{item.q}</p>
