@@ -72,6 +72,9 @@ export default function HomePage() {
               <Link href="/coaching" className="transition hover:text-white text-cyan-300">
                 💼 Coaching
               </Link>
+              <Link href="/career-quiz" className="transition hover:text-white text-emerald-300">
+                🧭 Career Quiz
+              </Link>
               <Link href="/agency/new" className="transition hover:text-white text-amber-300">
                 🏢 Agencies
               </Link>
@@ -334,6 +337,57 @@ export default function HomePage() {
               >
                 View app
               </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Career Quiz CTA */}
+        <section className="mt-16 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-8 sm:p-12">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
+                🧭 Free career quiz
+              </div>
+              <h2 className="text-3xl font-bold sm:text-4xl">Not sure what career suits you?</h2>
+              <p className="mt-4 text-lg text-white/60 leading-8">
+                Answer 9 quick questions about your qualifications, work style, and what matters to you — and we'll match you to real careers with salary ranges.
+              </p>
+              <ul className="mt-6 space-y-3 text-sm text-white/60">
+                {["Takes less than 3 minutes", "Based on your real qualifications and experience", "Matched to careers with average UK salaries", "Free — no sign up needed"].map(item => (
+                  <li key={item} className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-8">
+                <Link href="/career-quiz"
+                  style={{ backgroundColor: "#10b981", color: "#000" }}
+                  className="inline-block rounded-xl px-6 py-3 text-sm font-bold transition hover:opacity-90">
+                  Take the free quiz →
+                </Link>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-6 space-y-3">
+              <p className="text-xs uppercase tracking-wide text-white/30 mb-4">Example result</p>
+              {[
+                { title: "Project Manager", salary: "£35,000 – £65,000", match: 94, color: "#06b6d4" },
+                { title: "HR Administrator", salary: "£24,000 – £35,000", match: 81, color: "#8b5cf6" },
+                { title: "Recruitment Consultant", salary: "£25,000 – £50,000+", match: 73, color: "#8b5cf6" },
+              ].map((r, i) => (
+                <div key={r.title} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <div className="flex justify-between mb-2">
+                    <div>
+                      {i === 0 && <p className="text-xs text-cyan-400 mb-0.5">⭐ Best match</p>}
+                      <p className="text-sm font-semibold text-white">{r.title}</p>
+                      <p className="text-xs text-white/40">{r.salary}</p>
+                    </div>
+                    <p className="text-lg font-bold" style={{ color: r.color }}>{r.match}%</p>
+                  </div>
+                  <div className="h-1 w-full rounded-full bg-white/10">
+                    <div className="h-full rounded-full" style={{ width: `${r.match}%`, backgroundColor: r.color }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
