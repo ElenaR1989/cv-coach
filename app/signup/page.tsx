@@ -15,6 +15,7 @@ function SignupForm() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [openToAgencies, setOpenToAgencies] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState("")
@@ -46,8 +47,20 @@ function SignupForm() {
     if (!email || !password) { setError("Please fill in all fields."); return }
     setLoading(true)
     setError("")
-    const { error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { open_to_agencies: openToAgencies } },
+    })
     if (error) { setError(error.message); setLoading(false); return }
+    // Save open_to_agencies preference to profile
+    if (data.user) {
+      await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ open_to_agencies: openToAgencies }),
+      }).catch(() => {})
+    }
     if (agencySlug) await joinAgency(agencySlug)
     router.push("/verify-email")
   }
@@ -128,6 +141,20 @@ function SignupForm() {
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSignup()}
             />
+            {/* Open to agencies opt-in */}
+            <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-white/10 bg-white/4 p-3 hover:bg-white/6 transition">
+              <input
+                type="checkbox"
+                checked={openToAgencies}
+                onChange={e => setOpenToAgencies(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-cyan-400 cursor-pointer flex-shrink-0"
+              />
+              <span className="text-sm text-white/60 leading-5">
+                <span className="text-white font-medium">I'm open to being contacted by recruitment agencies</span>
+                {" "}— let agencies on HireFlow see my profile and career goals
+              </span>
+            </label>
+
             {error && <p className="text-sm text-red-400">{error}</p>}
             <button
               onClick={handleSignup}
