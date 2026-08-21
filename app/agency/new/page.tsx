@@ -27,7 +27,7 @@ export default function NewAgencyPage() {
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error || "Something went wrong"); setLoading(false); return }
-    router.push(`/agency/dashboard?id=${data.agency.id}`)
+    router.push(`/agency/welcome?id=${data.agency.id}`)
   }
 
   return (
