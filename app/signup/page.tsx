@@ -2,13 +2,16 @@
 
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
+import { Suspense } from "react"
 
-export default function SignupPage() {
+function SignupForm() {
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const agencySlug = searchParams.get("agency")
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -16,11 +19,26 @@ export default function SignupPage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState("")
 
+  const joinAgency = async (slug: string) => {
+    try {
+      await fetch("/api/agency/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      })
+    } catch (e) {
+      console.error("Failed to join agency:", e)
+    }
+  }
+
   const handleGoogle = async () => {
     setGoogleLoading(true)
+    const redirectTo = agencySlug
+      ? `${window.location.origin}/auth/callback?agency=${agencySlug}`
+      : `${window.location.origin}/auth/callback`
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo },
     })
   }
 
@@ -30,6 +48,7 @@ export default function SignupPage() {
     setError("")
     const { error } = await supabase.auth.signUp({ email, password })
     if (error) { setError(error.message); setLoading(false); return }
+    if (agencySlug) await joinAgency(agencySlug)
     router.push("/verify-email")
   }
 
@@ -131,5 +150,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#050816] text-white/40">Loading…</div>}>
+      <SignupForm />
+    </Suspense>
   )
 }
