@@ -62,7 +62,8 @@ function SignupForm() {
       }).catch(() => {})
     }
     if (agencySlug) await joinAgency(agencySlug)
-    router.push("/verify-email")
+    const nextPath = searchParams.get("next")
+    router.push(nextPath === "/career-quiz" ? "/career-quiz" : "/verify-email")
   }
 
   return (

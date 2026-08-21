@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -283,6 +284,27 @@ export default function CareerQuizPage() {
   const [finalAnswers, setFinalAnswers] = useState<Record<string, string>>({})
   const [unlocked, setUnlocked] = useState(false)
 
+  // On mount: restore saved answers and check if user is already logged in
+  useEffect(() => {
+    const saved = sessionStorage.getItem("quiz_answers")
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as Record<string, string>
+        if (Object.keys(parsed).length === questions.length) {
+          // All answers complete — restore results
+          setFinalAnswers(parsed)
+          setResults(getResults(parsed))
+          sessionStorage.removeItem("quiz_answers")
+        }
+      } catch {}
+    }
+    // Check auth to auto-unlock
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUnlocked(true)
+    })
+  }, [])
+
   const q = questions[current]
   const progress = ((current) / questions.length) * 100
 
@@ -306,6 +328,7 @@ export default function CareerQuizPage() {
     setAnswers({})
     setSelected(null)
     setResults(null)
+    sessionStorage.removeItem("quiz_answers")
   }
 
   if (results) {
@@ -357,11 +380,12 @@ export default function CareerQuizPage() {
                     Create your free account to unlock all 3 career matches, salary ranges, qualification routes, and your personalised next steps.
                   </p>
                   <Link href={`/signup?next=/career-quiz`}
+                    onClick={() => sessionStorage.setItem("quiz_answers", JSON.stringify(finalAnswers))}
                     style={{ backgroundColor: "#06b6d4", color: "#000" }}
                     className="block w-full rounded-xl py-3 text-sm font-bold mb-3 hover:opacity-90 transition">
                     Create free account to unlock →
                   </Link>
-                  <Link href="/login?next=/career-quiz"
+                  <Link href="/login?next=/career-quiz" onClick={() => sessionStorage.setItem("quiz_answers", JSON.stringify(finalAnswers))}
                     className="text-xs text-white/30 hover:text-white/60 transition underline">
                     I already have an account — sign in
                   </Link>
