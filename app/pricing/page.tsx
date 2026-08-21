@@ -28,6 +28,19 @@ const PRO_FEATURES = [
   "Priority support",
 ]
 
+const PREMIUM_FEATURES = [
+  "Everything in Pro — 12 months included",
+  "3 x 1-on-1 coaching sessions with Elena (60 min each)",
+  "Full professional CV rewrite — done for you",
+  "LinkedIn profile review & optimisation",
+  "Personalised career roadmap",
+  "Career Fit assessment",
+  "Cover letter written for your target role",
+  "Interview preparation coaching",
+  "Email access to Elena for 12 months",
+  "Priority responses within 24 hours",
+]
+
 export default function PricingPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -71,7 +84,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
-      <div className="mx-auto max-w-5xl px-6 py-16">
+      <div className="mx-auto max-w-6xl px-6 py-16">
 
         <div className="mb-8">
           <Link href="/dashboard" className="text-sm text-white/50 transition hover:text-white">← Back to Dashboard</Link>
@@ -85,7 +98,7 @@ export default function PricingPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-3">
           {/* Free */}
           <div className="rounded-2xl border border-white/10 bg-white/4 p-8">
             <h2 className="text-xl font-bold text-white">Free</h2>
@@ -153,6 +166,41 @@ export default function PricingPage() {
               )}
             </div>
           </div>
+
+          {/* Premium */}
+          <div className="relative rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-orange-500/5 p-8">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-5 py-1.5 text-xs font-bold text-black">
+              BEST RESULTS
+            </div>
+            <h2 className="text-xl font-bold text-white">Premium</h2>
+            <p className="mt-1 text-sm text-amber-300">Done-with-you career transformation</p>
+            <div className="my-6">
+              <span className="text-5xl font-bold text-white">£500</span>
+              <span className="text-white/40"> / one-time</span>
+            </div>
+            <ul className="mb-8 space-y-3">
+              {PREMIUM_FEATURES.map(f => (
+                <li key={f} className="flex items-start gap-2 text-sm text-white/80">
+                  <span className="mt-0.5 text-amber-400">✓</span>{f}
+                </li>
+              ))}
+            </ul>
+            <Link href="/premium"
+              style={{ backgroundColor: "#f59e0b", color: "#000" }}
+              className="block w-full rounded-xl py-3 text-center text-sm font-bold transition hover:opacity-90">
+              Learn more & apply →
+            </Link>
+            <p className="mt-3 text-center text-xs text-white/30">Limited spots — book a free call first</p>
+          </div>
+        </div>
+
+        {/* Agency CTA */}
+        <div className="mt-10 rounded-2xl border border-white/10 bg-white/4 p-6 text-center">
+          <p className="text-sm text-white/50">Are you a recruitment agency?</p>
+          <p className="mt-1 font-semibold text-white">Get a branded platform for your candidates — £500 one-time</p>
+          <Link href="/agency/new" className="mt-3 inline-block rounded-xl border border-white/20 px-5 py-2 text-sm text-white/70 transition hover:text-white">
+            Set up your agency platform →
+          </Link>
         </div>
 
         {/* FAQ */}
@@ -164,6 +212,8 @@ export default function PricingPage() {
               { q: "Is my CV data safe?", a: "Yes. Your data is stored securely and never shared with third parties or employers." },
               { q: "What's included in the free plan?", a: "You get full access to job tracking, job search, 1 practice interview per month, and 3 AI cover letters." },
               { q: "Do you offer any discounts?", a: "We occasionally run promotions for early users. Sign up free and keep an eye on your email for special offers." },
+              { q: "What is the Premium package?", a: "A full done-with-you career service — CV rewrite, 3 coaching sessions, LinkedIn review, career roadmap, and 12 months of HireFlow Pro. Limited spots available." },
+              { q: "How does the affiliate programme work?", a: "Refer someone to the Premium package and earn £100 when they pay. Apply to become an affiliate and get your unique link." },
             ].map(item => (
               <div key={item.q} className="rounded-2xl border border-white/10 bg-white/4 p-5">
                 <p className="font-semibold text-white">{item.q}</p>
@@ -172,6 +222,20 @@ export default function PricingPage() {
             ))}
           </div>
         </div>
+
+        {/* Affiliate CTA */}
+        <div className="mt-10 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-8 text-center">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs text-violet-300">
+            💸 Earn money with HireFlow
+          </div>
+          <h3 className="text-xl font-bold text-white">Become an affiliate — earn £100 per sale</h3>
+          <p className="mt-2 text-sm text-white/50">Refer people to our Premium package. They get their dream career, you earn £100. No experience needed.</p>
+          <Link href="/affiliate"
+            className="mt-5 inline-block rounded-xl border border-violet-400/30 bg-violet-500/10 px-6 py-3 text-sm font-semibold text-violet-300 transition hover:bg-violet-500/20">
+            Apply to become an affiliate →
+          </Link>
+        </div>
+
       </div>
     </div>
   )
