@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
-import PromoCodeForm from "@/components/promo-code-form"
 import ProfileCard from "./profile-card"
 
 export default async function SettingsPage() {
@@ -47,7 +46,6 @@ export default async function SettingsPage() {
         initialOpenToAgencies={profile?.open_to_agencies ?? false}
       />
 
-      <PromoCodeForm />
     </div>
   )
 }
