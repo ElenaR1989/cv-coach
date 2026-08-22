@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
-import ExtensionTokenPanel from "./extension-token-panel"
 import PromoCodeForm from "@/components/promo-code-form"
 import ProfileCard from "./profile-card"
 
@@ -12,7 +11,7 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("extension_token, full_name, career_goal, location, open_to_agencies")
+    .select("full_name, career_goal, location, open_to_agencies")
     .eq("id", user.id)
     .single()
 
@@ -48,7 +47,6 @@ export default async function SettingsPage() {
         initialOpenToAgencies={profile?.open_to_agencies ?? false}
       />
 
-      <ExtensionTokenPanel existingToken={profile?.extension_token ?? null} />
       <PromoCodeForm />
     </div>
   )
