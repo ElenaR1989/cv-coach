@@ -330,6 +330,37 @@ export default function HomePage() {
               <p className="mt-2 text-center text-xs text-white/30">Instalments available · Full refund guarantee</p>
             </div>
           </div>
+
+          {/* Agency white-label pricing */}
+          <div className="mt-16 max-w-5xl mx-auto">
+            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs text-amber-300 mb-3">🏢 For recruitment agencies</div>
+                  <h3 className="text-2xl font-bold text-white">White-label platform for your candidates</h3>
+                  <p className="mt-2 text-sm text-white/50 max-w-lg">Give your candidates a fully branded HireFlow experience under your name. First month free on all plans.</p>
+                </div>
+                <Link href="/agency/new" style={{ backgroundColor: "#f59e0b", color: "#000" }} className="shrink-0 rounded-xl px-6 py-3 text-sm font-bold transition hover:opacity-90 text-center">
+                  Start free →
+                </Link>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                {[
+                  { name: "Starter", price: "£79", desc: "Up to 20 candidates", color: "text-cyan-300", border: "border-cyan-500/20" },
+                  { name: "Growth", price: "£149", desc: "Up to 100 candidates", color: "text-violet-300", border: "border-violet-500/20", popular: true },
+                  { name: "Enterprise", price: "£299", desc: "Unlimited candidates", color: "text-amber-300", border: "border-amber-500/20" },
+                ].map(p => (
+                  <div key={p.name} className={`rounded-xl border ${p.border} bg-white/4 p-5 text-center relative`}>
+                    {p.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-500 px-3 py-0.5 text-xs font-bold text-white">Popular</div>}
+                    <p className="font-semibold text-white mb-1">{p.name}</p>
+                    <p className={`text-2xl font-bold ${p.color}`}>{p.price}<span className="text-sm font-normal text-white/40">/mo</span></p>
+                    <p className="text-xs text-white/40 mt-1">{p.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-center text-xs text-white/30">No credit card needed · Cancel anytime · Branded subdomain + candidate dashboard included</p>
+            </div>
+          </div>
         </section>
 
         <section className="py-20">
