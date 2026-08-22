@@ -276,7 +276,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold">Simple, transparent pricing</h2>
             <p className="mt-3 text-white/50">Start free. Upgrade when you're ready.</p>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 max-w-3xl mx-auto">
+          <div className="grid gap-6 lg:grid-cols-3 max-w-5xl mx-auto">
             {/* Free */}
             <div className="rounded-2xl border border-white/10 bg-white/4 p-8">
               <h3 className="text-lg font-bold text-white">Free</h3>
@@ -309,6 +309,25 @@ export default function HomePage() {
               <Link href="/signup" style={{ backgroundColor: "#06b6d4", color: "#000" }} className="block w-full rounded-xl py-3 text-center text-sm font-bold transition hover:opacity-90">
                 Get started with Pro
               </Link>
+            </div>
+            {/* Premium */}
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-8 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-4 py-1 text-xs font-bold text-black">BEST RESULTS</div>
+              <h3 className="text-lg font-bold text-white">Premium</h3>
+              <p className="text-xs text-amber-300 mt-0.5 mb-2">Done-with-you career support</p>
+              <div className="mt-2 mb-6">
+                <span className="text-4xl font-bold text-amber-300">£500</span>
+                <span className="text-white/40"> one-time</span>
+              </div>
+              <ul className="space-y-3 text-sm text-white/70 mb-8">
+                {["Full CV rewrite by Elena", "3 × 1-on-1 coaching sessions", "LinkedIn optimisation", "Personalised career roadmap", "University & Student Finance support", "12 months HireFlow Pro included", "Email access to Elena for 12 months"].map(f => (
+                  <li key={f} className="flex items-center gap-2"><span className="text-amber-400">✓</span>{f}</li>
+                ))}
+              </ul>
+              <Link href="/premium" style={{ backgroundColor: "#f59e0b", color: "#000" }} className="block w-full rounded-xl py-3 text-center text-sm font-bold transition hover:opacity-90">
+                Learn more →
+              </Link>
+              <p className="mt-2 text-center text-xs text-white/30">Instalments available · Full refund guarantee</p>
             </div>
           </div>
         </section>
