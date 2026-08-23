@@ -110,6 +110,38 @@ const questions = [
       { label: "I like to work independently and deliver results", value: "independent" },
     ],
   },
+  {
+    id: "hobby",
+    section: "About you personally",
+    question: "What's your biggest passion or hobby?",
+    options: [
+      { label: "🎨 Creative — art, music, writing, design", value: "creative" },
+      { label: "🏃 Physical / outdoors — sport, fitness, nature, travel", value: "physical" },
+      { label: "💻 Tech & problem solving — computers, gadgets, puzzles", value: "tech" },
+      { label: "🤝 People & community — volunteering, socialising, caring", value: "people" },
+      { label: "💰 Business & money — entrepreneurship, investing, sales", value: "business" },
+    ],
+  },
+  {
+    id: "dream_job",
+    section: "About you personally",
+    question: "What's your dream job — even if it feels out of reach?",
+    freeText: true,
+    placeholder: "e.g. Architect, Nurse, Game Designer, Entrepreneur…",
+    options: [],
+  },
+  {
+    id: "blocker",
+    section: "About you personally",
+    question: "What's the main thing stopping you from getting there?",
+    options: [
+      { label: "🎓 I don't have the right qualifications", value: "qualifications" },
+      { label: "🧭 I don't know where to start", value: "direction" },
+      { label: "😟 I lack confidence or experience", value: "confidence" },
+      { label: "💸 Financial reasons — can't afford to study or take time off", value: "financial" },
+      { label: "🤔 I'm not sure it's realistic for me", value: "doubt" },
+    ],
+  },
 ]
 
 interface CareerMatch {
@@ -280,6 +312,7 @@ export default function CareerQuizPage() {
   const [current, setCurrent] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [selected, setSelected] = useState<string | null>(null)
+  const [freeText, setFreeText] = useState("")
   const [results, setResults] = useState<CareerMatch[] | null>(null)
   const [finalAnswers, setFinalAnswers] = useState<Record<string, string>>({})
   const [unlocked, setUnlocked] = useState(false)
@@ -290,7 +323,7 @@ export default function CareerQuizPage() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as Record<string, string>
-        if (Object.keys(parsed).length === questions.length) {
+        if (Object.keys(parsed).length >= questions.length) {
           // All answers complete — restore results
           setFinalAnswers(parsed)
           setResults(getResults(parsed))
@@ -310,11 +343,16 @@ export default function CareerQuizPage() {
 
   const handleSelect = (value: string) => setSelected(value)
 
+  const isFreeText = (q as {freeText?: boolean}).freeText === true
+  const canProceed = isFreeText ? freeText.trim().length > 0 : !!selected
+
   const handleNext = () => {
-    if (!selected) return
-    const newAnswers = { ...answers, [q.id]: selected }
+    if (!canProceed) return
+    const value = isFreeText ? freeText.trim() : selected!
+    const newAnswers = { ...answers, [q.id]: value }
     setAnswers(newAnswers)
     setSelected(null)
+    setFreeText("")
     if (current + 1 >= questions.length) {
       setFinalAnswers(newAnswers)
       setResults(getResults(newAnswers))
@@ -327,6 +365,7 @@ export default function CareerQuizPage() {
     setCurrent(0)
     setAnswers({})
     setSelected(null)
+    setFreeText("")
     setResults(null)
     sessionStorage.removeItem("quiz_answers")
   }
@@ -346,6 +385,33 @@ export default function CareerQuizPage() {
             <h1 className="text-3xl font-bold sm:text-4xl">Here are your top career matches</h1>
             <p className="mt-3 text-white/50">Based on your qualifications, experience, and work preferences.</p>
           </div>
+
+          {/* Personal message based on dream job + blocker */}
+          {(finalAnswers.dream_job || finalAnswers.blocker) && (
+            <div className="mb-8 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-violet-400 mb-2">✨ Personal note for you</p>
+              {finalAnswers.dream_job && (
+                <p className="text-sm text-white/80 leading-6 mb-2">
+                  You mentioned your dream is to be a <strong className="text-white">{finalAnswers.dream_job}</strong> — that&apos;s a great goal, and your results below show careers that align with your strengths and could even be stepping stones towards it.
+                </p>
+              )}
+              {finalAnswers.blocker === "qualifications" && (
+                <p className="text-sm text-white/70 leading-6">The main thing holding you back is qualifications — scroll down to see exactly how to get them, including free and funded routes.</p>
+              )}
+              {finalAnswers.blocker === "direction" && (
+                <p className="text-sm text-white/70 leading-6">You said you don&apos;t know where to start — that&apos;s exactly what these results are for. Your top match below is the best place to begin.</p>
+              )}
+              {finalAnswers.blocker === "confidence" && (
+                <p className="text-sm text-white/70 leading-6">Confidence and experience come with the right support. Your results show careers you&apos;re genuinely suited for — the gap is smaller than you think.</p>
+              )}
+              {finalAnswers.blocker === "financial" && (
+                <p className="text-sm text-white/70 leading-6">Financial barriers are real — but many of the qualification routes below are free, funded, or come with Student Finance. Don&apos;t let cost stop you before you&apos;ve seen the options.</p>
+              )}
+              {finalAnswers.blocker === "doubt" && (
+                <p className="text-sm text-white/70 leading-6">It&apos;s more realistic than you think. Your quiz results show a strong match — and with the right plan, most people are much closer to their goal than they realise.</p>
+              )}
+            </div>
+          )}
 
           <div className="relative mb-10">
             <div className="space-y-5">
@@ -480,23 +546,38 @@ export default function CareerQuizPage() {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/30">{q.section}</p>
         <h2 className="mb-6 text-2xl font-bold leading-snug">{q.question}</h2>
 
-        <div className="space-y-3">
-          {q.options.map(opt => (
-            <button key={opt.value} onClick={() => handleSelect(opt.value)}
-              className={`w-full rounded-xl border px-5 py-4 text-left text-sm font-medium transition ${
-                selected === opt.value
-                  ? "border-cyan-500 bg-cyan-500/10 text-white"
-                  : "border-white/10 bg-white/4 text-white/70 hover:border-white/30 hover:text-white"
-              }`}>
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        {isFreeText ? (
+          <div>
+            <input
+              type="text"
+              value={freeText}
+              onChange={e => setFreeText(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && canProceed && handleNext()}
+              placeholder={(q as {placeholder?: string}).placeholder || "Type your answer…"}
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white placeholder-white/25 outline-none focus:border-cyan-400/50 transition"
+              autoFocus
+            />
+            <p className="mt-2 text-xs text-white/25">This is just for you — your answer makes your results more personal</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {q.options.map(opt => (
+              <button key={opt.value} onClick={() => handleSelect(opt.value)}
+                className={`w-full rounded-xl border px-5 py-4 text-left text-sm font-medium transition ${
+                  selected === opt.value
+                    ? "border-cyan-500 bg-cyan-500/10 text-white"
+                    : "border-white/10 bg-white/4 text-white/70 hover:border-white/30 hover:text-white"
+                }`}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
 
-        <button onClick={handleNext} disabled={!selected}
-          style={{ backgroundColor: selected ? "#06b6d4" : undefined, color: selected ? "#000" : undefined }}
+        <button onClick={handleNext} disabled={!canProceed}
+          style={{ backgroundColor: canProceed ? "#06b6d4" : undefined, color: canProceed ? "#000" : undefined }}
           className={`mt-8 w-full rounded-xl py-3.5 text-sm font-bold transition ${
-            selected ? "hover:opacity-90" : "border border-white/10 text-white/20 cursor-not-allowed"
+            canProceed ? "hover:opacity-90" : "border border-white/10 text-white/20 cursor-not-allowed"
           }`}>
           {current + 1 === questions.length ? "See my results →" : "Next →"}
         </button>
