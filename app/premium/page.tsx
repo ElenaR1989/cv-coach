@@ -1,5 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
+import { Suspense } from "react"
+import ReferralCTA from "./referral-cta"
 
 export default function PremiumPage() {
   const included = [
@@ -47,16 +49,16 @@ export default function PremiumPage() {
           <p className="mt-5 text-lg text-white/55 max-w-2xl mx-auto leading-8">
             Stop applying and hoping. Get a professional CV rewrite, personal coaching, LinkedIn optimisation, and a year of HireFlow Pro — everything you need, done with you.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="mailto:hello@hire-flow.app?subject=Premium Package - Free Discovery Call"
-              style={{ backgroundColor: "#f59e0b", color: "#000" }}
-              className="rounded-xl px-8 py-4 text-sm font-bold transition hover:opacity-90">
-              Book a free discovery call →
-            </a>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-white">£500</p>
-              <p className="text-xs text-white/40">one-time payment</p>
-            </div>
+          <div className="mt-8">
+            <Suspense fallback={
+              <a href="mailto:hello@hire-flow.app?subject=Premium Package - Free Discovery Call"
+                style={{ backgroundColor: "#f59e0b", color: "#000" }}
+                className="rounded-xl px-8 py-4 text-sm font-bold transition hover:opacity-90">
+                Book a free discovery call →
+              </a>
+            }>
+              <ReferralCTA />
+            </Suspense>
           </div>
           <p className="mt-4 text-xs text-white/30">Limited spots available · Free 30-min call first · Full refund guarantee after first session</p>
         </div>
@@ -129,11 +131,17 @@ export default function PremiumPage() {
         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-10 text-center">
           <h2 className="text-2xl font-bold text-white">Ready to get started?</h2>
           <p className="mt-2 text-white/50">Book a free 30-minute call. No commitment. Just an honest conversation about your career.</p>
-          <a href="mailto:hello@hire-flow.app?subject=Premium Package - Free Discovery Call"
-            style={{ backgroundColor: "#f59e0b", color: "#000" }}
-            className="mt-6 inline-block rounded-xl px-8 py-4 text-sm font-bold transition hover:opacity-90">
-            Email Elena to book your free call →
-          </a>
+          <div className="mt-6">
+            <Suspense fallback={
+              <a href="mailto:hello@hire-flow.app?subject=Premium Package - Free Discovery Call"
+                style={{ backgroundColor: "#f59e0b", color: "#000" }}
+                className="inline-block rounded-xl px-8 py-4 text-sm font-bold transition hover:opacity-90">
+                Email Elena to book your free call →
+              </a>
+            }>
+              <ReferralCTA />
+            </Suspense>
+          </div>
           <p className="mt-4 text-xs text-white/30">hello@hire-flow.app · Usually replies within a few hours</p>
         </div>
 
