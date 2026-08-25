@@ -361,6 +361,48 @@ export default function HomePage() {
               <p className="mt-4 text-center text-xs text-white/30">No credit card needed · Cancel anytime · Branded subdomain + candidate dashboard included</p>
             </div>
           </div>
+
+          {/* 1-on-1 Coaching */}
+          <div className="mt-12 max-w-5xl mx-auto rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-8">
+            <div className="mb-6 text-center">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
+                💼 1-on-1 Coaching Sessions
+              </div>
+              <h3 className="text-2xl font-bold text-white">Need personal help? Book a session with Elena</h3>
+              <p className="mt-2 text-sm text-white/50">One-off sessions — no subscription needed.</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 max-w-2xl mx-auto">
+              <div className="rounded-2xl border border-white/10 bg-white/4 p-6">
+                <div className="mb-3 text-2xl">📄</div>
+                <h4 className="font-semibold text-white">CV Review Session</h4>
+                <p className="mt-1 mb-4 text-sm text-white/50">Live 30-min call. Elena reviews your CV and shows you exactly what to fix.</p>
+                <div className="mb-4 flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-white">£35</span>
+                  <span className="text-xs text-white/40">/ 30 min</span>
+                </div>
+                <a href="https://calendly.com/hello-hire-flow/cv-review-session"
+                  target="_blank" rel="noopener noreferrer"
+                  className="block w-full rounded-xl border border-cyan-500/30 py-2.5 text-center text-sm font-semibold text-cyan-300 transition hover:bg-cyan-500/10">
+                  Book CV Review →
+                </a>
+              </div>
+              <div className="rounded-2xl border border-cyan-500/30 bg-white/4 p-6">
+                <div className="mb-3 text-2xl">🚀</div>
+                <h4 className="font-semibold text-white">Career Strategy Session</h4>
+                <p className="mt-1 mb-4 text-sm text-white/50">60-min deep dive — CV, job search plan, LinkedIn, and mock interview.</p>
+                <div className="mb-4 flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-white">£60</span>
+                  <span className="text-xs text-white/40">/ 60 min</span>
+                </div>
+                <a href="https://calendly.com/hello-hire-flow/career-strategy-session"
+                  target="_blank" rel="noopener noreferrer"
+                  style={{ backgroundColor: "#06b6d4", color: "#000" }}
+                  className="block w-full rounded-xl py-2.5 text-center text-sm font-bold transition hover:opacity-90">
+                  Book Strategy Session →
+                </a>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className="py-20">

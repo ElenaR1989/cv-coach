@@ -49,7 +49,8 @@ export default function CoachingPage() {
               <span className="text-white/40">/ 30 min</span>
             </div>
             <a
-              href="mailto:hello@hire-flow.app?subject=CV Review Session Booking&body=Hi Elena, I'd like to book a CV Review Session. My availability is:"
+              href="https://calendly.com/hello-hire-flow/cv-review-session"
+              target="_blank" rel="noopener noreferrer"
               style={{ backgroundColor: "#06b6d4", color: "#000" }}
               className="block w-full rounded-xl py-3 text-center text-sm font-bold transition hover:opacity-90"
             >
@@ -77,7 +78,8 @@ export default function CoachingPage() {
               <span className="text-white/40">/ 60 min</span>
             </div>
             <a
-              href="mailto:hello@hire-flow.app?subject=Full Job Search Strategy Session Booking&body=Hi Elena, I'd like to book a Full Job Search Strategy session. My availability is:"
+              href="https://calendly.com/hello-hire-flow/career-strategy-session"
+              target="_blank" rel="noopener noreferrer"
               style={{ backgroundColor: "#06b6d4", color: "#000" }}
               className="block w-full rounded-xl py-3 text-center text-sm font-bold transition hover:opacity-90"
             >

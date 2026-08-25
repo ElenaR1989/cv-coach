@@ -113,6 +113,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     recentApplicationsResult, applicationsThisPeriodResult,
     applicationsForCurrentPeriodChartResult, allApplicationsForInsightsResult,
     allCvProfilesResult, allCoverLettersResult,
+    referralClicksResult, profilesResult, agenciesResult,
   ] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers(),
     supabase.from("job_applications").select("*", { count: "exact", head: true }),
@@ -124,6 +125,9 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     supabase.from("job_applications").select("id, company, role, created_at, user_id"),
     supabase.from("cv_profiles").select("user_id"),
     supabase.from("cover_letters").select("user_id"),
+    supabaseAdmin.from("referral_clicks").select("ref, clicked_at").order("clicked_at", { ascending: false }).limit(50),
+    supabaseAdmin.from("profiles").select("id, plan, is_pro, open_to_agencies"),
+    supabaseAdmin.from("agencies").select("id, name, plan, created_at").order("created_at", { ascending: false }).limit(20),
   ])
 
   const authUsers: AuthUser[] = authUsersResult.data?.users ?? []
@@ -195,6 +199,31 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const topCompanies = Array.from(companyCounts.entries()).map(([company, count]) => ({ company, count })).sort((a, b) => b.count - a.count).slice(0, 5)
   const topRoles = Array.from(roleCounts.entries()).map(([role, count]) => ({ role, count })).sort((a, b) => b.count - a.count).slice(0, 5)
   const topActiveUsers = Array.from(userApplicationCounts.entries()).map(([userId, count]) => ({ userId, email: emailByUserId.get(userId) ?? userId, count })).sort((a, b) => b.count - a.count).slice(0, 5)
+
+  // Referral clicks
+  const referralClicks = referralClicksResult.data ?? []
+  const totalReferralClicks = referralClicks.length
+  const referralByRef = new Map<string, number>()
+  for (const click of referralClicks) {
+    referralByRef.set(click.ref, (referralByRef.get(click.ref) ?? 0) + 1)
+  }
+  const topReferrers = Array.from(referralByRef.entries()).map(([ref, count]) => ({ ref, count })).sort((a, b) => b.count - a.count).slice(0, 5)
+
+  // Plan breakdown
+  const profiles = profilesResult.data ?? []
+  const planCounts = { free: 0, pro: 0, premium: 0, other: 0 }
+  for (const p of profiles) {
+    const plan = (p.plan ?? "free").toLowerCase()
+    if (plan === "premium") planCounts.premium++
+    else if (plan === "pro" || p.is_pro) planCounts.pro++
+    else if (plan === "free" || !plan) planCounts.free++
+    else planCounts.other++
+  }
+  const openToAgenciesCount = profiles.filter(p => p.open_to_agencies).length
+
+  // Agencies
+  const agencies = agenciesResult.data ?? []
+  const totalAgencies = agencies.length
 
   const cvUserIds = new Set((allCvProfilesResult.data ?? []).map(i => i.user_id).filter(Boolean))
   const coverLetterUserIds = new Set((allCoverLettersResult.data ?? []).map(i => i.user_id).filter(Boolean))
@@ -315,6 +344,90 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
         <InsightCard title="Signups Growth" value={`${signupsGrowth > 0 ? "+" : ""}${signupsGrowth}%`} subtext={`${signupsThisPeriodCount} vs ${signupsPreviousPeriodCount} prev`} icon="👤" valueClass={signupsGrowth > 0 ? "text-emerald-400" : signupsGrowth < 0 ? "text-red-400" : "text-white"} />
         <InsightCard title="Engagement Rate" value={`${activeUserShare}%`} subtext="Users with ≥1 application" icon="⚡" />
         <InsightCard title="Active Users" value={`${allActiveUserIds.size}`} subtext={`of ${totalUsers} total users`} icon="🔥" />
+      </div>
+
+      {/* Plan breakdown + agencies + referrals */}
+      <div className="grid gap-6 xl:grid-cols-3">
+
+        {/* Plan breakdown */}
+        <div className={card}>
+          <h2 className="mb-4 text-sm font-semibold text-white">Plan Breakdown</h2>
+          <div className="space-y-3">
+            {[
+              { label: "Free", count: planCounts.free, color: "bg-white/20", textColor: "text-white/60" },
+              { label: "Pro", count: planCounts.pro, color: "bg-cyan-500", textColor: "text-cyan-300" },
+              { label: "Premium", count: planCounts.premium, color: "bg-amber-500", textColor: "text-amber-300" },
+            ].map(({ label, count, color, textColor }) => {
+              const pct = profiles.length === 0 ? 0 : Math.round((count / profiles.length) * 100)
+              return (
+                <div key={label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-xs font-medium ${textColor}`}>{label}</span>
+                    <span className="text-xs text-white/40">{count} users · {pct}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
+                    <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              )
+            })}
+            <div className="mt-4 pt-3 border-t border-white/8 flex items-center justify-between">
+              <span className="text-xs text-white/40">Open to agencies</span>
+              <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-300">{openToAgenciesCount} users</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Agencies */}
+        <div className={card}>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white">Agencies</h2>
+            <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalAgencies} total</span>
+          </div>
+          {agencies.length === 0 ? (
+            <p className="text-xs text-white/30">No agencies signed up yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {agencies.map(agency => (
+                <div key={agency.id} className={subCard + " flex items-center justify-between gap-3"}>
+                  <div>
+                    <p className="text-sm font-medium text-white">{agency.name || "Unnamed"}</p>
+                    <p className="text-xs text-white/35">{formatDate(agency.created_at)}</p>
+                  </div>
+                  <span className="rounded-full border border-violet-500/25 bg-violet-500/10 px-2 py-0.5 text-xs text-violet-300 capitalize">{agency.plan || "starter"}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Referral clicks */}
+        <div className={card}>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white">Referral Clicks</h2>
+            <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalReferralClicks} total</span>
+          </div>
+          {topReferrers.length === 0 ? (
+            <p className="text-xs text-white/30">No referral clicks yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {topReferrers.map(({ ref, count }) => (
+                <div key={ref} className={subCard + " flex items-center justify-between gap-3"}>
+                  <div>
+                    <p className="text-sm font-medium text-white">{ref}</p>
+                    <p className="text-xs text-white/35">affiliate link</p>
+                  </div>
+                  <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 text-xs text-amber-300">{count} click{count !== 1 ? "s" : ""}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {referralClicks.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-white/8">
+              <p className="text-xs text-white/30">Latest: {formatDate(referralClicks[0]?.clicked_at)} · {referralClicks[0]?.ref}</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Charts */}
