@@ -275,7 +275,7 @@ export default function PricingPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {[
               { q: "Can I cancel anytime?", a: "Yes — cancel anytime with no questions asked. You keep Pro until the end of your billing period." },
-              { q: "Is my CV data safe?", a: "Yes. Your data is stored securely and never shared with third parties or employers." },
+              { q: "Is my CV data safe?", a: "Yes. Your data is stored securely and never shared without your permission. If you choose to opt in, recruiters on our platform can discover your profile — but this is entirely optional and off by default." },
               { q: "What's included in the free plan?", a: "You get full access to job tracking, job search, 1 practice interview per month, and 3 AI cover letters." },
               { q: "Do you offer any discounts?", a: "We occasionally run promotions for early users. Sign up free and keep an eye on your email for special offers." },
               { q: "What is the Premium package?", a: "A full done-with-you career service — CV rewrite, 3 coaching sessions, LinkedIn review, career roadmap, and 12 months of HireFlow Pro. Limited spots available." },
