@@ -502,6 +502,22 @@ const upgradeHref = "/pricing"
         </div>
       )}
 
+      {/* Career Quiz banner */}
+      <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <span className="text-3xl">🧭</span>
+          <div>
+            <p className="text-sm font-semibold text-white">Not sure what career is right for you?</p>
+            <p className="text-xs text-white/40 mt-0.5">Take our free 3-minute career quiz and discover your top matches with salary ranges.</p>
+          </div>
+        </div>
+        <Link href="/career-quiz"
+          style={{ backgroundColor: "#06b6d4", color: "#000" }}
+          className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold transition hover:opacity-90 text-center">
+          Take the quiz →
+        </Link>
+      </div>
+
       <div>
         <h1 className="text-4xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">
