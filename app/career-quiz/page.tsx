@@ -309,6 +309,7 @@ function getResults(answers: Record<string, string>): CareerMatch[] {
 }
 
 export default function CareerQuizPage() {
+  const [started, setStarted] = useState(false)
   const [current, setCurrent] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [selected, setSelected] = useState<string | null>(null)
@@ -327,6 +328,7 @@ export default function CareerQuizPage() {
           // All answers complete — restore results
           setFinalAnswers(parsed)
           setResults(getResults(parsed))
+          setStarted(true)
           sessionStorage.removeItem("quiz_answers")
         }
       } catch {}
@@ -441,16 +443,17 @@ export default function CareerQuizPage() {
               <div className="absolute inset-0 flex items-end justify-center pb-4">
                 <div className="mx-4 w-full max-w-md rounded-2xl border border-cyan-500/30 bg-[#050816]/95 backdrop-blur-md p-6 text-center shadow-2xl">
                   <div className="mb-2 text-2xl">🔒</div>
-                  <h3 className="text-lg font-bold text-white mb-1">Your full results are ready</h3>
-                  <p className="text-sm text-white/50 mb-5">
-                    Create your free account to unlock all 3 career matches, salary ranges, qualification routes, and your personalised next steps.
+                  <h3 className="text-lg font-bold text-white mb-1">Your full results are ready!</h3>
+                  <p className="text-sm text-white/50 mb-4">
+                    Create your free account to unlock all 3 career matches, salary ranges, and your personalised next steps.
                   </p>
                   <Link href={`/signup?next=/career-quiz`}
                     onClick={() => sessionStorage.setItem("quiz_answers", JSON.stringify(finalAnswers))}
                     style={{ backgroundColor: "#06b6d4", color: "#000" }}
-                    className="block w-full rounded-xl py-3 text-sm font-bold mb-3 hover:opacity-90 transition">
+                    className="block w-full rounded-xl py-3 text-sm font-bold mb-2 hover:opacity-90 transition">
                     Create free account to unlock →
                   </Link>
+                  <p className="text-xs text-white/25 mb-2">Takes 30 seconds · 100% free · No credit card</p>
                   <Link href="/login?next=/career-quiz" onClick={() => sessionStorage.setItem("quiz_answers", JSON.stringify(finalAnswers))}
                     className="text-xs text-white/30 hover:text-white/60 transition underline">
                     I already have an account — sign in
@@ -529,7 +532,46 @@ export default function CareerQuizPage() {
     <div className="min-h-screen bg-[#050816] text-white">
       <div className="mx-auto max-w-xl px-6 py-16">
 
-        <div className="mb-10 flex items-center justify-between">
+        {/* Intro screen */}
+        {!started && !results && (
+          <div className="flex flex-col items-center text-center">
+            <Link href="/" className="mb-10 flex items-center gap-3">
+              <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
+              <span className="font-semibold text-sm">HireFlow</span>
+            </Link>
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
+              🧭 Free Career Match Quiz
+            </div>
+            <h1 className="text-3xl font-bold leading-tight sm:text-4xl">
+              Find out which career<br />actually suits you
+            </h1>
+            <p className="mt-4 text-base text-white/55 leading-7 max-w-sm">
+              Answer 12 quick questions and we'll match you to the careers that fit your personality, skills, and goals — with real salary ranges.
+            </p>
+            <div className="mt-8 w-full max-w-xs space-y-3">
+              <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/4 px-4 py-3 text-sm text-white/60">
+                <span>⏱️</span> Takes about 3 minutes
+              </div>
+              <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/4 px-4 py-3 text-sm text-white/60">
+                <span>💰</span> See real UK salary ranges
+              </div>
+              <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/4 px-4 py-3 text-sm text-white/60">
+                <span>🎯</span> Get your top 3 career matches
+              </div>
+            </div>
+            <button
+              onClick={() => setStarted(true)}
+              style={{ backgroundColor: "#06b6d4", color: "#000" }}
+              className="mt-8 w-full max-w-xs rounded-xl py-4 text-base font-bold transition hover:opacity-90">
+              Start the quiz →
+            </button>
+            <p className="mt-3 text-xs text-white/25">Free · No signup needed to start</p>
+          </div>
+        )}
+
+        {/* Quiz questions */}
+        {started && !results && (
+        <><div className="mb-10 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
             <span className="font-semibold text-sm">HireFlow</span>
@@ -581,6 +623,7 @@ export default function CareerQuizPage() {
           }`}>
           {current + 1 === questions.length ? "See my results →" : "Next →"}
         </button>
+        </>)}
 
       </div>
     </div>
