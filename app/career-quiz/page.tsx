@@ -308,6 +308,50 @@ function getResults(answers: Record<string, string>): CareerMatch[] {
   return careers
 }
 
+function EmailUnlock({ onUnlock, answers }: { onUnlock: () => void; answers: Record<string, string> }) {
+  const [email, setEmail] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!email.trim()) return
+    setLoading(true)
+    try {
+      await fetch("/api/quiz-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), answers }),
+      })
+    } catch {}
+    setDone(true)
+    setLoading(false)
+    onUnlock()
+  }
+
+  if (done) return <p className="text-sm text-cyan-300 py-2">✅ Unlocked! Scroll up to see your results.</p>
+
+  return (
+    <form onSubmit={handleSubmit} className="flex gap-2">
+      <input
+        type="email"
+        required
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        placeholder="Your email address"
+        className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-cyan-400/50 transition"
+      />
+      <button
+        type="submit"
+        disabled={loading}
+        style={{ backgroundColor: "#06b6d4", color: "#000" }}
+        className="rounded-xl px-4 py-3 text-sm font-bold transition hover:opacity-90 disabled:opacity-50">
+        {loading ? "..." : "Unlock"}
+      </button>
+    </form>
+  )
+}
+
 export default function CareerQuizPage() {
   const [started, setStarted] = useState(false)
   const [current, setCurrent] = useState(0)
@@ -445,17 +489,21 @@ export default function CareerQuizPage() {
                   <div className="mb-2 text-2xl">🔒</div>
                   <h3 className="text-lg font-bold text-white mb-1">Your full results are ready!</h3>
                   <p className="text-sm text-white/50 mb-4">
-                    Create your free account to unlock all 3 career matches, salary ranges, and your personalised next steps.
+                    Enter your email to unlock all 3 career matches, salary ranges, and your personalised next steps — free, no password needed.
                   </p>
+                  <EmailUnlock onUnlock={() => setUnlocked(true)} answers={finalAnswers} />
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-white/10" />
+                    <span className="text-xs text-white/25">or</span>
+                    <div className="h-px flex-1 bg-white/10" />
+                  </div>
                   <Link href={`/signup?next=/career-quiz`}
                     onClick={() => sessionStorage.setItem("quiz_answers", JSON.stringify(finalAnswers))}
-                    style={{ backgroundColor: "#06b6d4", color: "#000" }}
-                    className="block w-full rounded-xl py-3 text-sm font-bold mb-2 hover:opacity-90 transition">
-                    Create free account to unlock →
+                    className="block w-full rounded-xl border border-white/10 py-2.5 text-xs text-white/40 mt-3 hover:text-white/70 transition">
+                    Create a full free account instead →
                   </Link>
-                  <p className="text-xs text-white/25 mb-2">Takes 30 seconds · 100% free · No credit card</p>
                   <Link href="/login?next=/career-quiz" onClick={() => sessionStorage.setItem("quiz_answers", JSON.stringify(finalAnswers))}
-                    className="text-xs text-white/30 hover:text-white/60 transition underline">
+                    className="block text-xs text-white/25 hover:text-white/50 transition mt-2">
                     I already have an account — sign in
                   </Link>
                 </div>
