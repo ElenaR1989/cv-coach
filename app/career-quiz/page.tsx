@@ -7,18 +7,6 @@ import Image from "next/image"
 
 const questions = [
   {
-    id: "qualification",
-    section: "About you",
-    question: "What is your highest qualification?",
-    options: [
-      { label: "No formal qualifications", value: "none" },
-      { label: "GCSEs or equivalent", value: "gcse" },
-      { label: "A-Levels or equivalent", value: "alevels" },
-      { label: "Bachelor's Degree", value: "degree" },
-      { label: "Master's or higher", value: "masters" },
-    ],
-  },
-  {
     id: "field",
     section: "About you",
     question: "What field did you study or work in?",
@@ -30,19 +18,6 @@ const questions = [
       { label: "Science / Research", value: "science" },
       { label: "Education / Training", value: "education" },
       { label: "No specific field yet", value: "none" },
-    ],
-  },
-  {
-    id: "experience",
-    section: "About you",
-    question: "How much work experience do you have?",
-    options: [
-      { label: "None — I'm just starting out", value: "0" },
-      { label: "Less than 1 year", value: "1" },
-      { label: "1–3 years", value: "3" },
-      { label: "3–5 years", value: "5" },
-      { label: "5–10 years", value: "10" },
-      { label: "10+ years", value: "10+" },
     ],
   },
   {
@@ -79,16 +54,6 @@ const questions = [
     ],
   },
   {
-    id: "pace",
-    section: "Work style",
-    question: "What pace suits you best?",
-    options: [
-      { label: "Fast-paced, always something new", value: "fast" },
-      { label: "Steady and structured", value: "steady" },
-      { label: "A balance of both", value: "balance" },
-    ],
-  },
-  {
     id: "priority",
     section: "What matters to you",
     question: "What matters most in your career?",
@@ -98,28 +63,6 @@ const questions = [
       { label: "Making a difference and helping people", value: "impact" },
       { label: "Career progression and learning", value: "growth" },
       { label: "Job security and stability", value: "stability" },
-    ],
-  },
-  {
-    id: "leadership",
-    section: "What matters to you",
-    question: "How do you see yourself at work?",
-    options: [
-      { label: "I like to lead and take charge", value: "leader" },
-      { label: "I prefer to support and collaborate", value: "supporter" },
-      { label: "I like to work independently and deliver results", value: "independent" },
-    ],
-  },
-  {
-    id: "hobby",
-    section: "About you personally",
-    question: "What's your biggest passion or hobby?",
-    options: [
-      { label: "🎨 Creative — art, music, writing, design", value: "creative" },
-      { label: "🏃 Physical / outdoors — sport, fitness, nature, travel", value: "physical" },
-      { label: "💻 Tech & problem solving — computers, gadgets, puzzles", value: "tech" },
-      { label: "🤝 People & community — volunteering, socialising, caring", value: "people" },
-      { label: "💰 Business & money — entrepreneurship, investing, sales", value: "business" },
     ],
   },
   {
@@ -594,11 +537,11 @@ export default function CareerQuizPage() {
               Find out which career<br />actually suits you
             </h1>
             <p className="mt-4 text-base text-white/55 leading-7 max-w-sm">
-              Answer 12 quick questions and we'll match you to the careers that fit your personality, skills, and goals — with real salary ranges.
+              Answer 7 quick questions and we'll match you to the careers that fit your personality, skills, and goals — with real salary ranges.
             </p>
             <div className="mt-8 w-full max-w-xs space-y-3">
               <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/4 px-4 py-3 text-sm text-white/60">
-                <span>⏱️</span> Takes about 3 minutes
+                <span>⏱️</span> Takes about 2 minutes
               </div>
               <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/4 px-4 py-3 text-sm text-white/60">
                 <span>💰</span> See real UK salary ranges
