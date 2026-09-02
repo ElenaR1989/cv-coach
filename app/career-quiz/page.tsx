@@ -429,10 +429,10 @@ export default function CareerQuizPage() {
             {!unlocked && (
               <div className="absolute inset-0 flex items-end justify-center pb-4">
                 <div className="mx-4 w-full max-w-md rounded-2xl border border-cyan-500/30 bg-[#050816]/95 backdrop-blur-md p-6 text-center shadow-2xl">
-                  <div className="mb-2 text-2xl">🔒</div>
-                  <h3 className="text-lg font-bold text-white mb-1">Your full results are ready!</h3>
+                  <div className="mb-2 text-2xl">🚀</div>
+                  <h3 className="text-lg font-bold text-white mb-1">You're closer than you think!</h3>
                   <p className="text-sm text-white/50 mb-4">
-                    Enter your email to unlock all 3 career matches, salary ranges, and your personalised next steps — free, no password needed.
+                    Enter your email to unlock your full results and get one step closer to your dream career — free, no password needed.
                   </p>
                   <EmailUnlock onUnlock={() => setUnlocked(true)} answers={finalAnswers} />
                   <div className="mt-4 flex items-center gap-3">
