@@ -116,13 +116,6 @@ export default function HomePage() {
               >
                 Start improving your applications
               </Link>
-
-              <a
-                href="mailto:hello@hire-flow.app"
-                className="rounded-xl border border-white/20 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-              >
-                Request a demo
-              </a>
             </div>
             <p className="mt-4 text-xs text-white/40">
   No guesswork. No wasted applications. Just better results — faster.
@@ -405,34 +398,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="py-20">
-          <div className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-cyan-500/10 via-white/[0.03] to-violet-500/10 p-8 text-center backdrop-blur-xl sm:p-12">
-            <h2 className="text-3xl font-bold sm:text-4xl">
-              Want a quick demo?
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-white/70">
-              See how HireFlow can support smarter job applications for
-              individuals, advisors, and job centres.
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-              <a
-                href="mailto:hello@hire-flow.app"
-                className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:opacity-90"
-              >
-                Email us
-              </a>
-
-              <Link
-                href="/dashboard"
-                className="rounded-xl border border-white/20 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-              >
-                View app
-              </Link>
-            </div>
-          </div>
-        </section>
-
         {/* Career Quiz CTA */}
         <section className="mt-16 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-8 sm:p-12">
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
@@ -442,10 +407,10 @@ export default function HomePage() {
               </div>
               <h2 className="text-3xl font-bold sm:text-4xl">Not sure what career suits you?</h2>
               <p className="mt-4 text-lg text-white/60 leading-8">
-                Answer 9 quick questions about your qualifications, work style, and what matters to you — and we'll match you to real careers with salary ranges.
+                Answer 7 quick questions about your qualifications, work style, and what matters to you — and we'll match you to real careers with salary ranges.
               </p>
               <ul className="mt-6 space-y-3 text-sm text-white/60">
-                {["Takes less than 3 minutes", "Based on your real qualifications and experience", "Matched to careers with average UK salaries", "Free — no sign up needed"].map(item => (
+                {["Takes about 2 minutes", "Based on your real qualifications and experience", "Matched to careers with average UK salaries", "Free — no sign up needed"].map(item => (
                   <li key={item} className="flex items-center gap-2">
                     <span className="text-emerald-400">✓</span> {item}
                   </li>
