@@ -12,6 +12,7 @@ function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const agencySlug = searchParams.get("agency")
+  const nextPath = searchParams.get("next") === "/career-quiz" ? "/career-quiz" : null
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -34,9 +35,11 @@ function SignupForm() {
 
   const handleGoogle = async () => {
     setGoogleLoading(true)
-    const redirectTo = agencySlug
-      ? `${window.location.origin}/auth/callback?agency=${agencySlug}`
-      : `${window.location.origin}/auth/callback`
+    const callbackParams = new URLSearchParams()
+    if (agencySlug) callbackParams.set("agency", agencySlug)
+    if (nextPath) callbackParams.set("next", nextPath)
+    const query = callbackParams.toString()
+    const redirectTo = `${window.location.origin}/auth/callback${query ? `?${query}` : ""}`
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo },
@@ -62,8 +65,7 @@ function SignupForm() {
       }).catch(() => {})
     }
     if (agencySlug) await joinAgency(agencySlug)
-    const nextPath = searchParams.get("next")
-    router.push(nextPath === "/career-quiz" ? "/career-quiz" : "/verify-email")
+    router.push(nextPath ?? "/verify-email")
   }
 
   return (

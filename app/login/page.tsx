@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -14,9 +14,11 @@ const BENEFITS = [
   { icon: "📊", text: "Smart Coach spots your skill gaps" },
 ]
 
-export default function LoginPage() {
+function LoginForm() {
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const nextPath = searchParams.get('next') === '/career-quiz' ? '/career-quiz' : null
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,9 +28,12 @@ export default function LoginPage() {
 
   const handleGoogle = async () => {
     setGoogleLoading(true)
+    const redirectTo = nextPath
+      ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+      : `${window.location.origin}/auth/callback`
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo },
     })
   }
 
@@ -46,7 +51,7 @@ export default function LoginPage() {
       return
     }
 
-    router.push('/dashboard')
+    router.push(nextPath ?? '/dashboard')
     router.refresh()
   }
 
@@ -192,5 +197,13 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#050816] text-white/40">Loading…</div>}>
+      <LoginForm />
+    </Suspense>
   )
 }
