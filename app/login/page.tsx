@@ -4,7 +4,7 @@ import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import Image from 'next/image'
+import BrandLogo from '@/components/brand-logo'
 
 const BENEFITS = [
   { icon: "🎯", text: "Track every application in one place" },
@@ -64,10 +64,7 @@ function LoginForm() {
         <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-violet-500/10 blur-3xl" />
 
         <div className="relative">
-          <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo.png" alt="HireFlow" width={36} height={36} className="rounded-md" />
-            <span className="text-lg font-semibold">HireFlow</span>
-          </Link>
+          <BrandLogo size={36} textClassName="text-lg font-semibold" />
         </div>
 
         <div className="relative space-y-8">
@@ -108,10 +105,7 @@ function LoginForm() {
 
       {/* Right panel — form */}
       <div className="flex w-full lg:w-1/2 flex-col items-center justify-center px-6 py-12">
-        <Link href="/" className="mb-8 flex items-center gap-3 lg:hidden">
-          <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
-          <span className="text-base font-semibold">HireFlow</span>
-        </Link>
+        <BrandLogo className="mb-8 flex items-center gap-3 lg:hidden" textClassName="text-base font-semibold" />
 
         <div className="w-full max-w-sm">
           <div className="mb-8">
