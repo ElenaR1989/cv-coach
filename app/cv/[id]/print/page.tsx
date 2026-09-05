@@ -23,10 +23,19 @@ export default async function CvPrintPage({ params, searchParams }: PageProps) {
 
   const supabase = await createClient()
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    notFound()
+  }
+
   const { data: cv, error } = await supabase
     .from("cv_profiles")
     .select("*")
     .eq("id", id)
+    .eq("user_id", user.id)
     .single()
 
   if (error || !cv) {
