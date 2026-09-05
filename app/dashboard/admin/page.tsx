@@ -2,6 +2,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
+import { getIsAdmin } from "@/lib/auth/is-admin"
 import AdminApplicationsChart from "@/components/admin-applications-chart"
 import AdminSignupsChart from "@/components/admin-signups-chart"
 import InviteForm from "./invite-form"
@@ -103,6 +104,16 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
+
+  // This page reads every user's applications, CVs, cover letters, and
+  // profile/plan data via the service-role client below — it must never be
+  // reachable by a non-admin. Hiding the nav link is not access control.
+  const { data: viewerProfile } = await supabase
+    .from("profiles")
+    .select("is_admin, role")
+    .eq("id", user.id)
+    .single()
+  if (!getIsAdmin(viewerProfile, user.email)) redirect("/dashboard")
 
   const currentPeriodStart = startOfDaysAgo(rangeDays)
   const previousPeriodStart = startOfDaysAgo(rangeDays * 2)
