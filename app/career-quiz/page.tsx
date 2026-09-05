@@ -526,37 +526,31 @@ export default function CareerQuizPage() {
         {/* Intro screen */}
         {!started && !results && (
           <div className="flex flex-col items-center text-center">
-            <Link href="/" className="mb-10 flex items-center gap-3">
+            <Link href="/" className="mb-6 flex items-center gap-3">
               <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
               <span className="font-semibold text-sm">HireFlow</span>
             </Link>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
               🧭 Free Career Match Quiz
             </div>
             <h1 className="text-3xl font-bold leading-tight sm:text-4xl">
               Find out which career<br />actually suits you
             </h1>
-            <p className="mt-4 text-base text-white/55 leading-7 max-w-sm">
-              Answer 7 quick questions and we'll match you to the careers that fit your personality, skills, and goals — with real salary ranges.
+            <p className="mt-3 text-base text-white/55 leading-7 max-w-sm">
+              Answer 7 quick questions and we'll match you to the careers that fit you — with real salary ranges.
             </p>
-            <div className="mt-8 w-full max-w-xs space-y-3">
-              <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/4 px-4 py-3 text-sm text-white/60">
-                <span>⏱️</span> Takes about 2 minutes
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/4 px-4 py-3 text-sm text-white/60">
-                <span>💰</span> See real UK salary ranges
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/4 px-4 py-3 text-sm text-white/60">
-                <span>🎯</span> Get your top 3 career matches
-              </div>
-            </div>
             <button
               onClick={() => setStarted(true)}
               style={{ backgroundColor: "#06b6d4", color: "#000" }}
-              className="mt-8 w-full max-w-xs rounded-xl py-4 text-base font-bold transition hover:opacity-90">
+              className="mt-6 w-full max-w-xs rounded-xl py-4 text-base font-bold transition hover:opacity-90">
               Start the quiz →
             </button>
             <p className="mt-3 text-xs text-white/25">Free · No signup needed to start</p>
+            <div className="mt-6 flex w-full max-w-xs flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-white/40">
+              <span>⏱️ 2 minutes</span>
+              <span>💰 Real salary ranges</span>
+              <span>🎯 Top 3 matches</span>
+            </div>
           </div>
         )}
 
