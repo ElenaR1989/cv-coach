@@ -13,9 +13,6 @@ export default function PostHogProvider({
       api_host: "https://eu.posthog.com",
       capture_pageview: true,
       capture_pageleave: true,
-      loaded: (ph) => {
-        ph.capture("test_event")
-      },
     })
   }, [])
 
