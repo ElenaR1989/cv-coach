@@ -116,6 +116,13 @@ export default function DashboardNavbar({ isAdmin = false }: DashboardNavbarProp
                 <span>⚙️</span> Settings
               </Link>
               <Link
+                href="/account"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
+              >
+                <span>💳</span> Billing & Plan
+              </Link>
+              <Link
                 href="/dashboard/analytics"
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-white/70 transition hover:bg-white/5 hover:text-white"

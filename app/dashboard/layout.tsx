@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { createClient } from "@/lib/supabase/server"
+import { getIsAdmin } from "@/lib/auth/is-admin"
 import DashboardNavbar from "@/components/dashboard-navbar"
 
 export default async function DashboardLayout({
@@ -22,10 +23,7 @@ export default async function DashboardLayout({
       .eq("id", user.id)
       .single()
 
-    isAdmin =
-      profile?.is_admin === true ||
-      profile?.role === "admin" ||
-      user.email === "elena.zmau@icloud.com"
+    isAdmin = getIsAdmin(profile, user.email)
   }
 
   return (
