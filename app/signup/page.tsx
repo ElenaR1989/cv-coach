@@ -3,8 +3,8 @@
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter, useSearchParams } from "next/navigation"
-import Image from "next/image"
 import Link from "next/link"
+import BrandLogo from "@/components/brand-logo"
 import { Suspense } from "react"
 
 function SignupForm() {
@@ -72,10 +72,7 @@ function SignupForm() {
     <div className="flex min-h-screen bg-[#050816] text-white">
       {/* Left panel */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 border-r border-white/10">
-        <Link href="/" className="flex items-center gap-3">
-          <Image src="/logo.png" alt="HireFlow" width={36} height={36} className="rounded-md" />
-          <span className="text-lg font-semibold">HireFlow</span>
-        </Link>
+        <BrandLogo size={36} textClassName="text-lg font-semibold" />
         <div>
           <h2 className="text-3xl font-bold leading-tight mb-6">
             Stop guessing your<br />job applications.<br />Start improving them.
@@ -104,10 +101,7 @@ function SignupForm() {
       {/* Right panel */}
       <div className="flex flex-1 flex-col items-center justify-center px-6">
         <div className="w-full max-w-sm">
-          <div className="mb-8 lg:hidden flex items-center gap-3">
-            <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
-            <span className="text-lg font-semibold">HireFlow</span>
-          </div>
+          <BrandLogo className="mb-8 lg:hidden flex items-center gap-3" textClassName="text-lg font-semibold" />
 
           <h1 className="text-2xl font-bold mb-1">Create your free account</h1>
           <p className="text-sm text-white/40 mb-8">No credit card needed. Start in seconds.</p>
