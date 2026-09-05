@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import Image from "next/image"
+import BrandLogo from "@/components/brand-logo"
 
 const PLANS = [
   {
@@ -77,10 +77,7 @@ export default function NewAgencyPage() {
 
         {/* Nav */}
         <div className="mb-10 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
-            <span className="text-lg font-semibold">HireFlow</span>
-          </Link>
+          <BrandLogo textClassName="text-lg font-semibold" />
           {step === "setup" && (
             <button onClick={() => setStep("plan")} className="text-sm text-white/40 hover:text-white transition">← Change plan</button>
           )}

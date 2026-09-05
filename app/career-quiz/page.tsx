@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
 import Image from "next/image"
+import BrandLogo from "@/components/brand-logo"
 
 const questions = [
   {
@@ -526,10 +527,7 @@ export default function CareerQuizPage() {
         {/* Intro screen */}
         {!started && !results && (
           <div className="flex flex-col items-center text-center">
-            <Link href="/" className="mb-6 flex items-center gap-3">
-              <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
-              <span className="font-semibold text-sm">HireFlow</span>
-            </Link>
+            <BrandLogo className="mb-6 flex items-center gap-3" textClassName="font-semibold text-sm" />
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
               🧭 Free Career Match Quiz
             </div>
@@ -557,10 +555,7 @@ export default function CareerQuizPage() {
         {/* Quiz questions */}
         {started && !results && (
         <><div className="mb-10 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
-            <span className="font-semibold text-sm">HireFlow</span>
-          </Link>
+          <BrandLogo textClassName="font-semibold text-sm" />
           <span className="text-xs text-white/30">{current + 1} / {questions.length}</span>
         </div>
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import BrandLogo from "@/components/brand-logo"
 
 export default function AffiliatePage() {
   const [form, setForm] = useState({ name: "", email: "", how: "" })
@@ -41,10 +41,7 @@ export default function AffiliatePage() {
 
         {/* Nav */}
         <div className="mb-10 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
-            <span className="font-semibold">HireFlow</span>
-          </Link>
+          <BrandLogo />
           <Link href="/pricing" className="text-sm text-white/50 hover:text-white transition">Pricing</Link>
         </div>
 

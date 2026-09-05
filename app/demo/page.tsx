@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import BrandLogo from "@/components/brand-logo"
 
 /* ─── Mock data ─────────────────────────────────────────────── */
 
@@ -426,10 +426,7 @@ export default function DemoPage() {
       {/* Nav */}
       <div className="sticky top-0 z-30 border-b border-white/8 bg-[#050816]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="HireFlow" width={28} height={28} className="rounded-md" />
-            <span className="text-sm font-semibold">HireFlow</span>
-          </Link>
+          <BrandLogo size={28} className="flex items-center gap-2.5" textClassName="text-sm font-semibold" />
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-sm text-white/50 hover:text-white transition">Sign in</Link>
             <Link href="/signup" style={{ backgroundColor: "#06b6d4", color: "#000" }}

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import Image from "next/image"
+import BrandLogo from "@/components/brand-logo"
 import { Suspense } from "react"
 import ReferralCTA from "./referral-cta"
 
@@ -31,10 +31,7 @@ export default function PremiumPage() {
 
         {/* Nav */}
         <div className="mb-10 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
-            <span className="font-semibold">HireFlow</span>
-          </Link>
+          <BrandLogo />
           <Link href="/pricing" className="text-sm text-white/50 hover:text-white transition">← Pricing</Link>
         </div>
 

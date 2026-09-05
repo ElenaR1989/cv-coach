@@ -1,5 +1,5 @@
 import Link from "next/link"
-import Image from "next/image"
+import BrandLogo from "@/components/brand-logo"
 
 export default function CoachingPage() {
   return (
@@ -8,10 +8,7 @@ export default function CoachingPage() {
 
         {/* Header */}
         <div className="mb-10 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo.png" alt="HireFlow" width={32} height={32} className="rounded-md" />
-            <span className="text-lg font-semibold">HireFlow</span>
-          </Link>
+          <BrandLogo textClassName="text-lg font-semibold" />
           <Link href="/dashboard" className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/60 transition hover:text-white">
             Go to app →
           </Link>
