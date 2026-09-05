@@ -6,6 +6,8 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
   const agencySlug = searchParams.get("agency")
+  // Allowlist redirect targets to avoid an open redirect via a crafted `next` param
+  const next = searchParams.get("next") === "/career-quiz" ? "/career-quiz" : "/dashboard"
 
   if (code) {
     const supabase = await createClient()
@@ -34,5 +36,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/dashboard`)
+  return NextResponse.redirect(`${origin}${next}`)
 }
