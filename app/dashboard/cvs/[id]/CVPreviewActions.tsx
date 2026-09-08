@@ -68,106 +68,52 @@ export default function CVPreviewActions({ cvId, template, theme }: Props) {
     })
   }
 
+  const activeBtn = "bg-black text-white border-black"
+  const inactiveBtn = "bg-white text-gray-700 border-gray-300 hover:border-gray-500 hover:bg-gray-50"
+
   return (
     <div className="print-hide flex flex-wrap items-center gap-2">
-      <a
-        href="/dashboard/cvs"
-        className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-      >
-        Back
+      <a href="/dashboard/cvs" className={`rounded-lg border px-4 py-2 text-sm ${inactiveBtn}`}>
+        ← Back
       </a>
-
-      <a
-        href={`/dashboard/cvs/${cvId}/edit`}
-        className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-      >
-        Edit
+      <a href={`/dashboard/cvs/${cvId}/edit`} className={`rounded-lg border px-4 py-2 text-sm ${inactiveBtn}`}>
+        ✏️ Edit
       </a>
-
-      <button
-        type="button"
-        onClick={openCleanPdfPage}
-        className="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-      >
-        Export PDF
+      <button type="button" onClick={openCleanPdfPage} className={`rounded-lg border px-4 py-2 text-sm ${inactiveBtn}`}>
+        ⬇️ Export PDF
       </button>
 
-      <button
-        type="button"
-        onClick={() => changeTemplate("classic")}
-        disabled={isPending}
-        className={`rounded-lg border px-4 py-2 text-sm ${
-          template === "classic" ? "bg-black text-white" : "hover:bg-muted"
-        }`}
-      >
+      <span className="ml-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Template:</span>
+
+      <button type="button" onClick={() => changeTemplate("classic")} disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${template === "classic" ? activeBtn : inactiveBtn}`}>
         Classic
       </button>
-
-      <button
-        type="button"
-        onClick={() => changeTemplate("sidebar")}
-        disabled={isPending}
-        className={`rounded-lg border px-4 py-2 text-sm ${
-          template === "sidebar" ? "bg-black text-white" : "hover:bg-muted"
-        }`}
-      >
+      <button type="button" onClick={() => changeTemplate("sidebar")} disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${template === "sidebar" ? activeBtn : inactiveBtn}`}>
         Sidebar
       </button>
-
-      <button
-        type="button"
-        onClick={() => changeTemplate("minimal")}
-        disabled={isPending}
-        className={`rounded-lg border px-4 py-2 text-sm ${
-          template === "minimal" ? "bg-black text-white" : "hover:bg-muted"
-        }`}
-      >
+      <button type="button" onClick={() => changeTemplate("minimal")} disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${template === "minimal" ? activeBtn : inactiveBtn}`}>
         Minimal
       </button>
 
-      <span className="ml-2 text-sm text-gray-500">Theme:</span>
+      <span className="ml-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Theme:</span>
 
-      <button
-        type="button"
-        onClick={() => changeTheme("default")}
-        disabled={isPending}
-        className={`rounded-lg border px-4 py-2 text-sm ${
-          theme === "default" ? "bg-black text-white" : "hover:bg-muted"
-        }`}
-      >
+      <button type="button" onClick={() => changeTheme("default")} disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${theme === "default" ? activeBtn : inactiveBtn}`}>
         Default
       </button>
-
-      <button
-        type="button"
-        onClick={() => changeTheme("blue")}
-        disabled={isPending}
-        className={`rounded-lg border px-4 py-2 text-sm ${
-          theme === "blue" ? "bg-black text-white" : "hover:bg-muted"
-        }`}
-      >
+      <button type="button" onClick={() => changeTheme("blue")} disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${theme === "blue" ? activeBtn : inactiveBtn}`}>
         Blue
       </button>
-
-      <button
-        type="button"
-        onClick={() => changeTheme("emerald")}
-        disabled={isPending}
-        className={`rounded-lg border px-4 py-2 text-sm ${
-          theme === "emerald" ? "bg-black text-white" : "hover:bg-muted"
-        }`}
-      >
+      <button type="button" onClick={() => changeTheme("emerald")} disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${theme === "emerald" ? activeBtn : inactiveBtn}`}>
         Emerald
       </button>
-
-      <button
-        type="button"
-        onClick={() => changeTheme("burgundy")}
-        disabled={isPending}
-        className={`rounded-lg border px-4 py-2 text-sm ${
-          theme === "burgundy" ? "bg-black text-white" : "hover:bg-muted"
-        }`}
-      >
+      <button type="button" onClick={() => changeTheme("burgundy")} disabled={isPending}
+        className={`rounded-lg border px-4 py-2 text-sm ${theme === "burgundy" ? activeBtn : inactiveBtn}`}>
         Burgundy
       </button>
     </div>
