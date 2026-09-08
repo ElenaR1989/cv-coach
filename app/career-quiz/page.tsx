@@ -509,7 +509,7 @@ export default function CareerQuizPage() {
                 className="inline-block rounded-xl px-8 py-3 text-sm font-bold transition hover:opacity-90 mb-3">
                 Create my free account →
               </Link>
-              <p className="text-xs text-white/30">Free forever · No credit card · Takes 1 minute</p>
+              <p className="text-xs text-white/30">Free to start · No credit card · Takes 1 minute</p>
             </div>
           )}
 
