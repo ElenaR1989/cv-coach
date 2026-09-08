@@ -494,21 +494,24 @@ export default function CareerQuizPage() {
             )
           })()}
 
-          {unlocked && <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 mb-6 text-center">
-            <p className="font-semibold text-white mb-1">Want help landing one of these roles?</p>
-            <p className="text-sm text-white/50 mb-4">HireFlow helps you tailor your CV, practise interviews with AI, and track every application.</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/signup"
+          {unlocked && (
+            <div className="rounded-2xl border border-cyan-500/40 bg-gradient-to-b from-cyan-500/10 to-transparent p-6 mb-6 text-center">
+              <div className="mb-3 text-2xl">🎯</div>
+              <p className="font-bold text-white text-lg mb-1">
+                Your next step: build your CV for {results[0].title}
+              </p>
+              <p className="text-sm text-white/50 mb-5 max-w-xs mx-auto">
+                Create a free HireFlow account to tailor your CV to this role, practise interviews with AI, and track every application — all in one place.
+              </p>
+              <Link
+                href={`/signup?next=/career-quiz`}
                 style={{ backgroundColor: "#06b6d4", color: "#000" }}
-                className="rounded-xl px-6 py-3 text-sm font-bold transition hover:opacity-90">
-                Start applying free →
+                className="inline-block rounded-xl px-8 py-3 text-sm font-bold transition hover:opacity-90 mb-3">
+                Create my free account →
               </Link>
-              <Link href="/premium"
-                className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-6 py-3 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/20">
-                Get expert career coaching
-              </Link>
+              <p className="text-xs text-white/30">Free forever · No credit card · Takes 1 minute</p>
             </div>
-          </div>}
+          )}
 
           <div className="text-center">
             <button onClick={restart} className="text-sm text-white/30 hover:text-white transition">
