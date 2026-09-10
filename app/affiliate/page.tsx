@@ -50,9 +50,9 @@ export default function AffiliatePage() {
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs text-violet-300">
             💸 Affiliate Programme
           </div>
-          <h1 className="text-4xl font-bold sm:text-5xl">Earn £100 per sale.<br />Work when you want.</h1>
+          <h1 className="text-4xl font-bold sm:text-5xl">Earn money referring HireFlow.<br />Work when you want.</h1>
           <p className="mt-5 text-lg text-white/55 max-w-2xl mx-auto leading-8">
-            Refer people to HireFlow's £500 Premium Career Package. Every time someone buys through your link, you earn £100 — paid directly to you.
+            Refer people to HireFlow and earn commission on every sale — from Pro subscriptions to Premium coaching packages. No cap, no minimum, paid directly to you.
           </p>
         </div>
 
@@ -71,35 +71,35 @@ export default function AffiliatePage() {
           ))}
         </div>
 
-        {/* Earnings table */}
+        {/* Commission table */}
         <div className="mb-14 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-8">
-          <h2 className="mb-6 text-center text-xl font-bold">What you could earn</h2>
+          <h2 className="mb-6 text-center text-xl font-bold">What you earn per referral</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-white/40 text-left">
-                  <th className="pb-3 font-medium">Sales per month</th>
-                  <th className="pb-3 font-medium">Monthly earnings</th>
-                  <th className="pb-3 font-medium">Annual earnings</th>
+                  <th className="pb-3 font-medium">Package</th>
+                  <th className="pb-3 font-medium">Price</th>
+                  <th className="pb-3 font-medium">Your commission</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {[
-                  ["1 sale", "£100", "£1,200"],
-                  ["3 sales", "£300", "£3,600"],
-                  ["5 sales", "£500", "£6,000"],
-                  ["10 sales", "£1,000", "£12,000"],
-                ].map(([sales, monthly, annual]) => (
-                  <tr key={sales}>
-                    <td className="py-3 text-white">{sales}</td>
-                    <td className="py-3 text-violet-300 font-semibold">{monthly}</td>
-                    <td className="py-3 text-white/60">{annual}</td>
+                  ["Pro Plan", "£9.99/month", "£5 per signup"],
+                  ["1-2-1 Session (30 min)", "£30", "£10 per booking"],
+                  ["1-2-1 Session (1 hour)", "£60", "£20 per booking"],
+                  ["Premium Coaching Package", "£500", "£100 per sale"],
+                ].map(([pkg, price, commission]) => (
+                  <tr key={pkg}>
+                    <td className="py-3 text-white">{pkg}</td>
+                    <td className="py-3 text-white/60">{price}</td>
+                    <td className="py-3 text-violet-300 font-semibold">{commission}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="mt-4 text-xs text-white/30 text-center">No cap on earnings. No minimum. Paid per confirmed sale.</p>
+          <p className="mt-4 text-xs text-white/30 text-center">No cap on earnings. No minimum. Paid per confirmed sale within 7 days.</p>
         </div>
 
         {/* Who it's for */}
