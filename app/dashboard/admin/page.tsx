@@ -419,6 +419,54 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
         )}
       </div>
 
+      {/* Affiliate Applicants */}
+      {(() => {
+        const applicants = [
+          { name: "Safwan Ahmed", email: "safwxn.ahmxd08@gmail.com", ref: "safwan-ahmed", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
+          { name: "Samantha Evans", email: "samanthaevans140304@gmail.com", ref: "samantha-evans", status: "pending", source: "Indeed", note: "Email not sent yet" },
+          { name: "Oni Pamilerin", email: "onipamilerin2024@gmail.com", ref: "oni-pamilerin", status: "pending", source: "Indeed", note: "Email not sent yet" },
+          { name: "Fardowso Cabdulrahman", email: "fardowsocabdulrahman20@gmail.com", ref: "fardowso-cabdulrahman", status: "pending", source: "Indeed", note: "Email not sent yet" },
+          { name: "Osborn Cockburn", email: "osbornco@gmail.com", ref: "osborn-cockburn", status: "pending", source: "Indeed", note: "Email not sent yet" },
+        ]
+        const statusStyle = (s: string) => s === "active"
+          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+          : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+        return (
+          <div className={card}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white">🤝 Affiliate Applicants</h2>
+              <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{applicants.length} total</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-left border-b border-white/8 text-white/30">
+                    <th className="pb-2 font-medium">Name</th>
+                    <th className="pb-2 font-medium">Email</th>
+                    <th className="pb-2 font-medium">Referral link</th>
+                    <th className="pb-2 font-medium">Status</th>
+                    <th className="pb-2 font-medium">Notes</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {applicants.map(a => (
+                    <tr key={a.ref}>
+                      <td className="py-2.5 font-medium text-white pr-4">{a.name}</td>
+                      <td className="py-2.5 text-white/50 pr-4">{a.email}</td>
+                      <td className="py-2.5 text-cyan-400 pr-4 font-mono text-[10px]">hire-flow.app/signup?ref={a.ref}</td>
+                      <td className="py-2.5 pr-4">
+                        <span className={`rounded-full border px-2 py-0.5 capitalize ${statusStyle(a.status)}`}>{a.status}</span>
+                      </td>
+                      <td className="py-2.5 text-white/35">{a.note}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Plan breakdown + agencies + referrals */}
       <div className="grid gap-6 xl:grid-cols-3">
 
