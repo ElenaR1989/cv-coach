@@ -3,6 +3,8 @@ import "./globals.css"
 import PostHogProvider from "@/components/posthog-provider"
 import { Analytics } from "@vercel/analytics/react"
 import Script from "next/script"
+import { Suspense } from "react"
+import RefCapture from "@/components/ref-capture"
 
 export const metadata: Metadata = {
   title: "CV Integration in Job Form",
@@ -40,6 +42,7 @@ export default function RootLayout({
             <div className="absolute bottom-0 left-1/3 h-[400px] w-[400px] rounded-full bg-emerald-500/20 blur-[100px]" />
           </div>
 
+          <Suspense fallback={null}><RefCapture /></Suspense>
           <main>{children}</main>
           <Analytics />
         </PostHogProvider>

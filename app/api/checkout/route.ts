@@ -47,6 +47,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
+    // Look up affiliate ref from user's profile
+    const { createClient: createAdmin } = await import("@supabase/supabase-js")
+    const adminClient = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("referred_by")
+      .eq("id", user.id)
+      .single()
+    const affiliateRef = profile?.referred_by ?? null
+
     const baseUrl = getBaseUrl(req)
 
   
@@ -71,6 +84,7 @@ export async function POST(req: NextRequest) {
       },
       metadata: {
         user_id: user.id,
+        ...(affiliateRef ? { affiliate_ref: affiliateRef } : {}),
       },
       success_url: `${baseUrl}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/dashboard?canceled=true`,

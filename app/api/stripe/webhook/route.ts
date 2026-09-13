@@ -141,6 +141,20 @@ export async function POST(req: Request) {
           customerId,
           subscriptionId,
         })
+
+        // Record affiliate conversion if referred
+        const affiliateRef = session.metadata?.affiliate_ref ?? null
+        if (affiliateRef) {
+          await supabase.from("affiliate_conversions").insert({
+            affiliate_ref: affiliateRef,
+            user_id: userId,
+            conversion_type: "pro",
+            amount_gbp: 9.99,
+            commission_gbp: 5.00,
+            stripe_session_id: session.id,
+          })
+          console.log(`Affiliate conversion recorded: ${affiliateRef} → ${userId}`)
+        }
       } else {
         console.error("No userId found in checkout session")
       }

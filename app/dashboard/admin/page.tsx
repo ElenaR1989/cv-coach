@@ -124,7 +124,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     recentApplicationsResult, applicationsThisPeriodResult,
     applicationsForCurrentPeriodChartResult, allApplicationsForInsightsResult,
     allCvProfilesResult, allCoverLettersResult,
-    referralClicksResult, profilesResult, agenciesResult,
+    referralClicksResult, profilesResult, agenciesResult, affiliateConversionsResult,
   ] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers(),
     supabase.from("job_applications").select("*", { count: "exact", head: true }),
@@ -139,6 +139,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     supabaseAdmin.from("referral_clicks").select("ref, clicked_at").order("clicked_at", { ascending: false }).limit(50),
     supabaseAdmin.from("profiles").select("id, plan, is_pro, open_to_agencies"),
     supabaseAdmin.from("agencies").select("id, name, plan, created_at").order("created_at", { ascending: false }).limit(20),
+    supabaseAdmin.from("affiliate_conversions").select("*").order("created_at", { ascending: false }),
   ])
 
   const authUsers: AuthUser[] = authUsersResult.data?.users ?? []
@@ -210,6 +211,24 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const topCompanies = Array.from(companyCounts.entries()).map(([company, count]) => ({ company, count })).sort((a, b) => b.count - a.count).slice(0, 5)
   const topRoles = Array.from(roleCounts.entries()).map(([role, count]) => ({ role, count })).sort((a, b) => b.count - a.count).slice(0, 5)
   const topActiveUsers = Array.from(userApplicationCounts.entries()).map(([userId, count]) => ({ userId, email: emailByUserId.get(userId) ?? userId, count })).sort((a, b) => b.count - a.count).slice(0, 5)
+
+  // Affiliate conversions
+  const affiliateConversions = affiliateConversionsResult.data ?? []
+  const affiliateByRef = new Map<string, { count: number; commission: number; paid: number }>()
+  for (const c of affiliateConversions) {
+    const existing = affiliateByRef.get(c.affiliate_ref) ?? { count: 0, commission: 0, paid: 0 }
+    affiliateByRef.set(c.affiliate_ref, {
+      count: existing.count + 1,
+      commission: existing.commission + (c.commission_gbp ?? 0),
+      paid: existing.paid + (c.paid_out ? (c.commission_gbp ?? 0) : 0),
+    })
+  }
+  const affiliateLeaderboard = Array.from(affiliateByRef.entries())
+    .map(([ref, data]) => ({ ref, ...data }))
+    .sort((a, b) => b.commission - a.commission)
+  const totalCommissionOwed = affiliateConversions
+    .filter(c => !c.paid_out)
+    .reduce((sum, c) => sum + (c.commission_gbp ?? 0), 0)
 
   // Referral clicks
   const referralClicks = referralClicksResult.data ?? []
@@ -355,6 +374,49 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
         <InsightCard title="Signups Growth" value={`${signupsGrowth > 0 ? "+" : ""}${signupsGrowth}%`} subtext={`${signupsThisPeriodCount} vs ${signupsPreviousPeriodCount} prev`} icon="👤" valueClass={signupsGrowth > 0 ? "text-emerald-400" : signupsGrowth < 0 ? "text-red-400" : "text-white"} />
         <InsightCard title="Engagement Rate" value={`${activeUserShare}%`} subtext="Users with ≥1 application" icon="⚡" />
         <InsightCard title="Active Users" value={`${allActiveUserIds.size}`} subtext={`of ${totalUsers} total users`} icon="🔥" />
+      </div>
+
+      {/* Affiliate Earnings */}
+      <div className={card}>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-white">💸 Affiliate Earnings</h2>
+          {totalCommissionOwed > 0 && (
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs text-amber-300">
+              £{totalCommissionOwed.toFixed(2)} owed
+            </span>
+          )}
+        </div>
+        {affiliateLeaderboard.length === 0 ? (
+          <p className="text-xs text-white/30">No affiliate conversions yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-white/30 text-left border-b border-white/8">
+                  <th className="pb-2 font-medium">Affiliate</th>
+                  <th className="pb-2 font-medium">Conversions</th>
+                  <th className="pb-2 font-medium">Total earned</th>
+                  <th className="pb-2 font-medium">Paid out</th>
+                  <th className="pb-2 font-medium">Owed</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {affiliateLeaderboard.map(({ ref, count, commission, paid }) => (
+                  <tr key={ref}>
+                    <td className="py-2 text-white font-medium">{ref}</td>
+                    <td className="py-2 text-white/60">{count}</td>
+                    <td className="py-2 text-violet-300 font-semibold">£{commission.toFixed(2)}</td>
+                    <td className="py-2 text-emerald-300">£{paid.toFixed(2)}</td>
+                    <td className="py-2 text-amber-300 font-semibold">£{(commission - paid).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {affiliateConversions.length > 0 && (
+          <p className="mt-3 text-xs text-white/25">Latest: {affiliateConversions[0]?.affiliate_ref} · {formatDate(affiliateConversions[0]?.created_at)}</p>
+        )}
       </div>
 
       {/* Plan breakdown + agencies + referrals */}

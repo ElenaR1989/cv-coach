@@ -58,10 +58,11 @@ function SignupForm() {
     if (error) { setError(error.message); setLoading(false); return }
     // Save open_to_agencies preference to profile
     if (data.user) {
+      const affiliateRef = localStorage.getItem("hf_affiliate_ref") || null
       await fetch("/api/profile/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ open_to_agencies: openToAgencies }),
+        body: JSON.stringify({ open_to_agencies: openToAgencies, referred_by: affiliateRef }),
       }).catch(() => {})
     }
     if (agencySlug) await joinAgency(agencySlug)
