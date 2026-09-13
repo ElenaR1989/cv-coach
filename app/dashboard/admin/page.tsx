@@ -423,9 +423,9 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
       {(() => {
         const applicants = [
           { name: "Safwan Ahmed", email: "safwxn.ahmxd08@gmail.com", ref: "safwan-ahmed", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
-          { name: "Samantha Evans", email: "samanthaevans140304@gmail.com", ref: "samantha-evans", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
-          { name: "Oni Pamilerin", email: "onipamilerin2024@gmail.com", ref: "oni-pamilerin", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
-          { name: "Fardowso Cabdulrahman", email: "fardowsocabdulrahman20@gmail.com", ref: "fardowso-cabdulrahman", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
+          { name: "Samantha Evans", email: "samanthaevans140304@gmail.com", ref: "samantha-evans", status: "pending", source: "Indeed", note: "Message sent on Indeed — awaiting reply" },
+          { name: "Oni Pamilerin", email: "onipamilerin2024@gmail.com", ref: "oni-pamilerin", status: "pending", source: "Indeed", note: "Message sent on Indeed — awaiting reply" },
+          { name: "Fardowso Cabdulrahman", email: "fardowsocabdulrahman20@gmail.com", ref: "fardowso-cabdulrahman", status: "pending", source: "Indeed", note: "Message sent on Indeed — awaiting reply" },
           { name: "Osborn Cockburn", email: "osborncockburnn778@gmail.com", ref: "osborn-cockburn", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
           { name: "Razvan Marian Banu", email: "razvan.banu05@yahoo.com", ref: "razvan-marian-banu", status: "active", source: "WhatsApp RO", note: "Welcome email sent 13 Sep 2026" },
         ]
