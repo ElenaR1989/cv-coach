@@ -427,6 +427,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
           { name: "Oni Pamilerin", email: "onipamilerin2024@gmail.com", ref: "oni-pamilerin", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
           { name: "Fardowso Cabdulrahman", email: "fardowsocabdulrahman20@gmail.com", ref: "fardowso-cabdulrahman", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
           { name: "Osborn Cockburn", email: "osborncockburnn778@gmail.com", ref: "osborn-cockburn", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
+          { name: "Razvan Marian Banu", email: "razvan.banu05@yahoo.com", ref: "razvan-marian-banu", status: "active", source: "WhatsApp RO", note: "Welcome email sent 13 Sep 2026" },
         ]
         const statusStyle = (s: string) => s === "active"
           ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
