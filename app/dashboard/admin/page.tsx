@@ -423,10 +423,10 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
       {(() => {
         const applicants = [
           { name: "Safwan Ahmed", email: "safwxn.ahmxd08@gmail.com", ref: "safwan-ahmed", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
-          { name: "Samantha Evans", email: "samanthaevans140304@gmail.com", ref: "samantha-evans", status: "pending", source: "Indeed", note: "Email not sent yet" },
-          { name: "Oni Pamilerin", email: "onipamilerin2024@gmail.com", ref: "oni-pamilerin", status: "pending", source: "Indeed", note: "Email not sent yet" },
-          { name: "Fardowso Cabdulrahman", email: "fardowsocabdulrahman20@gmail.com", ref: "fardowso-cabdulrahman", status: "pending", source: "Indeed", note: "Email not sent yet" },
-          { name: "Osborn Cockburn", email: "osbornco@gmail.com", ref: "osborn-cockburn", status: "pending", source: "Indeed", note: "Email not sent yet" },
+          { name: "Samantha Evans", email: "samanthaevans140304@gmail.com", ref: "samantha-evans", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
+          { name: "Oni Pamilerin", email: "onipamilerin2024@gmail.com", ref: "oni-pamilerin", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
+          { name: "Fardowso Cabdulrahman", email: "fardowsocabdulrahman20@gmail.com", ref: "fardowso-cabdulrahman", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
+          { name: "Osborn Cockburn", email: "osborncockburnn778@gmail.com", ref: "osborn-cockburn", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
         ]
         const statusStyle = (s: string) => s === "active"
           ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
