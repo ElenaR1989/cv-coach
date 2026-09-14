@@ -254,6 +254,7 @@ function getResults(answers: Record<string, string>): CareerMatch[] {
 
 function EmailUnlock({ onUnlock, answers }: { onUnlock: () => void; answers: Record<string, string> }) {
   const [email, setEmail] = useState("")
+  const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
 
@@ -262,10 +263,21 @@ function EmailUnlock({ onUnlock, answers }: { onUnlock: () => void; answers: Rec
     if (!email.trim()) return
     setLoading(true)
     try {
+      // Save lead + send follow-up email
       await fetch("/api/quiz-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), answers }),
+        body: JSON.stringify({ email: email.trim(), name: name.trim(), answers }),
+      })
+      // Create HireFlow account via magic link (passwordless signup)
+      const supabase = createClient()
+      await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/career-quiz`,
+          data: { full_name: name.trim() || undefined },
+          shouldCreateUser: true,
+        },
       })
     } catch {}
     setDone(true)
@@ -273,25 +285,40 @@ function EmailUnlock({ onUnlock, answers }: { onUnlock: () => void; answers: Rec
     onUnlock()
   }
 
-  if (done) return <p className="text-sm text-cyan-300 py-2">✅ Unlocked! Scroll up to see your results.</p>
+  if (done) return (
+    <div className="text-center space-y-1">
+      <p className="text-sm text-cyan-300">✅ Your results are unlocked!</p>
+      <p className="text-xs text-white/40">We also sent a magic link to <strong className="text-white/60">{email}</strong> — click it to save your account.</p>
+    </div>
+  )
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form onSubmit={handleSubmit} className="space-y-3">
       <input
-        type="email"
-        required
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        placeholder="Your email address"
-        className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-cyan-400/50 transition"
+        type="text"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        placeholder="Your first name"
+        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-cyan-400/50 transition"
       />
-      <button
-        type="submit"
-        disabled={loading}
-        style={{ backgroundColor: "#06b6d4", color: "#000" }}
-        className="rounded-xl px-4 py-3 text-sm font-bold transition hover:opacity-90 disabled:opacity-50">
-        {loading ? "..." : "Unlock"}
-      </button>
+      <div className="flex gap-2">
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="Your email address"
+          className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-cyan-400/50 transition"
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ backgroundColor: "#06b6d4", color: "#000" }}
+          className="rounded-xl px-4 py-3 text-sm font-bold transition hover:opacity-90 disabled:opacity-50 whitespace-nowrap">
+          {loading ? "..." : "Unlock →"}
+        </button>
+      </div>
+      <p className="text-xs text-white/25">We&apos;ll create your free HireFlow account and email you your results.</p>
     </form>
   )
 }
@@ -406,12 +433,12 @@ export default function CareerQuizPage() {
           <div className="relative mb-10">
             <div className="space-y-5">
               {results.map((r, i) => (
-                <div key={r.title} className={`rounded-2xl border p-6 transition-all ${i === 0 ? "border-cyan-500/30 bg-cyan-500/5" : "border-white/10 bg-white/4"} ${!unlocked && i > 0 ? "blur-sm select-none" : ""}`}>
+                <div key={r.title} className={`rounded-2xl border p-6 transition-all ${i === 0 ? "border-cyan-500/30 bg-cyan-500/5" : "border-white/10 bg-white/4"} ${!unlocked ? "blur-sm select-none" : ""}`}>
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div>
                       {i === 0 && <p className="text-xs text-cyan-400 font-semibold mb-1">⭐ Best match</p>}
-                      <h2 className="text-xl font-bold text-white">{!unlocked && i > 0 ? "████████████" : r.title}</h2>
-                      <p className="text-sm text-white/40 mt-0.5">{!unlocked && i > 0 ? "£██,000 – £██,000" : `${r.salary} / year`}</p>
+                      <h2 className="text-xl font-bold text-white">{!unlocked ? "████████████" : r.title}</h2>
+                      <p className="text-sm text-white/40 mt-0.5">{!unlocked ? "£██,000 – £██,000" : `${r.salary} / year`}</p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-2xl font-bold" style={{ color: i === 0 ? "#06b6d4" : "#fff" }}>{r.match}%</p>
@@ -421,7 +448,7 @@ export default function CareerQuizPage() {
                   <div className="mb-3 h-1.5 w-full rounded-full bg-white/10">
                     <div className="h-full rounded-full transition-all" style={{ width: `${r.match}%`, backgroundColor: i === 0 ? "#06b6d4" : "#8b5cf6" }} />
                   </div>
-                  <p className="text-sm text-white/60 leading-6">{!unlocked && i > 0 ? "██████ ███ ████ ████████ ████ ████████ ██ ████████ ████ ████." : r.why}</p>
+                  <p className="text-sm text-white/60 leading-6">{!unlocked ? "██████ ███ ████ ████████ ████ ████████ ██ ████████ ████ ████." : r.why}</p>
                 </div>
               ))}
             </div>
