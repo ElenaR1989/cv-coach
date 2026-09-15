@@ -586,7 +586,7 @@ export default function CareerQuizPage() {
               className="mt-6 w-full rounded-xl py-4 text-lg font-bold transition hover:opacity-90 shadow-lg shadow-cyan-500/20">
               Find my career match →
             </button>
-            <p className="mt-3 text-xs text-white/25">Free · Takes 2 minutes · No credit card needed</p>
+            <p className="mt-3 text-xs text-white/25">Free · Takes 2 minutes · Enter your email to unlock results</p>
 
             {/* Trust badges */}
             <div className="mt-6 grid grid-cols-3 gap-3 w-full">
