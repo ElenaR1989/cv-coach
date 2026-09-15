@@ -1,681 +1,96 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
-import Link from "next/link"
-import Image from "next/image"
+import dynamic from "next/dynamic"
+import { useState } from "react"
 import BrandLogo from "@/components/brand-logo"
 
-const questions = [
-  {
-    id: "field",
-    section: "About you",
-    question: "What field did you study or work in?",
-    options: [
-      { label: "Business / Finance / Admin", value: "business" },
-      { label: "Technology / IT / Engineering", value: "tech" },
-      { label: "Healthcare / Social Care", value: "healthcare" },
-      { label: "Creative / Arts / Media", value: "creative" },
-      { label: "Science / Research", value: "science" },
-      { label: "Education / Training", value: "education" },
-      { label: "No specific field yet", value: "none" },
-    ],
-  },
-  {
-    id: "people",
-    section: "Work style",
-    question: "Which do you prefer?",
-    options: [
-      { label: "Working closely with people every day", value: "people" },
-      { label: "A mix of people and independent work", value: "mix" },
-      { label: "Mostly working independently", value: "solo" },
-    ],
-  },
-  {
-    id: "type",
-    section: "Work style",
-    question: "What kind of work energises you most?",
-    options: [
-      { label: "Helping and supporting others", value: "helping" },
-      { label: "Building or creating things", value: "building" },
-      { label: "Analysing data and solving problems", value: "analytical" },
-      { label: "Organising, planning, managing", value: "organising" },
-      { label: "Selling, persuading, communicating", value: "selling" },
-    ],
-  },
-  {
-    id: "environment",
-    section: "Work style",
-    question: "Where do you prefer to work?",
-    options: [
-      { label: "Office environment", value: "office" },
-      { label: "Remote / from home", value: "remote" },
-      { label: "Outdoors or on the move", value: "outdoors" },
-      { label: "Doesn't matter to me", value: "any" },
-    ],
-  },
-  {
-    id: "priority",
-    section: "What matters to you",
-    question: "What matters most in your career?",
-    options: [
-      { label: "High salary and financial growth", value: "salary" },
-      { label: "Work-life balance and flexibility", value: "balance" },
-      { label: "Making a difference and helping people", value: "impact" },
-      { label: "Career progression and learning", value: "growth" },
-      { label: "Job security and stability", value: "stability" },
-    ],
-  },
-  {
-    id: "dream_job",
-    section: "About you personally",
-    question: "What's your dream job — even if it feels out of reach?",
-    freeText: true,
-    placeholder: "e.g. Architect, Nurse, Game Designer, Entrepreneur…",
-    options: [],
-  },
-  {
-    id: "blocker",
-    section: "About you personally",
-    question: "What's the main thing stopping you from getting there?",
-    options: [
-      { label: "🎓 I don't have the right qualifications", value: "qualifications" },
-      { label: "🧭 I don't know where to start", value: "direction" },
-      { label: "😟 I lack confidence or experience", value: "confidence" },
-      { label: "💸 Financial reasons — can't afford to study or take time off", value: "financial" },
-      { label: "🤔 I'm not sure it's realistic for me", value: "doubt" },
-    ],
-  },
-]
-
-interface CareerMatch {
-  title: string
-  salary: string
-  why: string
-  match: number
-}
-
-interface QualRoute {
-  icon: string
-  name: string
-  detail: string
-  url: string
-}
-
-const qualRoutes: Record<string, QualRoute[]> = {
-  "Project Manager": [
-    { icon: "📜", name: "PRINCE2 Foundation", detail: "Online certification from ~£200 — widely recognised by UK employers", url: "https://www.axelos.com/certifications/propath/prince2-project-management" },
-    { icon: "🎓", name: "Open University — Business Degree", detail: "Part-time, study from home, from £6,000/year with Student Finance available", url: "https://www.open.ac.uk/courses/business-management" },
-    { icon: "🏫", name: "Local College — HNC in Business", detail: "Level 4 qualification, often 1 year part-time, funded options available", url: "https://nationalcareers.service.gov.uk/find-a-course" },
-  ],
-  "Data Analyst": [
-    { icon: "💻", name: "Google Data Analytics Certificate", detail: "Online via Coursera, ~6 months, ~£200 total — highly recognised", url: "https://www.coursera.org/google-certificates/data-analytics-certificate" },
-    { icon: "🎓", name: "Open University — Computing & IT", detail: "Part-time degree, Student Finance available, study from home", url: "https://www.open.ac.uk/courses/computing-and-it" },
-    { icon: "📊", name: "Microsoft Power BI Certification", detail: "Online, self-paced, from £100 — in high demand by UK employers", url: "https://learn.microsoft.com/en-us/certifications/power-bi-data-analyst-associate/" },
-  ],
-  "Software Developer": [
-    { icon: "💻", name: "Codecademy / freeCodeCamp", detail: "Free online coding courses — start with Python or JavaScript", url: "https://www.freecodecamp.org" },
-    { icon: "🎓", name: "Open University — Software Engineering", detail: "Accredited degree, part-time, Student Finance available", url: "https://www.open.ac.uk/courses/computing-and-it/degrees/bsc-computing-software-q62" },
-    { icon: "🏫", name: "Apprenticeship — Software Developer", detail: "Earn while you learn — paid role with full training, no degree needed", url: "https://www.findapprenticeship.service.gov.uk" },
-  ],
-  "Teacher / Trainer": [
-    { icon: "📜", name: "PGCE — Postgraduate Certificate in Education", detail: "1-year qualification, salaried school direct routes available", url: "https://www.gov.uk/become-teacher" },
-    { icon: "🏫", name: "Level 3 Award in Education & Training", detail: "Entry-level teaching qualification, available at most colleges", url: "https://nationalcareers.service.gov.uk/find-a-course" },
-    { icon: "🎓", name: "Open University — Education Studies", detail: "Flexible degree for aspiring teachers, Student Finance available", url: "https://www.open.ac.uk/courses/education" },
-  ],
-  "Social Worker / Care Coordinator": [
-    { icon: "🎓", name: "BA Social Work Degree", detail: "Required to become a qualified social worker — 3 years full-time or part-time options", url: "https://www.ucas.com/explore/subjects/social-work" },
-    { icon: "📜", name: "Level 3 Diploma in Health & Social Care", detail: "Entry route into care roles, available at colleges and online", url: "https://nationalcareers.service.gov.uk/find-a-course" },
-    { icon: "🏫", name: "Apprenticeship — Social Care", detail: "Work in care while studying — paid and funded by employer", url: "https://www.findapprenticeship.service.gov.uk" },
-  ],
-  "HR Administrator / HR Assistant": [
-    { icon: "📜", name: "CIPD Level 3 Foundation Certificate", detail: "The standard HR qualification — available online from ~£1,500", url: "https://www.cipd.org/en/qualifications/hr-qualifications/" },
-    { icon: "🏫", name: "Local College — Business Admin Level 3", detail: "Broad business qualification, often funded or low cost", url: "https://nationalcareers.service.gov.uk/find-a-course" },
-    { icon: "🎓", name: "Open University — Business & Management", detail: "Flexible degree with HR modules, Student Finance available", url: "https://www.open.ac.uk/courses/business-management" },
-  ],
-  "Financial Analyst / Accountant": [
-    { icon: "📜", name: "AAT Accounting Qualification", detail: "Industry-standard, levels 2–4, available online from ~£800", url: "https://www.aat.org.uk/qualifications" },
-    { icon: "📜", name: "ACCA — Association of Chartered Certified Accountants", detail: "Globally recognised, can be done alongside work", url: "https://www.accaglobal.com/uk/en/qualifications.html" },
-    { icon: "🎓", name: "Open University — Accounting & Finance Degree", detail: "Part-time, Student Finance available, study from home", url: "https://www.open.ac.uk/courses/accounting-finance" },
-  ],
-  "UX / Product Designer": [
-    { icon: "💻", name: "Google UX Design Certificate", detail: "Online via Coursera, ~6 months, ~£200 — portfolio included", url: "https://www.coursera.org/google-certificates/ux-design-certificate" },
-    { icon: "🎓", name: "Open University — Design & Innovation", detail: "Part-time degree, Student Finance available", url: "https://www.open.ac.uk/courses/design-innovation" },
-    { icon: "🏫", name: "Short course — Figma & UX Fundamentals", detail: "Online, self-paced, many free options on YouTube and Udemy", url: "https://www.udemy.com/topic/ux-design/" },
-  ],
-  "default": [
-    { icon: "🎓", name: "Open University", detail: "Study a degree from home, part-time, with Student Finance available", url: "https://www.open.ac.uk" },
-    { icon: "🏫", name: "National Careers Service — Find a Course", detail: "Free UK tool to find funded courses and qualifications near you", url: "https://nationalcareers.service.gov.uk/find-a-course" },
-    { icon: "🏫", name: "Find an Apprenticeship", detail: "Earn while you learn — government-funded, no prior qualifications needed", url: "https://www.findapprenticeship.service.gov.uk" },
-  ],
-}
-
-function getQualRoutes(topCareer: string, qual: string): QualRoute[] | null {
-  // If they already have a degree or masters, don't show this section
-  if (qual === "degree" || qual === "masters") return null
-  return qualRoutes[topCareer] || qualRoutes["default"]
-}
-
-function getResults(answers: Record<string, string>): CareerMatch[] {
-  const careers: CareerMatch[] = []
-
-  const q = answers.qualification
-  const f = answers.field
-  const e = answers.experience
-  const p = answers.people
-  const t = answers.type
-  const env = answers.environment
-  const pace = answers.pace
-  const pri = answers.priority
-  const lead = answers.leadership
-
-  const hasExp = e !== "0"
-  const seniorExp = ["5", "10", "10+"].includes(e)
-  const juniorExp = ["0", "1"].includes(e)
-  const highQual = ["degree", "masters"].includes(q)
-  const anyQual = q !== "none"
-
-  // Score each career based on answers
-  const all: { career: CareerMatch; score: number }[] = [
-    {
-      score: (t === "organising" ? 3 : 0) + (p === "mix" || p === "people" ? 2 : 0) + (f === "business" ? 2 : 0) + (pace === "steady" ? 1 : 0) + (anyQual ? 1 : 0),
-      career: { title: "Office Manager", salary: "£28,000 – £40,000", why: "You like organising, working with people, and keeping things running smoothly.", match: 0 },
-    },
-    {
-      score: (t === "helping" ? 3 : 0) + (p === "people" ? 3 : 0) + (f === "healthcare" ? 3 : 0) + (pri === "impact" ? 2 : 0),
-      career: { title: "Social Worker / Care Coordinator", salary: "£26,000 – £38,000", why: "You're driven by helping people and making a real difference in their lives.", match: 0 },
-    },
-    {
-      score: (t === "selling" ? 3 : 0) + (p === "people" ? 2 : 0) + (pace === "fast" ? 2 : 0) + (f === "business" ? 1 : 0) + (pri === "salary" ? 2 : 0),
-      career: { title: "Recruitment Consultant", salary: "£25,000 – £50,000+", why: "You're great with people, enjoy fast pace, and are motivated by results and earnings.", match: 0 },
-    },
-    {
-      score: (t === "analytical" ? 3 : 0) + (p === "solo" || p === "mix" ? 2 : 0) + (f === "tech" || f === "science" || f === "business" ? 2 : 0) + (highQual ? 2 : 0),
-      career: { title: "Data Analyst", salary: "£30,000 – £55,000", why: "You enjoy working with information, spotting patterns, and solving problems independently.", match: 0 },
-    },
-    {
-      score: (t === "building" ? 3 : 0) + (f === "tech" ? 3 : 0) + (p === "solo" || p === "mix" ? 2 : 0) + (env === "remote" ? 2 : 0) + (pri === "salary" || pri === "growth" ? 1 : 0),
-      career: { title: "Software Developer", salary: "£35,000 – £75,000+", why: "You enjoy building things, problem-solving, and working independently — tech is a great fit.", match: 0 },
-    },
-    {
-      score: (t === "building" ? 2 : 0) + (f === "creative" || f === "tech" ? 2 : 0) + (t === "analytical" ? 1 : 0) + (p === "mix" ? 1 : 0) + (anyQual ? 1 : 0),
-      career: { title: "UX / Product Designer", salary: "£32,000 – £60,000", why: "You blend creativity with structure, care about how things feel to use, and like collaborative work.", match: 0 },
-    },
-    {
-      score: (t === "helping" ? 2 : 0) + (f === "education" ? 3 : 0) + (p === "people" ? 2 : 0) + (pri === "impact" ? 2 : 0) + (highQual ? 1 : 0),
-      career: { title: "Teacher / Trainer", salary: "£28,000 – £45,000", why: "You care about helping people grow and learn — and you have the patience and communication skills to do it.", match: 0 },
-    },
-    {
-      score: (t === "organising" ? 2 : 0) + (lead === "leader" ? 3 : 0) + (seniorExp ? 2 : 0) + (pace === "fast" ? 1 : 0) + (pri === "growth" || pri === "salary" ? 1 : 0),
-      career: { title: "Project Manager", salary: "£35,000 – £65,000", why: "You're a natural organiser and leader — you thrive when coordinating teams and delivering results.", match: 0 },
-    },
-    {
-      score: (t === "helping" ? 3 : 0) + (f === "healthcare" ? 2 : 0) + (p === "people" ? 2 : 0) + (env === "office" || env === "any" ? 1 : 0) + (pri === "stability" ? 1 : 0),
-      career: { title: "HR Administrator / HR Assistant", salary: "£24,000 – £35,000", why: "You enjoy supporting people and keeping things organised — HR is a natural fit.", match: 0 },
-    },
-    {
-      score: (t === "selling" ? 3 : 0) + (p === "people" ? 2 : 0) + (pri === "salary" ? 2 : 0) + (pace === "fast" ? 2 : 0) + (f === "business" ? 1 : 0),
-      career: { title: "Sales Executive / Account Manager", salary: "£25,000 – £55,000+", why: "You love connecting with people, are motivated by targets, and enjoy the energy of sales.", match: 0 },
-    },
-    {
-      score: (t === "building" ? 2 : 0) + (f === "creative" ? 3 : 0) + (env === "remote" ? 1 : 0) + (p === "solo" || p === "mix" ? 1 : 0),
-      career: { title: "Graphic Designer / Content Creator", salary: "£22,000 – £45,000", why: "You're creative and expressive — you love making things look and feel great.", match: 0 },
-    },
-    {
-      score: (t === "analytical" ? 2 : 0) + (f === "business" || f === "science" ? 2 : 0) + (highQual ? 2 : 0) + (pri === "salary" ? 2 : 0) + (pace === "steady" ? 1 : 0),
-      career: { title: "Financial Analyst / Accountant", salary: "£30,000 – £60,000", why: "You're detail-oriented, enjoy working with numbers, and value financial security.", match: 0 },
-    },
-    {
-      score: (env === "outdoors" ? 4 : 0) + (t === "building" ? 2 : 0) + (pace === "fast" ? 1 : 0) + (p === "mix" || p === "solo" ? 1 : 0),
-      career: { title: "Trades / Construction / Engineering", salary: "£28,000 – £55,000", why: "You prefer working with your hands outdoors, and value practical skills over desk work.", match: 0 },
-    },
-    {
-      score: (t === "helping" ? 2 : 0) + (f === "healthcare" ? 3 : 0) + (p === "people" ? 3 : 0) + (pri === "impact" ? 2 : 0) + (anyQual ? 1 : 0),
-      career: { title: "Healthcare Assistant / NHS Support", salary: "£22,000 – £30,000", why: "You care deeply about others and want to make a direct difference in people's health and wellbeing.", match: 0 },
-    },
-    {
-      score: (t === "organising" ? 2 : 0) + (f === "business" ? 1 : 0) + (juniorExp ? 1 : 0) + (pace === "steady" ? 1 : 0) + (p === "mix" ? 1 : 0),
-      career: { title: "Administrator / Executive Assistant", salary: "£22,000 – £35,000", why: "You're reliable, organised, and enjoy keeping things running behind the scenes.", match: 0 },
-    },
-  ]
-
-  // Sort by score and take top 3
-  all.sort((a, b) => b.score - a.score)
-  const top = all.slice(0, 3)
-  const maxScore = top[0].score
-
-  top.forEach((item, i) => {
-    const pct = maxScore > 0 ? Math.round((item.score / maxScore) * 100) : 70
-    careers.push({ ...item.career, match: i === 0 ? Math.min(pct, 97) : Math.max(pct - (i * 8), 60) })
-  })
-
-  return careers
-}
-
-function EmailUnlock({ onUnlock, answers }: { onUnlock: () => void; answers: Record<string, string> }) {
-  const [email, setEmail] = useState("")
-  const [name, setName] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [done, setDone] = useState(false)
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!email.trim()) return
-    setLoading(true)
-    try {
-      // Save lead + send follow-up email
-      await fetch("/api/quiz-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), name: name.trim(), answers }),
-      })
-      // Create HireFlow account via magic link (passwordless signup)
-      const supabase = createClient()
-      await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          emailRedirectTo: `${window.location.origin}/career-quiz`,
-          data: { full_name: name.trim() || undefined },
-          shouldCreateUser: true,
-        },
-      })
-    } catch {}
-    setDone(true)
-    setLoading(false)
-    onUnlock()
-  }
-
-  if (done) return (
-    <div className="text-center space-y-1">
-      <p className="text-sm text-cyan-300">✅ Your results are unlocked!</p>
-      <p className="text-xs text-white/40">We also sent a magic link to <strong className="text-white/60">{email}</strong> — click it to save your account.</p>
-    </div>
-  )
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <input
-        type="text"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        placeholder="Your first name"
-        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-cyan-400/50 transition"
-      />
-      <div className="flex gap-2">
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="Your email address"
-          className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-cyan-400/50 transition"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          style={{ backgroundColor: "#06b6d4", color: "#000" }}
-          className="rounded-xl px-4 py-3 text-sm font-bold transition hover:opacity-90 disabled:opacity-50 whitespace-nowrap">
-          {loading ? "..." : "Unlock →"}
-        </button>
+const QuizClient = dynamic(() => import("./quiz-client"), {
+  loading: () => (
+    <div className="flex min-h-screen items-center justify-center bg-[#050816]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-cyan-400" />
+        <p className="text-xs text-white/30">Loading quiz…</p>
       </div>
-      <p className="text-xs text-white/25">We&apos;ll create your free HireFlow account and email you your results.</p>
-    </form>
-  )
-}
+    </div>
+  ),
+  ssr: false,
+})
 
 export default function CareerQuizPage() {
   const [started, setStarted] = useState(false)
-  const [current, setCurrent] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [selected, setSelected] = useState<string | null>(null)
-  const [freeText, setFreeText] = useState("")
-  const [results, setResults] = useState<CareerMatch[] | null>(null)
-  const [finalAnswers, setFinalAnswers] = useState<Record<string, string>>({})
-  const [unlocked, setUnlocked] = useState(false)
 
-  // On mount: restore saved answers and check if user is already logged in
-  useEffect(() => {
-    const saved = sessionStorage.getItem("quiz_answers")
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as Record<string, string>
-        if (Object.keys(parsed).length >= questions.length) {
-          // All answers complete — restore results
-          setFinalAnswers(parsed)
-          setResults(getResults(parsed))
-          setStarted(true)
-          sessionStorage.removeItem("quiz_answers")
-        }
-      } catch {}
-    }
-    // Check auth to auto-unlock
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUnlocked(true)
-    })
-  }, [])
-
-  const q = questions[current]
-  const progress = ((current) / questions.length) * 100
-
-  const handleSelect = (value: string) => setSelected(value)
-
-  const isFreeText = (q as {freeText?: boolean}).freeText === true
-  const canProceed = isFreeText ? freeText.trim().length > 0 : !!selected
-
-  const handleNext = () => {
-    if (!canProceed) return
-    const value = isFreeText ? freeText.trim() : selected!
-    const newAnswers = { ...answers, [q.id]: value }
-    setAnswers(newAnswers)
-    setSelected(null)
-    setFreeText("")
-    if (current + 1 >= questions.length) {
-      setFinalAnswers(newAnswers)
-      setResults(getResults(newAnswers))
-    } else {
-      setCurrent(c => c + 1)
-    }
-  }
-
-  const restart = () => {
-    setCurrent(0)
-    setAnswers({})
-    setSelected(null)
-    setFreeText("")
-    setResults(null)
-    sessionStorage.removeItem("quiz_answers")
-  }
-
-  if (results) {
-    return (
-      <div className="min-h-screen bg-[#050816] text-white">
-        <div className="mx-auto max-w-2xl px-6 py-16">
-          <div className="mb-8 flex justify-center">
-            <BrandLogo className="flex items-center gap-3" textClassName="font-semibold text-sm" />
-          </div>
-
-          <div className="mb-10 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
-              🎯 Your career matches
-            </div>
-            <h1 className="text-3xl font-bold sm:text-4xl">Here are your top career matches</h1>
-            <p className="mt-3 text-white/50">Based on your qualifications, experience, and work preferences.</p>
-          </div>
-
-          {/* Personal message based on dream job + blocker */}
-          {(finalAnswers.dream_job || finalAnswers.blocker) && (
-            <div className="mb-8 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-violet-400 mb-2">✨ Personal note for you</p>
-              {finalAnswers.dream_job && (
-                <p className="text-sm text-white/80 leading-6 mb-2">
-                  You mentioned your dream is to be a <strong className="text-white">{finalAnswers.dream_job}</strong> — that&apos;s a great goal, and your results below show careers that align with your strengths and could even be stepping stones towards it.
-                </p>
-              )}
-              {finalAnswers.blocker === "qualifications" && (
-                <p className="text-sm text-white/70 leading-6">The main thing holding you back is qualifications — scroll down to see exactly how to get them, including free and funded routes.</p>
-              )}
-              {finalAnswers.blocker === "direction" && (
-                <p className="text-sm text-white/70 leading-6">You said you don&apos;t know where to start — that&apos;s exactly what these results are for. Your top match below is the best place to begin.</p>
-              )}
-              {finalAnswers.blocker === "confidence" && (
-                <p className="text-sm text-white/70 leading-6">Confidence and experience come with the right support. Your results show careers you&apos;re genuinely suited for — the gap is smaller than you think.</p>
-              )}
-              {finalAnswers.blocker === "financial" && (
-                <p className="text-sm text-white/70 leading-6">Financial barriers are real — but many of the qualification routes below are free, funded, or come with Student Finance. Don&apos;t let cost stop you before you&apos;ve seen the options.</p>
-              )}
-              {finalAnswers.blocker === "doubt" && (
-                <p className="text-sm text-white/70 leading-6">It&apos;s more realistic than you think. Your quiz results show a strong match — and with the right plan, most people are much closer to their goal than they realise.</p>
-              )}
-            </div>
-          )}
-
-          <div className="relative mb-10">
-            <div className="space-y-5">
-              {results.map((r, i) => (
-                <div key={r.title} className={`rounded-2xl border p-6 transition-all ${i === 0 ? "border-cyan-500/30 bg-cyan-500/5" : "border-white/10 bg-white/4"} ${!unlocked ? "blur-sm select-none" : ""}`}>
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div>
-                      {i === 0 && <p className="text-xs text-cyan-400 font-semibold mb-1">⭐ Best match</p>}
-                      <h2 className="text-xl font-bold text-white">{!unlocked ? "████████████" : r.title}</h2>
-                      <p className="text-sm text-white/40 mt-0.5">{!unlocked ? "£██,000 – £██,000" : `${r.salary} / year`}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-2xl font-bold" style={{ color: i === 0 ? "#06b6d4" : "#fff" }}>{r.match}%</p>
-                      <p className="text-xs text-white/30">match</p>
-                    </div>
-                  </div>
-                  <div className="mb-3 h-1.5 w-full rounded-full bg-white/10">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${r.match}%`, backgroundColor: i === 0 ? "#06b6d4" : "#8b5cf6" }} />
-                  </div>
-                  <p className="text-sm text-white/60 leading-6">{!unlocked ? "██████ ███ ████ ████████ ████ ████████ ██ ████████ ████ ████." : r.why}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Unlock overlay */}
-            {!unlocked && (
-              <div className="absolute inset-0 flex items-end justify-center pb-4">
-                <div className="mx-4 w-full max-w-md rounded-2xl border border-cyan-500/30 bg-[#050816]/95 backdrop-blur-md p-6 text-center shadow-2xl">
-                  <div className="mb-2 text-2xl">🚀</div>
-                  <h3 className="text-lg font-bold text-white mb-1">You're closer than you think!</h3>
-                  <p className="text-sm text-white/50 mb-4">
-                    Enter your email to unlock your full results and get one step closer to your dream career — free, no password needed.
-                  </p>
-                  <EmailUnlock onUnlock={() => setUnlocked(true)} answers={finalAnswers} />
-                  <div className="mt-4 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-white/10" />
-                    <span className="text-xs text-white/25">or</span>
-                    <div className="h-px flex-1 bg-white/10" />
-                  </div>
-                  <Link href={`/signup?next=/career-quiz`}
-                    onClick={() => sessionStorage.setItem("quiz_answers", JSON.stringify(finalAnswers))}
-                    className="block w-full rounded-xl border border-white/10 py-2.5 text-xs text-white/40 mt-3 hover:text-white/70 transition">
-                    Create a full free account instead →
-                  </Link>
-                  <Link href="/login?next=/career-quiz" onClick={() => sessionStorage.setItem("quiz_answers", JSON.stringify(finalAnswers))}
-                    className="block text-xs text-white/25 hover:text-white/50 transition mt-2">
-                    I already have an account — sign in
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Qualification routes — only shown when unlocked */}
-          {unlocked && results && (() => {
-            const routes = getQualRoutes(results[0].title, finalAnswers.qualification)
-            if (!routes) return null
-            return (
-              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 mb-6">
-                <div className="mb-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400 mb-1">🎓 Missing qualifications?</p>
-                  <h3 className="font-bold text-white text-lg">How to get there</h3>
-                  <p className="text-sm text-white/50 mt-1">
-                    If your top match requires qualifications you don&apos;t have yet, here are the best routes to get them — including free and funded options.
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  {routes.map(r => (
-                    <a key={r.name} href={r.url} target="_blank" rel="noreferrer" onClick={e => { e.preventDefault(); window.open(r.url, "_blank") }}
-                      className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/4 p-4 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition">
-                      <span className="text-xl shrink-0">{r.icon}</span>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-white">{r.name}</p>
-                        <p className="text-xs text-white/50 mt-0.5">{r.detail}</p>
-                      </div>
-                      <span className="text-white/20 text-sm shrink-0">↗</span>
-                    </a>
-                  ))}
-                </div>
-                <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                  <p className="text-sm font-semibold text-emerald-300 mb-1">We can support you through this too</p>
-                  <p className="text-xs text-white/50 mb-3">
-                    Our Premium coaching package includes end-to-end support — choosing the right course, applying to university or college, applying for Student Finance, and understanding all your funding options. Elena handles the entire process with you, not just the advice.
-                  </p>
-                  <Link href="/premium" className="text-xs font-semibold text-emerald-300 hover:text-white transition">
-                    Find out more about Premium coaching →
-                  </Link>
-                </div>
-              </div>
-            )
-          })()}
-
-          {unlocked && (
-            <div className="rounded-2xl border border-cyan-500/40 bg-gradient-to-b from-cyan-500/10 to-transparent p-6 mb-6 text-center">
-              <div className="mb-3 text-2xl">🎯</div>
-              <p className="font-bold text-white text-lg mb-1">
-                Your next step: build your CV for {results[0].title}
-              </p>
-              <p className="text-sm text-white/50 mb-5 max-w-xs mx-auto">
-                Create a free HireFlow account to tailor your CV to this role, practise interviews with AI, and track every application — all in one place.
-              </p>
-              <Link
-                href={`/signup?next=/career-quiz`}
-                style={{ backgroundColor: "#06b6d4", color: "#000" }}
-                className="inline-block rounded-xl px-8 py-3 text-sm font-bold transition hover:opacity-90 mb-3">
-                Create my free account →
-              </Link>
-              <p className="text-xs text-white/30">Free to start · No credit card · Takes 1 minute</p>
-            </div>
-          )}
-
-          <div className="text-center">
-            <button onClick={restart} className="text-sm text-white/30 hover:text-white transition">
-              ↩ Retake the quiz
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+  if (started) {
+    return <QuizClient autoStart={true} />
   }
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
-      <div className="mx-auto max-w-xl px-6 py-16">
+      <div className="mx-auto max-w-md px-6 py-16">
+        <div className="flex flex-col items-center text-center">
+          <BrandLogo className="mb-6 flex items-center gap-3" textClassName="font-semibold text-sm" />
 
-        {/* Intro screen */}
-        {!started && !results && (
-          <div className="flex flex-col items-center text-center">
-            <BrandLogo className="mb-6 flex items-center gap-3" textClassName="font-semibold text-sm" />
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
+            🧭 Free Career Match Quiz
+          </div>
 
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
-              🧭 Free Career Match Quiz
-            </div>
+          <h1 className="text-3xl font-bold leading-tight sm:text-4xl">
+            Not sure what career<br />is right for you?
+          </h1>
+          <p className="mt-3 text-base text-white/60 leading-7 max-w-sm">
+            Answer 7 quick questions and get your <strong className="text-white">top 3 career matches</strong> — with real UK salary ranges.
+          </p>
 
-            <h1 className="text-3xl font-bold leading-tight sm:text-4xl">
-              Not sure what career<br />is right for you?
-            </h1>
-            <p className="mt-3 text-base text-white/60 leading-7 max-w-sm">
-              Answer 7 quick questions and get your <strong className="text-white">top 3 career matches</strong> — with real UK salary ranges.
-            </p>
-
-            {/* Social proof */}
-            <div className="mt-5 flex items-center gap-2">
-              <div className="flex -space-x-2">
-                {["J","S","M","A","R"].map(l => (
-                  <div key={l} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#050816] bg-cyan-500/20 text-xs font-semibold text-cyan-300">{l}</div>
-                ))}
-              </div>
-              <p className="text-xs text-white/40"><span className="text-white font-semibold">242 people</span> took this quiz this month</p>
-            </div>
-
-            <button
-              onClick={() => setStarted(true)}
-              style={{ backgroundColor: "#06b6d4", color: "#000" }}
-              className="mt-6 w-full rounded-xl py-4 text-lg font-bold transition hover:opacity-90 shadow-lg shadow-cyan-500/20">
-              Find my career match →
-            </button>
-            <p className="mt-3 text-xs text-white/25">Free · Takes 2 minutes · Enter your email to unlock results</p>
-
-            {/* Social links */}
-            <div className="mt-5 flex items-center justify-center gap-4">
-              <a href="https://www.instagram.com/hire_flowapp" target="_blank" rel="noreferrer" className="text-white/30 hover:text-white transition" aria-label="Instagram">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-              </a>
-              <a href="https://www.facebook.com/profile.php?id=61591738826836" target="_blank" rel="noreferrer" className="text-white/30 hover:text-white transition" aria-label="Facebook">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-              </a>
-              <a href="https://www.tiktok.com/@hireflow26" target="_blank" rel="noreferrer" className="text-white/30 hover:text-white transition" aria-label="TikTok">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
-              </a>
-              <a href="https://www.linkedin.com/in/elena-rahimi-34b618404" target="_blank" rel="noreferrer" className="text-white/30 hover:text-white transition" aria-label="LinkedIn">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-              </a>
-              <a href="https://www.pinterest.com/user_olhle0656" target="_blank" rel="noreferrer" className="text-white/30 hover:text-white transition" aria-label="Pinterest">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.632-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
-              </a>
-            </div>
-
-            {/* Trust badges */}
-            <div className="mt-6 grid grid-cols-3 gap-3 w-full">
-              {[
-                { icon: "⏱️", label: "2 minutes" },
-                { icon: "💰", label: "Real UK salaries" },
-                { icon: "🎯", label: "Top 3 matches" },
-              ].map(b => (
-                <div key={b.label} className="rounded-xl border border-white/8 bg-white/3 py-3 px-2">
-                  <p className="text-lg mb-1">{b.icon}</p>
-                  <p className="text-xs text-white/40">{b.label}</p>
-                </div>
+          {/* Social proof */}
+          <div className="mt-5 flex items-center gap-2">
+            <div className="flex -space-x-2">
+              {["J","S","M","A","R"].map(l => (
+                <div key={l} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#050816] bg-cyan-500/20 text-xs font-semibold text-cyan-300">{l}</div>
               ))}
             </div>
+            <p className="text-xs text-white/40"><span className="text-white font-semibold">242 people</span> took this quiz this month</p>
           </div>
-        )}
 
-        {/* Quiz questions */}
-        {started && !results && (
-        <><div className="mb-10 flex items-center justify-between">
-          <BrandLogo textClassName="font-semibold text-sm" />
-          <span className="text-xs text-white/30">{current + 1} / {questions.length}</span>
-        </div>
+          <button
+            onClick={() => setStarted(true)}
+            style={{ backgroundColor: "#06b6d4", color: "#000" }}
+            className="mt-6 w-full rounded-xl py-4 text-lg font-bold transition hover:opacity-90 shadow-lg shadow-cyan-500/20">
+            Find my career match →
+          </button>
+          <p className="mt-3 text-xs text-white/25">Free · Takes 2 minutes · Enter your email to unlock results</p>
 
-        {/* Progress bar */}
-        <div className="mb-8 h-1.5 w-full rounded-full bg-white/10">
-          <div className="h-full rounded-full bg-cyan-500 transition-all duration-300" style={{ width: `${progress}%` }} />
-        </div>
-
-        {/* Section label */}
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/30">{q.section}</p>
-        <h2 className="mb-6 text-2xl font-bold leading-snug">{q.question}</h2>
-
-        {isFreeText ? (
-          <div>
-            <input
-              type="text"
-              value={freeText}
-              onChange={e => setFreeText(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && canProceed && handleNext()}
-              placeholder={(q as {placeholder?: string}).placeholder || "Type your answer…"}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white placeholder-white/25 outline-none focus:border-cyan-400/50 transition"
-              autoFocus
-            />
-            <p className="mt-2 text-xs text-white/25">This is just for you — your answer makes your results more personal</p>
+          {/* Social links */}
+          <div className="mt-5 flex items-center justify-center gap-4">
+            <a href="https://www.instagram.com/hire_flowapp" target="_blank" rel="noreferrer noopener" className="text-white/30 hover:text-white transition" aria-label="Instagram">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>
+            <a href="https://www.facebook.com/profile.php?id=61591738826836" target="_blank" rel="noreferrer noopener" className="text-white/30 hover:text-white transition" aria-label="Facebook">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="https://www.tiktok.com/@hireflow26" target="_blank" rel="noreferrer noopener" className="text-white/30 hover:text-white transition" aria-label="TikTok">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+            </a>
+            <a href="https://www.linkedin.com/in/elena-rahimi-34b618404" target="_blank" rel="noreferrer noopener" className="text-white/30 hover:text-white transition" aria-label="LinkedIn">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </a>
+            <a href="https://www.pinterest.com/user_olhle0656" target="_blank" rel="noreferrer noopener" className="text-white/30 hover:text-white transition" aria-label="Pinterest">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.632-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+            </a>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {q.options.map(opt => (
-              <button key={opt.value} onClick={() => handleSelect(opt.value)}
-                className={`w-full rounded-xl border px-5 py-4 text-left text-sm font-medium transition ${
-                  selected === opt.value
-                    ? "border-cyan-500 bg-cyan-500/10 text-white"
-                    : "border-white/10 bg-white/4 text-white/70 hover:border-white/30 hover:text-white"
-                }`}>
-                {opt.label}
-              </button>
+
+          {/* Trust badges */}
+          <div className="mt-6 grid grid-cols-3 gap-3 w-full">
+            {[
+              { icon: "⏱️", label: "2 minutes" },
+              { icon: "💰", label: "Real UK salaries" },
+              { icon: "🎯", label: "Top 3 matches" },
+            ].map(b => (
+              <div key={b.label} className="rounded-xl border border-white/8 bg-white/3 py-3 px-2">
+                <p className="text-lg mb-1">{b.icon}</p>
+                <p className="text-xs text-white/40">{b.label}</p>
+              </div>
             ))}
           </div>
-        )}
-
-        <button onClick={handleNext} disabled={!canProceed}
-          style={{ backgroundColor: canProceed ? "#06b6d4" : undefined, color: canProceed ? "#000" : undefined }}
-          className={`mt-8 w-full rounded-xl py-3.5 text-sm font-bold transition ${
-            canProceed ? "hover:opacity-90" : "border border-white/10 text-white/20 cursor-not-allowed"
-          }`}>
-          {current + 1 === questions.length ? "See my results →" : "Next →"}
-        </button>
-        </>)}
-
+        </div>
       </div>
     </div>
   )
