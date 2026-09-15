@@ -558,26 +558,48 @@ export default function CareerQuizPage() {
         {!started && !results && (
           <div className="flex flex-col items-center text-center">
             <BrandLogo className="mb-6 flex items-center gap-3" textClassName="font-semibold text-sm" />
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
+
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
               🧭 Free Career Match Quiz
             </div>
+
             <h1 className="text-3xl font-bold leading-tight sm:text-4xl">
-              Find out which career<br />actually suits you
+              Not sure what career<br />is right for you?
             </h1>
-            <p className="mt-3 text-base text-white/55 leading-7 max-w-sm">
-              Answer 7 quick questions and we'll match you to the careers that fit you — with real salary ranges.
+            <p className="mt-3 text-base text-white/60 leading-7 max-w-sm">
+              Answer 7 quick questions and get your <strong className="text-white">top 3 career matches</strong> — with real UK salary ranges.
             </p>
+
+            {/* Social proof */}
+            <div className="mt-5 flex items-center gap-2">
+              <div className="flex -space-x-2">
+                {["J","S","M","A","R"].map(l => (
+                  <div key={l} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#050816] bg-cyan-500/20 text-xs font-semibold text-cyan-300">{l}</div>
+                ))}
+              </div>
+              <p className="text-xs text-white/40"><span className="text-white font-semibold">242 people</span> took this quiz this month</p>
+            </div>
+
             <button
               onClick={() => setStarted(true)}
               style={{ backgroundColor: "#06b6d4", color: "#000" }}
-              className="mt-6 w-full max-w-xs rounded-xl py-4 text-base font-bold transition hover:opacity-90">
-              Start the quiz →
+              className="mt-6 w-full rounded-xl py-4 text-lg font-bold transition hover:opacity-90 shadow-lg shadow-cyan-500/20">
+              Find my career match →
             </button>
-            <p className="mt-3 text-xs text-white/25">Free · No signup needed to start</p>
-            <div className="mt-6 flex w-full max-w-xs flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-white/40">
-              <span>⏱️ 2 minutes</span>
-              <span>💰 Real salary ranges</span>
-              <span>🎯 Top 3 matches</span>
+            <p className="mt-3 text-xs text-white/25">Free · Takes 2 minutes · No credit card needed</p>
+
+            {/* Trust badges */}
+            <div className="mt-6 grid grid-cols-3 gap-3 w-full">
+              {[
+                { icon: "⏱️", label: "2 minutes" },
+                { icon: "💰", label: "Real UK salaries" },
+                { icon: "🎯", label: "Top 3 matches" },
+              ].map(b => (
+                <div key={b.label} className="rounded-xl border border-white/8 bg-white/3 py-3 px-2">
+                  <p className="text-lg mb-1">{b.icon}</p>
+                  <p className="text-xs text-white/40">{b.label}</p>
+                </div>
+              ))}
             </div>
           </div>
         )}
