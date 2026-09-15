@@ -392,7 +392,7 @@ export default function CareerQuizPage() {
       <div className="min-h-screen bg-[#050816] text-white">
         <div className="mx-auto max-w-2xl px-6 py-16">
           <div className="mb-8 flex justify-center">
-            <Image src="/logo.png" alt="HireFlow" width={40} height={40} className="rounded-xl" />
+            <BrandLogo className="flex items-center gap-3" textClassName="font-semibold text-sm" />
           </div>
 
           <div className="mb-10 text-center">
@@ -497,7 +497,7 @@ export default function CareerQuizPage() {
                 </div>
                 <div className="space-y-3">
                   {routes.map(r => (
-                    <a key={r.name} href={r.url} target="_blank" rel="noreferrer"
+                    <a key={r.name} href={r.url} target="_blank" rel="noreferrer" onClick={e => { e.preventDefault(); window.open(r.url, "_blank") }}
                       className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/4 p-4 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition">
                       <span className="text-xl shrink-0">{r.icon}</span>
                       <div className="flex-1">
