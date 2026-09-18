@@ -433,12 +433,12 @@ export default function QuizClient({ autoStart = false }: { autoStart?: boolean 
           <div className="relative mb-10">
             <div className="space-y-5">
               {results.map((r, i) => (
-                <div key={r.title} className={`rounded-2xl border p-6 transition-all ${i === 0 ? "border-cyan-500/30 bg-cyan-500/5" : "border-white/10 bg-white/4"} ${!unlocked ? "blur-sm select-none" : ""}`}>
+                <div key={r.title} className={`rounded-2xl border p-6 transition-all ${i === 0 ? "border-cyan-500/30 bg-cyan-500/5" : "border-white/10 bg-white/4"}`}>
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div>
                       {i === 0 && <p className="text-xs text-cyan-400 font-semibold mb-1">⭐ Best match</p>}
-                      <h2 className="text-xl font-bold text-white">{!unlocked ? "████████████" : r.title}</h2>
-                      <p className="text-sm text-white/40 mt-0.5">{!unlocked ? "£██,000 – £██,000" : `${r.salary} / year`}</p>
+                      <h2 className="text-xl font-bold text-white">{r.title}</h2>
+                      <p className="text-sm text-white/40 mt-0.5">{!unlocked ? "Unlock to see salary →" : `${r.salary} / year`}</p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-2xl font-bold" style={{ color: i === 0 ? "#06b6d4" : "#fff" }}>{r.match}%</p>
@@ -448,7 +448,7 @@ export default function QuizClient({ autoStart = false }: { autoStart?: boolean 
                   <div className="mb-3 h-1.5 w-full rounded-full bg-white/10">
                     <div className="h-full rounded-full transition-all" style={{ width: `${r.match}%`, backgroundColor: i === 0 ? "#06b6d4" : "#8b5cf6" }} />
                   </div>
-                  <p className="text-sm text-white/60 leading-6">{!unlocked ? "██████ ███ ████ ████████ ████ ████████ ██ ████████ ████ ████." : r.why}</p>
+                  <p className={`text-sm leading-6 ${!unlocked ? "blur-sm select-none text-white/60" : "text-white/60"}`}>{r.why}</p>
                 </div>
               ))}
             </div>
@@ -457,11 +457,12 @@ export default function QuizClient({ autoStart = false }: { autoStart?: boolean 
             {!unlocked && (
               <div className="absolute inset-0 flex items-end justify-center pb-4">
                 <div className="mx-4 w-full max-w-md rounded-2xl border border-cyan-500/30 bg-[#050816]/95 backdrop-blur-md p-6 text-center shadow-2xl">
-                  <div className="mb-2 text-2xl">🚀</div>
-                  <h3 className="text-lg font-bold text-white mb-1">You're closer than you think!</h3>
-                  <p className="text-sm text-white/50 mb-4">
-                    Enter your email to unlock your full results and get one step closer to your dream career — free, no password needed.
+                  <div className="mb-2 text-2xl">🎯</div>
+                  <h3 className="text-lg font-bold text-white mb-1">Your results are ready!</h3>
+                  <p className="text-sm text-white/50 mb-1">
+                    Where shall we send your full career matches + UK salaries?
                   </p>
+                  <p className="text-xs text-white/30 mb-4">Free · No password · Takes 10 seconds</p>
                   <EmailUnlock onUnlock={() => setUnlocked(true)} answers={finalAnswers} />
                   <div className="mt-4 flex items-center gap-3">
                     <div className="h-px flex-1 bg-white/10" />
