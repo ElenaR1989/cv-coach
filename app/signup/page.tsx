@@ -84,6 +84,7 @@ function SignupForm() {
               { icon: "🎯", text: "Track every application in one place" },
               { icon: "🤖", text: "Practice interviews with instant AI feedback" },
               { icon: "📊", text: "Smart Coach shows your skill gaps" },
+              { icon: "🧭", text: "Free career quiz — discover your top 3 career matches" },
             ].map(f => (
               <div key={f.text} className="flex items-center gap-3 text-white/70">
                 <span className="text-xl">{f.icon}</span>
