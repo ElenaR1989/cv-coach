@@ -5,7 +5,7 @@ import Link from "next/link"
 
 const FREE_FEATURES = [
   "Track unlimited applications",
-  "Search jobs across LinkedIn, Indeed, Reed & more",
+  "Search jobs across Reed, Adzuna, Jooble & Remotive",
   "1 AI practice interview per month",
   "Basic CV editor",
   "3 AI cover letters",
