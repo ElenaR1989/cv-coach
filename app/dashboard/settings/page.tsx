@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import ProfileCard from "./profile-card"
+import PromoCodeCard from "./promo-code-card"
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -45,6 +46,8 @@ export default async function SettingsPage() {
         initialLocation={profile?.location ?? null}
         initialOpenToAgencies={profile?.open_to_agencies ?? false}
       />
+
+      <PromoCodeCard />
 
       <div className="rounded-2xl border border-white/10 bg-white/4 p-6">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/40">Billing</h2>
