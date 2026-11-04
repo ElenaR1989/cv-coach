@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import Anthropic from "@anthropic-ai/sdk"
+import OpenAI from "openai"
 
-const anthropic = new Anthropic()
+const openai = new OpenAI()
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -12,8 +12,8 @@ export async function POST(req: Request) {
   const { title, company_name, location, job_type, requirements } = await req.json()
   if (!title) return NextResponse.json({ error: "Job title is required" }, { status: 400 })
 
-  const message = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
     max_tokens: 800,
     messages: [{
       role: "user",
@@ -29,6 +29,6 @@ Write in plain English, no jargon. Keep it under 300 words. Do not include salar
     }],
   })
 
-  const description = message.content[0].type === "text" ? message.content[0].text : ""
+  const description = completion.choices[0].message.content ?? ""
   return NextResponse.json({ description })
 }
