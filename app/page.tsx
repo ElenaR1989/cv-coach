@@ -78,6 +78,9 @@ export default function HomePage() {
               <Link href="/agency/new" className="transition hover:text-white text-amber-300">
                 🏢 Agencies
               </Link>
+              <Link href="/employer/signup" className="transition hover:text-white text-rose-300">
+                📋 Post a Job
+              </Link>
               <a href="#contact" className="transition hover:text-white">
                 Contact
               </a>
