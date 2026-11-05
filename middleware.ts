@@ -25,8 +25,6 @@ export async function middleware(request: NextRequest) {
 
   const hostname = request.headers.get("host") || ""
   const url = request.nextUrl.clone()
-  const hostname = request.headers.get("host") || ""
-  const url = request.nextUrl.clone()
 
   const mainDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "hire-flow.app"
 
