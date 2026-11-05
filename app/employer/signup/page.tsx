@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import BrandLogo from "@/components/brand-logo"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
 
 export default function EmployerSignupPage() {
   const router = useRouter()
@@ -22,13 +23,13 @@ export default function EmployerSignupPage() {
     if (!email || !password) { setError("Please fill in all fields."); return }
     setLoading(true)
     setError("")
-    const res = await fetch("/api/auth/employer-signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) { setError(data.error ?? "Something went wrong"); setLoading(false); return }
+    const supabase = createClient()
+    const { error: signUpError } = await supabase.auth.signUp({ email, password, options: { data: { role: "employer" } } })
+    if (signUpError && signUpError.message !== "User already registered") {
+      setError(signUpError.message); setLoading(false); return
+    }
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    if (signInError) { setError(signInError.message); setLoading(false); return }
     setLoading(false)
     setStep("company")
   }
