@@ -25,7 +25,7 @@ Location: ${location || "UK"}
 Job type: ${job_type || "full-time"}
 Key requirements: ${requirements || "not specified"}
 
-Write in plain English, no jargon. Keep it under 300 words. Do not include salary details.`,
+Write in plain English, no jargon. Keep it under 300 words. Do not include salary details. Do not use markdown formatting, asterisks or bold — use plain text with section headings on their own line.`,
     }],
   })
 
