@@ -63,10 +63,10 @@ export default async function JobsPage() {
             {jobs.map(job => {
               const salary = formatSalary(job.salary_min, job.salary_max)
               return (
-                <div key={job.id} className="rounded-2xl border border-white/10 bg-white/4 p-5 hover:border-white/20 transition">
+                <Link key={job.id} href={`/jobs/${job.id}`} className="block rounded-2xl border border-white/10 bg-white/4 p-5 hover:border-cyan-500/40 hover:bg-white/6 transition cursor-pointer">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <Link href={`/jobs/${job.id}`}><h2 className="text-lg font-bold text-white hover:text-cyan-300 transition">{job.title}</h2></Link>
+                      <h2 className="text-lg font-bold text-white">{job.title}</h2>
                       <p className="text-sm text-cyan-400 font-medium mt-0.5">{job.employers?.company_name}</p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/50">{job.location}</span>
@@ -94,7 +94,7 @@ export default async function JobsPage() {
                       </Link>
                     )}
                   </div>
-                </div>
+                </Link>
               )
             })}
           </div>
