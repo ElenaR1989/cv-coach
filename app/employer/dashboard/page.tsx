@@ -19,11 +19,16 @@ interface Job {
 export default function EmployerDashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+  const [apiError, setApiError] = useState("")
 
   useEffect(() => {
     fetch("/api/employer/jobs")
       .then(r => r.json())
-      .then(d => { setJobs(d.jobs ?? []); setLoading(false) })
+      .then(d => {
+        if (d.error) setApiError(d.error)
+        setJobs(d.jobs ?? [])
+        setLoading(false)
+      })
   }, [])
 
   const formatSalary = (min: number | null, max: number | null) => {
@@ -47,6 +52,8 @@ export default function EmployerDashboardPage() {
 
         <h1 className="text-2xl font-bold mb-1">Employer Dashboard</h1>
         <p className="text-sm text-white/40 mb-8">Manage your job postings and view applicants.</p>
+
+        {apiError && <p className="mb-4 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-400">Error: {apiError}</p>}
 
         {loading ? (
           <div className="flex justify-center py-20">
