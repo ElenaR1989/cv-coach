@@ -141,7 +141,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     supabaseAdmin.from("profiles").select("id, plan, is_pro, open_to_agencies"),
     supabaseAdmin.from("agencies").select("id, name, plan, created_at").order("created_at", { ascending: false }).limit(20),
     supabaseAdmin.from("affiliate_conversions").select("*").order("created_at", { ascending: false }),
-    supabaseAdmin.from("employers").select("id, company_name, location, created_at").order("created_at", { ascending: false }),
+    supabaseAdmin.from("employers").select("id, user_id, company_name, location, created_at").order("created_at", { ascending: false }),
     supabaseAdmin.from("job_postings").select("id, title, is_active, created_at").order("created_at", { ascending: false }),
   ])
 
@@ -152,6 +152,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const totalCoverLetters = coverLettersResult.count ?? 0
   const employers = employersResult.data ?? []
   const jobPostings = jobPostingsResult.data ?? []
+  const employerUserIds = new Set(employers.map((e: { user_id?: string }) => e.user_id))
   const totalEmployers = employers.length
   const totalJobPostings = jobPostings.length
   const activeJobPostings = jobPostings.filter(j => j.is_active).length
@@ -706,6 +707,11 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
                     <p className="text-xs text-white/35">Joined {formatDate(item.created_at)}</p>
                   </div>
                 </div>
+                {employerUserIds.has(item.id) ? (
+                  <span className="rounded-full border border-rose-500/25 bg-rose-500/10 px-2 py-0.5 text-xs text-rose-300">Employer</span>
+                ) : (
+                  <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-300">Job seeker</span>
+                )}
               </div>
             ))}
           </div>
