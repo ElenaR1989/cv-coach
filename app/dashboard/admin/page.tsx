@@ -125,6 +125,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     applicationsForCurrentPeriodChartResult, allApplicationsForInsightsResult,
     allCvProfilesResult, allCoverLettersResult,
     referralClicksResult, profilesResult, agenciesResult, affiliateConversionsResult,
+    employersResult, jobPostingsResult,
   ] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers(),
     supabase.from("job_applications").select("*", { count: "exact", head: true }),
@@ -140,6 +141,8 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     supabaseAdmin.from("profiles").select("id, plan, is_pro, open_to_agencies"),
     supabaseAdmin.from("agencies").select("id, name, plan, created_at").order("created_at", { ascending: false }).limit(20),
     supabaseAdmin.from("affiliate_conversions").select("*").order("created_at", { ascending: false }),
+    supabaseAdmin.from("employers").select("id, company_name, location, created_at").order("created_at", { ascending: false }),
+    supabaseAdmin.from("job_postings").select("id, title, is_active, created_at").order("created_at", { ascending: false }),
   ])
 
   const authUsers: AuthUser[] = authUsersResult.data?.users ?? []
@@ -147,6 +150,11 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const totalApplications = applicationsResult.count ?? 0
   const totalCVs = cvsResult.count ?? 0
   const totalCoverLetters = coverLettersResult.count ?? 0
+  const employers = employersResult.data ?? []
+  const jobPostings = jobPostingsResult.data ?? []
+  const totalEmployers = employers.length
+  const totalJobPostings = jobPostings.length
+  const activeJobPostings = jobPostings.filter(j => j.is_active).length
   const applicationsThisPeriod = applicationsThisPeriodResult.count ?? 0
 
   const usersThisPeriod = authUsers.filter(u => u.created_at && new Date(u.created_at).getTime() >= new Date(currentPeriodStart).getTime()).length
@@ -365,6 +373,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
         <StatCard title="Total Users" value={totalUsers} subtext={`${usersThisPeriod} new in ${rangeDays}d`} icon="👥" accent="border-blue-500/20 bg-blue-500/8" />
         <StatCard title="Applications" value={totalApplications} subtext={`${applicationsThisPeriod} in last ${rangeDays}d`} icon="📨" accent="border-emerald-500/20 bg-emerald-500/8" />
         <StatCard title="CV Profiles" value={totalCVs} subtext="Stored in the system" icon="📄" accent="border-violet-500/20 bg-violet-500/8" />
+        <StatCard title="Employers" value={totalEmployers} subtext={`${activeJobPostings} active jobs posted`} icon="🏢" accent="border-rose-500/20 bg-rose-500/8" />
         <StatCard title="Cover Letters" value={totalCoverLetters} subtext="Generated across users" icon="✍️" accent="border-amber-500/20 bg-amber-500/8" />
       </div>
 
@@ -518,6 +527,31 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
                     <p className="text-xs text-white/35">{formatDate(agency.created_at)}</p>
                   </div>
                   <span className="rounded-full border border-violet-500/25 bg-violet-500/10 px-2 py-0.5 text-xs text-violet-300 capitalize">{agency.plan || "starter"}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Employers */}
+        <div className={card}>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white">Employers</h2>
+            <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalEmployers} total</span>
+          </div>
+          {employers.length === 0 ? (
+            <p className="text-xs text-white/30">No employers signed up yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {employers.map(emp => (
+                <div key={emp.id} className={subCard + " flex items-center justify-between gap-3"}>
+                  <div>
+                    <p className="text-sm font-medium text-white">{emp.company_name}</p>
+                    <p className="text-xs text-white/35">{emp.location} · {formatDate(emp.created_at)}</p>
+                  </div>
+                  <span className="rounded-full border border-rose-500/25 bg-rose-500/10 px-2 py-0.5 text-xs text-rose-300">
+                    {jobPostings.filter(j => j.is_active).length} jobs
+                  </span>
                 </div>
               ))}
             </div>
