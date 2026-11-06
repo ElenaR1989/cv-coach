@@ -17,7 +17,7 @@ export async function GET() {
 
   const { data: jobs } = await supabaseAdmin
     .from("job_postings")
-    .select("*, job_applications(count)")
+    .select("*")
     .eq("employer_id", employer.id)
     .order("created_at", { ascending: false })
 

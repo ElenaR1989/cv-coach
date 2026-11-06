@@ -88,7 +88,7 @@ export default function EmployerDashboardPage() {
                 <div className="mt-4 flex items-center gap-6">
                   <div className="flex items-center gap-2 text-sm text-white/50">
                     <span>👥</span>
-                    <span><strong className="text-white">{job.job_applications?.[0]?.count ?? 0}</strong> applicants</span>
+                    <span><strong className="text-white">0</strong> applicants</span>
                   </div>
                   <div className="text-sm text-white/30">
                     Posted {new Date(job.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
