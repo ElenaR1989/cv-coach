@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
+import { Resend } from "resend"
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function GET() {
   const supabase = await createClient()
@@ -51,5 +54,24 @@ export async function POST(req: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Notify Elena of new job posting
+  try {
+    const { data: emp } = await supabaseAdmin.from("employers").select("company_name").eq("id", employer.id).single()
+    await resend.emails.send({
+      from: "HireFlow <hello@hire-flow.app>",
+      to: "hello@hire-flow.app",
+      subject: `New job posted: ${title}`,
+      html: `<p>A new job has been posted on HireFlow.</p>
+<ul>
+<li><strong>Company:</strong> ${emp?.company_name ?? "Unknown"}</li>
+<li><strong>Role:</strong> ${title}</li>
+<li><strong>Location:</strong> ${location}</li>
+<li><strong>Type:</strong> ${job_type}</li>
+</ul>
+<p><a href="https://hire-flow.app/jobs">View on jobs board →</a></p>`,
+    })
+  } catch {}
+
   return NextResponse.json({ job: data })
 }
