@@ -9,6 +9,7 @@ export const metadata = {
 
 export default async function JobsPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { data: jobs } = await supabase
     .from("job_postings")
@@ -86,10 +87,10 @@ export default async function JobsPage() {
                         Apply now →
                       </a>
                     ) : (
-                      <Link href={`/signup?next=/jobs/${job.id}/apply`}
+                      <Link href={user ? `/dashboard` : `/signup`}
                         style={{ backgroundColor: "#06b6d4", color: "#000" }}
                         className="rounded-xl px-5 py-2 text-sm font-bold transition hover:opacity-90">
-                        Apply with HireFlow →
+                        {user ? "Apply with HireFlow →" : "Sign up to apply →"}
                       </Link>
                     )}
                   </div>
