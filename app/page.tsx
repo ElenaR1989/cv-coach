@@ -234,6 +234,30 @@ export default function HomePage() {
               a CV may need strengthening.
             </p>
           </div>
+
+          <div className="rounded-3xl border border-rose-500/20 bg-rose-500/5 p-8 backdrop-blur-xl lg:col-span-2">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-300/80">
+              For employers
+            </p>
+            <h3 className="mt-3 text-2xl font-bold">
+              Post jobs and reach local talent directly
+            </h3>
+            <p className="mt-4 text-base leading-8 text-white/70">
+              Post your job in minutes with AI-generated descriptions, reach job seekers in your area, and get applications from people who have already matched their career goals to your role. Free to post during our launch period.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-6 text-sm text-white/55">
+              <div className="flex items-center gap-2"><span className="text-rose-400">✓</span> AI job description writer</div>
+              <div className="flex items-center gap-2"><span className="text-rose-400">✓</span> Reach motivated local candidates</div>
+              <div className="flex items-center gap-2"><span className="text-rose-400">✓</span> Free to post — no contract</div>
+            </div>
+            <div className="mt-6">
+              <Link href="/employer/signup" style={{ backgroundColor: "#f43f5e", color: "#fff" }}
+                className="inline-block rounded-xl px-6 py-3 text-sm font-bold transition hover:opacity-90">
+                Post a job for free →
+              </Link>
+              <p className="mt-2 text-xs text-white/35">Free during launch · From £19/job in 2027</p>
+            </div>
+          </div>
         </section>
 
         {/* Early reviewers */}
