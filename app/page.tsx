@@ -247,7 +247,7 @@ export default function HomePage() {
             </p>
             <div className="mt-6 flex flex-wrap gap-6 text-sm text-white/55">
               <div className="flex items-center gap-2"><span className="text-rose-400">✓</span> AI job description writer</div>
-              <div className="flex items-center gap-2"><span className="text-rose-400">✓</span> Reach motivated local candidates</div>
+              <div className="flex items-center gap-2"><span className="text-rose-400">✓</span> Reach motivated candidates</div>
               <div className="flex items-center gap-2"><span className="text-rose-400">✓</span> Free to post — no contract</div>
             </div>
             <div className="mt-6">

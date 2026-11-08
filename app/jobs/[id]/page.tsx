@@ -12,7 +12,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
     .from("job_postings")
     .select("*, employers(company_name, location, website, company_description)")
     .eq("id", id)
-    .eq("is_active", true)
+    .eq("status", "active")
     .single()
 
   if (!job) notFound()

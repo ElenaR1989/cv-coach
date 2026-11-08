@@ -12,6 +12,7 @@ interface Job {
   salary_min: number | null
   salary_max: number | null
   is_active: boolean
+  status: string
   created_at: string
   job_applications: { count: number }[]
 }
@@ -80,8 +81,13 @@ export default function EmployerDashboardPage() {
                     <p className="text-sm text-white/40 mt-0.5">{job.location} · {job.job_type} · {formatSalary(job.salary_min, job.salary_max)}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${job.is_active ? "bg-green-500/15 text-green-400" : "bg-white/10 text-white/40"}`}>
-                      {job.is_active ? "Active" : "Inactive"}
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      job.status === "active" ? "bg-green-500/15 text-green-400" :
+                      job.status === "pending" ? "bg-amber-500/15 text-amber-400" :
+                      job.status === "rejected" ? "bg-red-500/15 text-red-400" :
+                      "bg-white/10 text-white/40"
+                    }`}>
+                      {job.status === "active" ? "Live" : job.status === "pending" ? "Pending review" : job.status === "rejected" ? "Not approved" : "Inactive"}
                     </span>
                   </div>
                 </div>

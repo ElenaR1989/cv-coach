@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
   const { data, error } = await supabaseAdmin
     .from("job_postings")
-    .insert({ employer_id: employer.id, title, description, location, job_type, salary_min, salary_max, apply_url })
+    .insert({ employer_id: employer.id, title, description, location, job_type, salary_min, salary_max, apply_url, status: "pending", is_active: false })
     .select()
     .single()
 
@@ -61,15 +61,15 @@ export async function POST(req: Request) {
     await resend.emails.send({
       from: "HireFlow <hello@hire-flow.app>",
       to: "hello@hire-flow.app",
-      subject: `New job posted: ${title}`,
-      html: `<p>A new job has been posted on HireFlow.</p>
+      subject: `New job pending approval: ${title}`,
+      html: `<p>A new job has been submitted and is waiting for your approval.</p>
 <ul>
 <li><strong>Company:</strong> ${emp?.company_name ?? "Unknown"}</li>
 <li><strong>Role:</strong> ${title}</li>
 <li><strong>Location:</strong> ${location}</li>
 <li><strong>Type:</strong> ${job_type}</li>
 </ul>
-<p><a href="https://hire-flow.app/jobs">View on jobs board →</a></p>`,
+<p><a href="https://hire-flow.app/dashboard/admin">Review in admin dashboard →</a></p>`,
     })
   } catch {}
 

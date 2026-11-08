@@ -7,6 +7,7 @@ import AdminApplicationsChart from "@/components/admin-applications-chart"
 import AdminSignupsChart from "@/components/admin-signups-chart"
 import InviteForm from "./invite-form"
 import SendEmailForm from "./send-email-form"
+import PendingJobCard from "./pending-job-card"
 
 function formatDate(value?: string | null) {
   if (!value) return "—"
@@ -142,7 +143,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     supabaseAdmin.from("agencies").select("id, name, plan, created_at").order("created_at", { ascending: false }).limit(20),
     supabaseAdmin.from("affiliate_conversions").select("*").order("created_at", { ascending: false }),
     supabaseAdmin.from("employers").select("id, user_id, company_name, location, created_at").order("created_at", { ascending: false }),
-    supabaseAdmin.from("job_postings").select("id, title, is_active, created_at").order("created_at", { ascending: false }),
+    supabaseAdmin.from("job_postings").select("id, title, is_active, status, location, job_type, created_at, employer_id, employers(company_name)").order("created_at", { ascending: false }),
   ])
 
   const authUsers: AuthUser[] = authUsersResult.data?.users ?? []
@@ -155,7 +156,8 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const employerUserIds = new Set(employers.map((e: { user_id?: string }) => e.user_id))
   const totalEmployers = employers.length
   const totalJobPostings = jobPostings.length
-  const activeJobPostings = jobPostings.filter(j => j.is_active).length
+  const activeJobPostings = jobPostings.filter(j => j.status === "active").length
+  const pendingJobPostings = jobPostings.filter(j => j.status === "pending")
   const applicationsThisPeriod = applicationsThisPeriodResult.count ?? 0
 
   const usersThisPeriod = authUsers.filter(u => u.created_at && new Date(u.created_at).getTime() >= new Date(currentPeriodStart).getTime()).length
@@ -343,6 +345,26 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
           <SendEmailForm allEmails={authUsers.map(u => u.email).filter(Boolean) as string[]} />
         </div>
       </div>
+
+      {/* Pending job approvals */}
+      {pendingJobPostings.length > 0 && (
+        <div className={`${card} border-amber-500/30 bg-amber-500/5`}>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">⏳</span>
+              <div>
+                <h2 className="text-sm font-semibold text-white">Jobs Pending Approval</h2>
+                <p className="text-xs text-white/40">{pendingJobPostings.length} job{pendingJobPostings.length !== 1 ? "s" : ""} waiting for review</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {pendingJobPostings.map(job => (
+              <PendingJobCard key={job.id} job={job} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* User funnel */}
       <div className={card}>

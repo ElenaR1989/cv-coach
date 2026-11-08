@@ -14,7 +14,7 @@ export default async function JobsPage() {
   const { data: jobs } = await supabase
     .from("job_postings")
     .select("*, employers(company_name, location, website)")
-    .eq("is_active", true)
+    .eq("status", "active")
     .order("created_at", { ascending: false })
 
   const formatSalary = (min: number | null, max: number | null) => {
