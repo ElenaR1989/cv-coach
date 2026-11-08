@@ -1,7 +1,7 @@
 import JobSearchClient from "./job-search-client"
 
 export const metadata = {
-  title: "Search Jobs – HireFlow",
+  title: "Job Boards – HireFlow",
 }
 
 export default function SearchJobsPage() {

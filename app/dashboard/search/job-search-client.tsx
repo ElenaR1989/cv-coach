@@ -75,7 +75,7 @@ export default function JobSearchClient() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Search Jobs</h1>
+        <h1 className="text-2xl font-bold text-white">Job Boards</h1>
         <p className="mt-1 text-sm text-white/50">
           Search across Adzuna, Reed, Jooble, and Remotive in one place.
         </p>

@@ -76,10 +76,10 @@ export default function DashboardNavbar({ isAdmin = false }: DashboardNavbarProp
           Cover Letters
         </Link>
         <Link href="/dashboard/search" className={navLinkClass(pathname, "/dashboard/search")}>
-          Search Jobs
+          Job Boards
         </Link>
         <Link href="/jobs" className={navLinkClass(pathname, "/jobs")}>
-          Browse Jobs
+          HireFlow Jobs
         </Link>
         <Link href="/dashboard/analytics" className={navLinkClass(pathname, "/dashboard/analytics")}>
           Analytics
