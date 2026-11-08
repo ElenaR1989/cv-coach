@@ -49,14 +49,20 @@ export default async function JobsPage() {
 
         {!jobs || jobs.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/4 p-12 text-center">
-            <p className="text-4xl mb-4">🔍</p>
-            <h2 className="text-lg font-bold mb-2">No jobs posted yet</h2>
-            <p className="text-sm text-white/40 mb-6">Be the first employer to reach our community of job seekers.</p>
-            <Link href="/employer/signup"
-              style={{ backgroundColor: "#06b6d4", color: "#000" }}
-              className="inline-block rounded-xl px-6 py-3 text-sm font-bold transition hover:opacity-90">
-              Post a job for free →
-            </Link>
+            <p className="text-4xl mb-4">🚀</p>
+            <h2 className="text-lg font-bold mb-2">Jobs coming soon</h2>
+            <p className="text-sm text-white/40 mb-6 max-w-sm mx-auto">We're onboarding our first employers this week. Check back soon — or take the free career quiz while you wait to get matched when jobs go live.</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/career-quiz"
+                style={{ backgroundColor: "#06b6d4", color: "#000" }}
+                className="inline-block rounded-xl px-6 py-3 text-sm font-bold transition hover:opacity-90">
+                Take the free career quiz →
+              </Link>
+              <Link href="/employer/signup"
+                className="inline-block rounded-xl border border-white/15 px-6 py-3 text-sm font-semibold text-white/60 transition hover:text-white">
+                Post a job for free →
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
