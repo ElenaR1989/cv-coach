@@ -26,33 +26,21 @@ export default function HomePage() {
             </div>
 
             <nav className="flex flex-wrap items-center gap-3 text-sm text-white/80">
-              <a href="#features" className="transition hover:text-white">
-                Features
-              </a>
-              <a href="#who-its-for" className="transition hover:text-white">
-                Who it’s for
-              </a>
-              <Link href="/demo" className="transition hover:text-white text-violet-300">
-                🤖 Demo
+              <Link href="/career-quiz" className="transition hover:text-white text-emerald-300">
+                🧭 Career Quiz
               </Link>
               <Link href="/coaching" className="transition hover:text-white text-cyan-300">
                 💼 Coaching
               </Link>
-              <Link href="/career-quiz" className="transition hover:text-white text-emerald-300">
-                🧭 Career Quiz
-              </Link>
               <Link href="/agency/new" className="transition hover:text-white text-amber-300">
                 🏢 Agencies
-              </Link>
-              <Link href="/employer/signup" className="transition hover:text-white text-rose-300">
-                📋 Post a Job
               </Link>
               <Link href="/affiliate" className="transition hover:text-white text-violet-300">
                 💸 Affiliates
               </Link>
-              <a href="#contact" className="transition hover:text-white">
-                Contact
-              </a>
+              <Link href="/employer/signup" className="transition hover:text-white text-rose-300">
+                📋 Post a Job
+              </Link>
               <Link
                 href="/dashboard"
                 className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 font-medium text-white transition hover:bg-white/20"
