@@ -47,6 +47,9 @@ export default function HomePage() {
               <Link href="/employer/signup" className="transition hover:text-white text-rose-300">
                 📋 Post a Job
               </Link>
+              <Link href="/affiliate" className="transition hover:text-white text-violet-300">
+                💸 Affiliates
+              </Link>
               <a href="#contact" className="transition hover:text-white">
                 Contact
               </a>
