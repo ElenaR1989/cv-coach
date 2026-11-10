@@ -7,8 +7,8 @@ import { Suspense } from "react"
 import RefCapture from "@/components/ref-capture"
 
 export const metadata: Metadata = {
-  title: "CV Integration in Job Form",
-  description: "Track applications and manage CVs",
+  title: "HireFlow — Free Job Board & Career Tools",
+  description: "Find jobs matched to your skills, take the free career quiz, and get hired faster. Free for job seekers. Free for employers during launch.",
 }
 
 export default function RootLayout({
