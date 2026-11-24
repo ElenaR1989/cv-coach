@@ -243,6 +243,10 @@ export default function HomePage() {
               <a href="mailto:hello@hire-flow.app" className="transition hover:text-white">
                 hello@hire-flow.app
               </a>
+              <div className="flex gap-4">
+                <Link href="/privacy" className="transition hover:text-white">Privacy Policy</Link>
+                <Link href="/terms" className="transition hover:text-white">Terms</Link>
+              </div>
               <span>©️ {new Date().getFullYear()} HireFlow. All rights reserved.</span>
             </div>
           </div>
