@@ -8,6 +8,7 @@ import AdminSignupsChart from "@/components/admin-signups-chart"
 import InviteForm from "./invite-form"
 import SendEmailForm from "./send-email-form"
 import PendingJobCard from "./pending-job-card"
+import { AdminTabs, AdminTabPanel } from "./admin-tabs"
 
 function formatDate(value?: string | null) {
   if (!value) return "—"
@@ -294,68 +295,49 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const card = "rounded-2xl border border-white/10 bg-white/4 p-6"
   const subCard = "rounded-xl border border-white/8 bg-white/3 p-4 transition hover:bg-white/6"
 
+  const affiliateApplicants = [
+    { name: "Safwan Ahmed", email: "safwxn.ahmxd08@gmail.com", ref: "safwan-ahmed", status: "active", note: "Welcome email sent 13 Sep 2026" },
+    { name: "Samantha Evans", email: "samanthaevans140304@gmail.com", ref: "samantha-evans", status: "pending", note: "Message sent on Indeed — awaiting reply" },
+    { name: "Oni Pamilerin", email: "onipamilerin2024@gmail.com", ref: "oni-pamilerin", status: "pending", note: "Message sent on Indeed — awaiting reply" },
+    { name: "Fardowso Cabdulrahman", email: "fardowsocabdulrahman20@gmail.com", ref: "fardowso-cabdulrahman", status: "pending", note: "Message sent on Indeed — awaiting reply" },
+    { name: "Osborn Cockburn", email: "osborncockburnn778@gmail.com", ref: "osborn-cockburn", status: "active", note: "Welcome email sent 13 Sep 2026" },
+    { name: "Razvan Marian Banu", email: "razvan.banu05@yahoo.com", ref: "razvan-marian-banu", status: "active", note: "Welcome email sent 13 Sep 2026" },
+    { name: "George Ionut Dumitru", email: "dumitrugeorge151@gmail.com", ref: "george-ionut-dumitru", status: "active", note: "Applied 14 Sep 2026" },
+  ]
+  const statusStyle = (s: string) => s === "active"
+    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+    : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 md:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-8 md:px-8">
 
       {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-          <p className="mt-1 text-sm text-white/40">Monitor platform usage, users, CVs, and applications.</p>
+          <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
+          <p className="mt-0.5 text-sm text-white/40">{user.email}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/40">
-            {user.email}
-          </span>
-          <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
-            {rangeOptions.map(option => {
-              const isActive = selectedRange === option.value
-              return (
-                <Link key={option.value} href={buildAdminHref({ range: option.value, company: companyFilter, role: roleFilter, user: userFilter })}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${isActive ? "bg-white/12 text-white" : "text-white/40 hover:text-white"}`}>
-                  {option.label}
-                </Link>
-              )
-            })}
-          </div>
+        <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1 w-fit">
+          {rangeOptions.map(option => {
+            const isActive = selectedRange === option.value
+            return (
+              <Link key={option.value} href={buildAdminHref({ range: option.value, company: companyFilter, role: roleFilter, user: userFilter })}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${isActive ? "bg-white/12 text-white" : "text-white/40 hover:text-white"}`}>
+                {option.label}
+              </Link>
+            )
+          })}
         </div>
       </div>
 
-      {/* Invite + Email panels */}
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className={`${card} border-cyan-500/20 bg-cyan-500/5`}>
-          <div className="mb-4 flex items-center gap-3">
-            <span className="text-xl">✉️</span>
-            <div>
-              <h2 className="text-sm font-semibold text-white">Invite New User</h2>
-              <p className="text-xs text-white/40">Send a magic-link invite to onboard job seekers, advisors, or beta users.</p>
-            </div>
-          </div>
-          <InviteForm />
-        </div>
-
-        <div className={`${card} border-violet-500/20 bg-violet-500/5`}>
-          <div className="mb-4 flex items-center gap-3">
-            <span className="text-xl">📣</span>
-            <div>
-              <h2 className="text-sm font-semibold text-white">Send Announcement</h2>
-              <p className="text-xs text-white/40">Email all users or a specific person from hello@hire-flow.app.</p>
-            </div>
-          </div>
-          <SendEmailForm allEmails={authUsers.map(u => u.email).filter(Boolean) as string[]} />
-        </div>
-      </div>
-
-      {/* Pending job approvals */}
+      {/* Pending jobs — always visible at top if any */}
       {pendingJobPostings.length > 0 && (
-        <div className={`${card} border-amber-500/30 bg-amber-500/5`}>
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-xl">⏳</span>
-              <div>
-                <h2 className="text-sm font-semibold text-white">Jobs Pending Approval</h2>
-                <p className="text-xs text-white/40">{pendingJobPostings.length} job{pendingJobPostings.length !== 1 ? "s" : ""} waiting for review</p>
-              </div>
+        <div className={`${card} border-amber-500/30 bg-amber-500/5 mb-8`}>
+          <div className="mb-4 flex items-center gap-3">
+            <span className="text-xl">⏳</span>
+            <div>
+              <h2 className="text-sm font-semibold text-white">Jobs Pending Approval</h2>
+              <p className="text-xs text-white/40">{pendingJobPostings.length} job{pendingJobPostings.length !== 1 ? "s" : ""} waiting for review</p>
             </div>
           </div>
           <div className="space-y-3">
@@ -366,110 +348,394 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
         </div>
       )}
 
-      {/* User funnel */}
-      <div className={card}>
-        <div className="mb-5">
-          <h2 className="text-base font-semibold text-white">User Funnel</h2>
-          <p className="text-xs text-white/40">How users move through the platform journey</p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {funnelData.map((item, i) => (
-            <div key={item.label} className="rounded-xl border border-white/8 bg-white/3 p-4">
-              <div className="flex items-start justify-between">
+      <AdminTabs>
+
+        {/* ── OVERVIEW ───────────────────────────────────────────── */}
+        <AdminTabPanel tab="Overview">
+
+          {/* Key numbers */}
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard title="Total Users" value={totalUsers} subtext={`${usersThisPeriod} new in ${rangeDays}d`} icon="👥" accent="border-blue-500/20 bg-blue-500/8" />
+            <StatCard title="Employers" value={totalEmployers} subtext={`${activeJobPostings} active jobs`} icon="🏢" accent="border-rose-500/20 bg-rose-500/8" />
+            <StatCard title="Applications" value={totalApplications} subtext={`${applicationsThisPeriod} in last ${rangeDays}d`} icon="📨" accent="border-emerald-500/20 bg-emerald-500/8" />
+            <StatCard title="Cover Letters" value={totalCoverLetters} subtext="Generated across users" icon="✍️" accent="border-amber-500/20 bg-amber-500/8" />
+          </div>
+
+          {/* Quick actions */}
+          <div className="grid gap-6 xl:grid-cols-2">
+            <div className={`${card} border-cyan-500/20 bg-cyan-500/5`}>
+              <div className="mb-4 flex items-center gap-3">
+                <span className="text-xl">✉️</span>
                 <div>
-                  <p className="text-xs text-white/40">{item.label}</p>
-                  <p className="mt-1.5 text-3xl font-bold text-white">{item.value}</p>
-                  <p className="mt-1 text-xs text-white/30">{i === 0 ? "Total registered" : `${item.pct}% of users`}</p>
+                  <h2 className="text-sm font-semibold text-white">Invite New User</h2>
+                  <p className="text-xs text-white/40">Send a magic-link invite to onboard job seekers, advisors, or beta users.</p>
                 </div>
-                <span className="text-2xl">{item.icon}</span>
               </div>
-              <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/8">
-                <div className="h-full rounded-full bg-cyan-500" style={{ width: `${item.pct}%` }} />
+              <InviteForm />
+            </div>
+            <div className={`${card} border-violet-500/20 bg-violet-500/5`}>
+              <div className="mb-4 flex items-center gap-3">
+                <span className="text-xl">📣</span>
+                <div>
+                  <h2 className="text-sm font-semibold text-white">Send Announcement</h2>
+                  <p className="text-xs text-white/40">Email all users or a specific person from hello@hire-flow.app.</p>
+                </div>
+              </div>
+              <SendEmailForm allEmails={authUsers.map(u => u.email).filter(Boolean) as string[]} />
+            </div>
+          </div>
+
+          {/* Recent signups + activity */}
+          <div className="grid gap-6 xl:grid-cols-2">
+            <div className={card}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-white">Recent Signups</h2>
+                <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{recentUsers.length}</span>
+              </div>
+              <div className="space-y-2">
+                {recentUsers.length === 0 ? (
+                  <p className="text-xs text-white/30">No signups yet.</p>
+                ) : recentUsers.map(item => (
+                  <div key={item.id} className={subCard + " flex items-center justify-between gap-4"}>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-white/40">
+                        {(item.email[0] ?? "?").toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">{item.email}</p>
+                        <p className="text-xs text-white/35">Joined {formatDate(item.created_at)}</p>
+                      </div>
+                    </div>
+                    {employerUserIds.has(item.id) ? (
+                      <span className="rounded-full border border-rose-500/25 bg-rose-500/10 px-2 py-0.5 text-xs text-rose-300">Employer</span>
+                    ) : (
+                      <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-300">Job seeker</span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Main stats */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total Users" value={totalUsers} subtext={`${usersThisPeriod} new in ${rangeDays}d`} icon="👥" accent="border-blue-500/20 bg-blue-500/8" />
-        <StatCard title="Applications" value={totalApplications} subtext={`${applicationsThisPeriod} in last ${rangeDays}d`} icon="📨" accent="border-emerald-500/20 bg-emerald-500/8" />
-        <StatCard title="CV Profiles" value={totalCVs} subtext="Stored in the system" icon="📄" accent="border-violet-500/20 bg-violet-500/8" />
-        <StatCard title="Employers" value={totalEmployers} subtext={`${activeJobPostings} active jobs posted`} icon="🏢" accent="border-rose-500/20 bg-rose-500/8" />
-        <StatCard title="Cover Letters" value={totalCoverLetters} subtext="Generated across users" icon="✍️" accent="border-amber-500/20 bg-amber-500/8" />
-      </div>
-
-      {/* Growth insights */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <InsightCard title="Applications Growth" value={`${applicationsGrowth > 0 ? "+" : ""}${applicationsGrowth}%`} subtext={`${applicationsThisPeriodCount} vs ${applicationsPreviousPeriodCount} prev`} icon="📈" valueClass={applicationsGrowth > 0 ? "text-emerald-400" : applicationsGrowth < 0 ? "text-red-400" : "text-white"} />
-        <InsightCard title="Signups Growth" value={`${signupsGrowth > 0 ? "+" : ""}${signupsGrowth}%`} subtext={`${signupsThisPeriodCount} vs ${signupsPreviousPeriodCount} prev`} icon="👤" valueClass={signupsGrowth > 0 ? "text-emerald-400" : signupsGrowth < 0 ? "text-red-400" : "text-white"} />
-        <InsightCard title="Engagement Rate" value={`${activeUserShare}%`} subtext="Users with ≥1 application" icon="⚡" />
-        <InsightCard title="Active Users" value={`${allActiveUserIds.size}`} subtext={`of ${totalUsers} total users`} icon="🔥" />
-      </div>
-
-      {/* Affiliate Earnings */}
-      <div className={card}>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">💸 Affiliate Earnings</h2>
-          {totalCommissionOwed > 0 && (
-            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs text-amber-300">
-              £{totalCommissionOwed.toFixed(2)} owed
-            </span>
-          )}
-        </div>
-        {affiliateLeaderboard.length === 0 ? (
-          <p className="text-xs text-white/30">No affiliate conversions yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-white/30 text-left border-b border-white/8">
-                  <th className="pb-2 font-medium">Affiliate</th>
-                  <th className="pb-2 font-medium">Conversions</th>
-                  <th className="pb-2 font-medium">Total earned</th>
-                  <th className="pb-2 font-medium">Paid out</th>
-                  <th className="pb-2 font-medium">Owed</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {affiliateLeaderboard.map(({ ref, count, commission, paid }) => (
-                  <tr key={ref}>
-                    <td className="py-2 text-white font-medium">{ref}</td>
-                    <td className="py-2 text-white/60">{count}</td>
-                    <td className="py-2 text-violet-300 font-semibold">£{commission.toFixed(2)}</td>
-                    <td className="py-2 text-emerald-300">£{paid.toFixed(2)}</td>
-                    <td className="py-2 text-amber-300 font-semibold">£{(commission - paid).toFixed(2)}</td>
-                  </tr>
+            <div className={card}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-white">Recent Activity</h2>
+                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-300">Live</span>
+              </div>
+              <div className="space-y-2">
+                {recentApplicationsSource.slice(0, 6).length === 0 ? (
+                  <p className="text-xs text-white/30">No activity yet.</p>
+                ) : recentApplicationsSource.slice(0, 6).map(item => (
+                  <div key={item.id} className={subCard + " flex items-start justify-between gap-4"}>
+                    <div>
+                      <p className="text-xs font-medium text-cyan-400">New application</p>
+                      <p className="text-sm text-white/70">{item.company} — {normalizeRole(item.role)}</p>
+                      <p className="text-xs text-white/30">{emailByUserId.get(item.user_id)}</p>
+                    </div>
+                    <p className="shrink-0 text-xs text-white/25">{formatDate(item.created_at)}</p>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
-        )}
-        {affiliateConversions.length > 0 && (
-          <p className="mt-3 text-xs text-white/25">Latest: {affiliateConversions[0]?.affiliate_ref} · {formatDate(affiliateConversions[0]?.created_at)}</p>
-        )}
-      </div>
+        </AdminTabPanel>
 
-      {/* Affiliate Applicants */}
-      {(() => {
-        const applicants = [
-          { name: "Safwan Ahmed", email: "safwxn.ahmxd08@gmail.com", ref: "safwan-ahmed", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
-          { name: "Samantha Evans", email: "samanthaevans140304@gmail.com", ref: "samantha-evans", status: "pending", source: "Indeed", note: "Message sent on Indeed — awaiting reply" },
-          { name: "Oni Pamilerin", email: "onipamilerin2024@gmail.com", ref: "oni-pamilerin", status: "pending", source: "Indeed", note: "Message sent on Indeed — awaiting reply" },
-          { name: "Fardowso Cabdulrahman", email: "fardowsocabdulrahman20@gmail.com", ref: "fardowso-cabdulrahman", status: "pending", source: "Indeed", note: "Message sent on Indeed — awaiting reply" },
-          { name: "Osborn Cockburn", email: "osborncockburnn778@gmail.com", ref: "osborn-cockburn", status: "active", source: "Indeed", note: "Welcome email sent 13 Sep 2026" },
-          { name: "Razvan Marian Banu", email: "razvan.banu05@yahoo.com", ref: "razvan-marian-banu", status: "active", source: "WhatsApp RO", note: "Welcome email sent 13 Sep 2026" },
-          { name: "George Ionut Dumitru", email: "dumitrugeorge151@gmail.com", ref: "george-ionut-dumitru", status: "active", source: "WhatsApp RO", note: "Applied 14 Sep 2026" },
-        ]
-        const statusStyle = (s: string) => s === "active"
-          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-          : "border-amber-500/30 bg-amber-500/10 text-amber-300"
-        return (
+        {/* ── USERS ──────────────────────────────────────────────── */}
+        <AdminTabPanel tab="Users">
+
+          {/* Funnel */}
+          <div className={card}>
+            <div className="mb-5">
+              <h2 className="text-base font-semibold text-white">User Funnel</h2>
+              <p className="text-xs text-white/40">How users move through the platform journey</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {funnelData.map((item, i) => (
+                <div key={item.label} className="rounded-xl border border-white/8 bg-white/3 p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs text-white/40">{item.label}</p>
+                      <p className="mt-1.5 text-3xl font-bold text-white">{item.value}</p>
+                      <p className="mt-1 text-xs text-white/30">{i === 0 ? "Total registered" : `${item.pct}% of users`}</p>
+                    </div>
+                    <span className="text-2xl">{item.icon}</span>
+                  </div>
+                  <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/8">
+                    <div className="h-full rounded-full bg-cyan-500" style={{ width: `${item.pct}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Growth insights */}
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <InsightCard title="Applications Growth" value={`${applicationsGrowth > 0 ? "+" : ""}${applicationsGrowth}%`} subtext={`${applicationsThisPeriodCount} vs ${applicationsPreviousPeriodCount} prev`} icon="📈" valueClass={applicationsGrowth > 0 ? "text-emerald-400" : applicationsGrowth < 0 ? "text-red-400" : "text-white"} />
+            <InsightCard title="Signups Growth" value={`${signupsGrowth > 0 ? "+" : ""}${signupsGrowth}%`} subtext={`${signupsThisPeriodCount} vs ${signupsPreviousPeriodCount} prev`} icon="👤" valueClass={signupsGrowth > 0 ? "text-emerald-400" : signupsGrowth < 0 ? "text-red-400" : "text-white"} />
+            <InsightCard title="Engagement Rate" value={`${activeUserShare}%`} subtext="Users with ≥1 application" icon="⚡" />
+            <InsightCard title="Active Users" value={`${allActiveUserIds.size}`} subtext={`of ${totalUsers} total users`} icon="🔥" />
+          </div>
+
+          {/* Charts */}
+          <div className="grid gap-6 xl:grid-cols-2">
+            <div className={card}>
+              <h2 className="mb-1 text-sm font-semibold text-white">Applications — Last {rangeDays} Days</h2>
+              <p className="mb-5 text-xs text-white/35">Daily activity across the platform</p>
+              <AdminApplicationsChart data={applicationsChartData} />
+            </div>
+            <div className={card}>
+              <h2 className="mb-1 text-sm font-semibold text-white">Signups — Last {rangeDays} Days</h2>
+              <p className="mb-5 text-xs text-white/35">Daily new user growth</p>
+              <AdminSignupsChart data={signupsChartData} />
+            </div>
+          </div>
+
+          {/* Top companies / roles / users */}
+          <div className="grid gap-6 xl:grid-cols-3">
+            <div className={card}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-white">Top Companies</h2>
+                <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{topCompanies.length}</span>
+              </div>
+              {topCompanies.length === 0 ? <p className="text-xs text-white/30">No data yet.</p> : (
+                <div className="space-y-2">
+                  {topCompanies.map((item, i) => (
+                    <Link key={item.company} href={buildAdminHref({ range: selectedRange, company: item.company, role: roleFilter, user: userFilter })}
+                      className={subCard + " flex items-center justify-between gap-3"}>
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 text-xs font-semibold text-white/40">#{i + 1}</span>
+                        <div>
+                          <p className="text-sm font-medium text-white">{item.company}</p>
+                          <p className="text-xs text-white/35">{item.count} application{item.count !== 1 ? "s" : ""}</p>
+                        </div>
+                      </div>
+                      <span className="text-base">🏢</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className={card}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-white">Top Roles</h2>
+                <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{topRoles.length}</span>
+              </div>
+              {topRoles.length === 0 ? <p className="text-xs text-white/30">No data yet.</p> : (
+                <div className="space-y-2">
+                  {topRoles.map((item, i) => (
+                    <Link key={item.role} href={buildAdminHref({ range: selectedRange, company: companyFilter, role: item.role, user: userFilter })}
+                      className={subCard + " flex items-center justify-between gap-3"}>
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 text-xs font-semibold text-white/40">#{i + 1}</span>
+                        <div>
+                          <p className="text-sm font-medium text-white">{item.role}</p>
+                          <p className="text-xs text-white/35">{item.count} application{item.count !== 1 ? "s" : ""}</p>
+                        </div>
+                      </div>
+                      <span className="text-base">💼</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className={card}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-white">Top Active Users</h2>
+                <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{topActiveUsers.length}</span>
+              </div>
+              {topActiveUsers.length === 0 ? <p className="text-xs text-white/30">No activity yet.</p> : (
+                <div className="space-y-2">
+                  {topActiveUsers.map((item, i) => (
+                    <Link key={item.userId} href={buildAdminHref({ range: selectedRange, company: companyFilter, role: roleFilter, user: item.userId })}
+                      className={subCard + " flex items-center justify-between gap-3"}>
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 text-xs font-semibold text-white/40">#{i + 1}</span>
+                        <div>
+                          <p className="text-sm font-medium text-white truncate max-w-[140px]">{item.email}</p>
+                          <p className="text-xs text-white/35">{item.count} application{item.count !== 1 ? "s" : ""}</p>
+                        </div>
+                      </div>
+                      <span className="text-base">{i === 0 ? "🏆" : "👤"}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* All users table */}
+          <div className={card}>
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white">All Registered Users</h2>
+              <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalUsers} total</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] border-separate border-spacing-y-2 text-sm">
+                <thead>
+                  <tr className="text-xs uppercase tracking-wide text-white/30">
+                    <th className="pb-2 text-left font-medium">User</th>
+                    <th className="pb-2 text-left font-medium">Joined</th>
+                    <th className="pb-2 text-left font-medium">Applications</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...authUsers]
+                    .sort((a, b) => (b.created_at ? new Date(b.created_at).getTime() : 0) - (a.created_at ? new Date(a.created_at).getTime() : 0))
+                    .map(u => {
+                      const appCount = userApplicationCounts.get(u.id) ?? 0
+                      return (
+                        <tr key={u.id} className="group">
+                          <td className="rounded-l-xl border-y border-l border-white/8 bg-white/3 px-4 py-3 group-hover:bg-white/5">
+                            <div className="flex items-center gap-2.5">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs font-semibold text-white/40">
+                                {(u.email?.[0] ?? "?").toUpperCase()}
+                              </div>
+                              <span className="font-medium text-white">{u.email ?? "—"}</span>
+                            </div>
+                          </td>
+                          <td className="border-y border-white/8 bg-white/3 px-4 py-3 text-xs text-white/40 group-hover:bg-white/5">{formatDate(u.created_at)}</td>
+                          <td className="rounded-r-xl border-y border-r border-white/8 bg-white/3 px-4 py-3 group-hover:bg-white/5">
+                            {appCount > 0 ? (
+                              <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-0.5 text-xs text-cyan-300">{appCount}</span>
+                            ) : (
+                              <span className="text-xs text-white/25">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Latest applications */}
+          <div className={card}>
+            <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-white">Latest Applications</h2>
+                <p className="text-xs text-white/35">Most recent applications submitted on the platform</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {hasFilters && (
+                  <>
+                    {companyFilter && <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50">Company: {companyFilter}</span>}
+                    {roleFilter && <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50">Role: {roleFilter}</span>}
+                    {userFilter && <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50">User: {emailByUserId.get(userFilter) ?? userFilter}</span>}
+                    <Link href={buildAdminHref({ range: selectedRange })} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50 hover:text-white transition">Clear filters ×</Link>
+                  </>
+                )}
+                <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/35">{filteredApplications.length} records</span>
+              </div>
+            </div>
+            {filteredApplications.length === 0 ? (
+              <p className="rounded-xl border border-white/8 py-6 text-center text-xs text-white/30">No applications found.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] border-separate border-spacing-y-2 text-sm">
+                  <thead>
+                    <tr className="text-xs uppercase tracking-wide text-white/30">
+                      <th className="pb-2 text-left font-medium">Company</th>
+                      <th className="pb-2 text-left font-medium">Role</th>
+                      <th className="pb-2 text-left font-medium">User</th>
+                      <th className="pb-2 text-left font-medium">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredApplications.map(item => (
+                      <tr key={item.id} className="group">
+                        <td className="rounded-l-xl border-y border-l border-white/8 bg-white/3 px-4 py-3 font-medium text-white group-hover:bg-white/5">{item.company || "—"}</td>
+                        <td className="border-y border-white/8 bg-white/3 px-4 py-3 text-white/70 group-hover:bg-white/5">{item.normalizedRole || "—"}</td>
+                        <td className="border-y border-white/8 bg-white/3 px-4 py-3 text-xs text-white/40 group-hover:bg-white/5">{emailByUserId.get(item.user_id) ?? "—"}</td>
+                        <td className="rounded-r-xl border-y border-r border-white/8 bg-white/3 px-4 py-3 text-xs text-white/35 group-hover:bg-white/5">{formatDate(item.created_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </AdminTabPanel>
+
+        {/* ── EMPLOYERS ──────────────────────────────────────────── */}
+        <AdminTabPanel tab="Employers">
+          <div className="grid gap-6 xl:grid-cols-2">
+            <div className={card}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-white">Employers</h2>
+                <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalEmployers} total</span>
+              </div>
+              {employers.length === 0 ? (
+                <p className="text-xs text-white/30">No employers signed up yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {employers.map(emp => (
+                    <div key={emp.id} className={subCard + " flex items-center justify-between gap-3"}>
+                      <div>
+                        <p className="text-sm font-medium text-white">{emp.company_name}</p>
+                        <p className="text-xs text-white/35">{emp.location} · {formatDate(emp.created_at)}</p>
+                      </div>
+                      <span className="rounded-full border border-rose-500/25 bg-rose-500/10 px-2 py-0.5 text-xs text-rose-300">
+                        {jobPostings.filter(j => j.employer_id === emp.id).length} jobs
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className={card}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-white">All Job Postings</h2>
+                <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalJobPostings} total</span>
+              </div>
+              {jobPostings.length === 0 ? (
+                <p className="text-xs text-white/30">No jobs posted yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {jobPostings.map(job => (
+                    <div key={job.id} className={subCard + " flex items-center justify-between gap-3"}>
+                      <div>
+                        <p className="text-sm font-medium text-white">{job.title}</p>
+                        <p className="text-xs text-white/35">{(job.employers as { company_name?: string } | null)?.company_name ?? "—"} · {job.location}</p>
+                      </div>
+                      <span className={`rounded-full border px-2 py-0.5 text-xs capitalize ${job.status === "active" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : job.status === "pending" ? "border-amber-500/30 bg-amber-500/10 text-amber-300" : "border-white/10 text-white/40"}`}>{job.status}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className={card}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white">Agencies</h2>
+              <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalAgencies} total</span>
+            </div>
+            {agencies.length === 0 ? (
+              <p className="text-xs text-white/30">No agencies signed up yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {agencies.map(agency => (
+                  <div key={agency.id} className={subCard + " flex items-center justify-between gap-3"}>
+                    <div>
+                      <p className="text-sm font-medium text-white">{agency.name || "Unnamed"}</p>
+                      <p className="text-xs text-white/35">{formatDate(agency.created_at)}</p>
+                    </div>
+                    <span className="rounded-full border border-violet-500/25 bg-violet-500/10 px-2 py-0.5 text-xs text-violet-300 capitalize">{agency.plan || "starter"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </AdminTabPanel>
+
+        {/* ── AFFILIATES ─────────────────────────────────────────── */}
+        <AdminTabPanel tab="Affiliates">
+
+          {/* Affiliate applicants */}
           <div className={card}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-white">🤝 Affiliate Applicants</h2>
-              <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{applicants.length} total</span>
+              <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{affiliateApplicants.length} total</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
@@ -483,7 +749,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {applicants.map(a => (
+                  {affiliateApplicants.map(a => (
                     <tr key={a.ref}>
                       <td className="py-2.5 font-medium text-white pr-4">{a.name}</td>
                       <td className="py-2.5 text-white/50 pr-4">{a.email}</td>
@@ -498,369 +764,100 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
               </table>
             </div>
           </div>
-        )
-      })()}
 
-      {/* Plan breakdown + agencies + referrals */}
-      <div className="grid gap-6 xl:grid-cols-3">
-
-        {/* Plan breakdown */}
-        <div className={card}>
-          <h2 className="mb-4 text-sm font-semibold text-white">Plan Breakdown</h2>
-          <div className="space-y-3">
-            {[
-              { label: "Free", count: planCounts.free, color: "bg-white/20", textColor: "text-white/60" },
-              { label: "Pro", count: planCounts.pro, color: "bg-cyan-500", textColor: "text-cyan-300" },
-              { label: "Premium", count: planCounts.premium, color: "bg-amber-500", textColor: "text-amber-300" },
-            ].map(({ label, count, color, textColor }) => {
-              const pct = profiles.length === 0 ? 0 : Math.round((count / profiles.length) * 100)
-              return (
-                <div key={label}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`text-xs font-medium ${textColor}`}>{label}</span>
-                    <span className="text-xs text-white/40">{count} users · {pct}%</span>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
-                    <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              )
-            })}
-            <div className="mt-4 pt-3 border-t border-white/8 flex items-center justify-between">
-              <span className="text-xs text-white/40">Open to agencies</span>
-              <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-300">{openToAgenciesCount} users</span>
+          {/* Affiliate earnings */}
+          <div className={card}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white">💸 Affiliate Earnings</h2>
+              {totalCommissionOwed > 0 && (
+                <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs text-amber-300">£{totalCommissionOwed.toFixed(2)} owed</span>
+              )}
             </div>
-          </div>
-        </div>
-
-        {/* Agencies */}
-        <div className={card}>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Agencies</h2>
-            <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalAgencies} total</span>
-          </div>
-          {agencies.length === 0 ? (
-            <p className="text-xs text-white/30">No agencies signed up yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {agencies.map(agency => (
-                <div key={agency.id} className={subCard + " flex items-center justify-between gap-3"}>
-                  <div>
-                    <p className="text-sm font-medium text-white">{agency.name || "Unnamed"}</p>
-                    <p className="text-xs text-white/35">{formatDate(agency.created_at)}</p>
-                  </div>
-                  <span className="rounded-full border border-violet-500/25 bg-violet-500/10 px-2 py-0.5 text-xs text-violet-300 capitalize">{agency.plan || "starter"}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Employers */}
-        <div className={card}>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Employers</h2>
-            <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalEmployers} total</span>
-          </div>
-          {employers.length === 0 ? (
-            <p className="text-xs text-white/30">No employers signed up yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {employers.map(emp => (
-                <div key={emp.id} className={subCard + " flex items-center justify-between gap-3"}>
-                  <div>
-                    <p className="text-sm font-medium text-white">{emp.company_name}</p>
-                    <p className="text-xs text-white/35">{emp.location} · {formatDate(emp.created_at)}</p>
-                  </div>
-                  <span className="rounded-full border border-rose-500/25 bg-rose-500/10 px-2 py-0.5 text-xs text-rose-300">
-                    {jobPostings.filter(j => j.is_active).length} jobs
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Referral clicks */}
-        <div className={card}>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Referral Clicks</h2>
-            <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalReferralClicks} total</span>
-          </div>
-          {topReferrers.length === 0 ? (
-            <p className="text-xs text-white/30">No referral clicks yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {topReferrers.map(({ ref, count }) => (
-                <div key={ref} className={subCard + " flex items-center justify-between gap-3"}>
-                  <div>
-                    <p className="text-sm font-medium text-white">{ref}</p>
-                    <p className="text-xs text-white/35">affiliate link</p>
-                  </div>
-                  <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 text-xs text-amber-300">{count} click{count !== 1 ? "s" : ""}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {referralClicks.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-white/8">
-              <p className="text-xs text-white/30">Latest: {formatDate(referralClicks[0]?.clicked_at)} · {referralClicks[0]?.ref}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className={card}>
-          <h2 className="mb-1 text-sm font-semibold text-white">Applications — Last {rangeDays} Days</h2>
-          <p className="mb-5 text-xs text-white/35">Daily activity across the platform</p>
-          <AdminApplicationsChart data={applicationsChartData} />
-        </div>
-        <div className={card}>
-          <h2 className="mb-1 text-sm font-semibold text-white">Signups — Last {rangeDays} Days</h2>
-          <p className="mb-5 text-xs text-white/35">Daily new user growth</p>
-          <AdminSignupsChart data={signupsChartData} />
-        </div>
-      </div>
-
-      {/* Top companies / roles / users */}
-      <div className="grid gap-6 xl:grid-cols-3">
-        {/* Companies */}
-        <div className={card}>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Top Companies</h2>
-            <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{topCompanies.length}</span>
-          </div>
-          {topCompanies.length === 0 ? (
-            <p className="text-xs text-white/30">No data yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {topCompanies.map((item, i) => (
-                <Link key={item.company} href={buildAdminHref({ range: selectedRange, company: item.company, role: roleFilter, user: userFilter })}
-                  className={subCard + " flex items-center justify-between gap-3"}>
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 text-xs font-semibold text-white/40">#{i + 1}</span>
-                    <div>
-                      <p className="text-sm font-medium text-white">{item.company}</p>
-                      <p className="text-xs text-white/35">{item.count} application{item.count !== 1 ? "s" : ""}</p>
-                    </div>
-                  </div>
-                  <span className="text-base">🏢</span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Roles */}
-        <div className={card}>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Top Roles</h2>
-            <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{topRoles.length}</span>
-          </div>
-          {topRoles.length === 0 ? (
-            <p className="text-xs text-white/30">No data yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {topRoles.map((item, i) => (
-                <Link key={item.role} href={buildAdminHref({ range: selectedRange, company: companyFilter, role: item.role, user: userFilter })}
-                  className={subCard + " flex items-center justify-between gap-3"}>
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 text-xs font-semibold text-white/40">#{i + 1}</span>
-                    <div>
-                      <p className="text-sm font-medium text-white">{item.role}</p>
-                      <p className="text-xs text-white/35">{item.count} application{item.count !== 1 ? "s" : ""}</p>
-                    </div>
-                  </div>
-                  <span className="text-base">💼</span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Top users */}
-        <div className={card}>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Top Active Users</h2>
-            <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{topActiveUsers.length}</span>
-          </div>
-          {topActiveUsers.length === 0 ? (
-            <p className="text-xs text-white/30">No activity yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {topActiveUsers.map((item, i) => (
-                <Link key={item.userId} href={buildAdminHref({ range: selectedRange, company: companyFilter, role: roleFilter, user: item.userId })}
-                  className={subCard + " flex items-center justify-between gap-3"}>
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 text-xs font-semibold text-white/40">#{i + 1}</span>
-                    <div>
-                      <p className="text-sm font-medium text-white truncate max-w-[140px]">{item.email}</p>
-                      <p className="text-xs text-white/35">{item.count} application{item.count !== 1 ? "s" : ""}</p>
-                    </div>
-                  </div>
-                  <span className="text-base">{i === 0 ? "🏆" : "👤"}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Recent signups + activity */}
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className={card}>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Recent Signups</h2>
-            <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{recentUsers.length}</span>
-          </div>
-          <div className="space-y-2">
-            {recentUsers.length === 0 ? (
-              <p className="text-xs text-white/30">No signups yet.</p>
-            ) : recentUsers.map(item => (
-              <div key={item.id} className={subCard + " flex items-center justify-between gap-4"}>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-white/40">
-                    {(item.email[0] ?? "?").toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">{item.email}</p>
-                    <p className="text-xs text-white/35">Joined {formatDate(item.created_at)}</p>
-                  </div>
-                </div>
-                {employerUserIds.has(item.id) ? (
-                  <span className="rounded-full border border-rose-500/25 bg-rose-500/10 px-2 py-0.5 text-xs text-rose-300">Employer</span>
-                ) : (
-                  <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-300">Job seeker</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className={card}>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Recent Activity</h2>
-            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-300">Live</span>
-          </div>
-          <div className="space-y-2">
-            {recentApplicationsSource.slice(0, 6).length === 0 ? (
-              <p className="text-xs text-white/30">No activity yet.</p>
-            ) : recentApplicationsSource.slice(0, 6).map(item => (
-              <div key={item.id} className={subCard + " flex items-start justify-between gap-4"}>
-                <div>
-                  <p className="text-xs font-medium text-cyan-400">New application</p>
-                  <p className="text-sm text-white/70">{item.company} — {normalizeRole(item.role)}</p>
-                  <p className="text-xs text-white/30">{emailByUserId.get(item.user_id)}</p>
-                </div>
-                <p className="shrink-0 text-xs text-white/25">{formatDate(item.created_at)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* All registered users */}
-      <div className={card}>
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-white">All Registered Users</h2>
-            <p className="text-xs text-white/35">Click an email to compose a message</p>
-          </div>
-          <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalUsers} total</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] border-separate border-spacing-y-2 text-sm">
-            <thead>
-              <tr className="text-xs uppercase tracking-wide text-white/30">
-                <th className="pb-2 text-left font-medium">User</th>
-                <th className="pb-2 text-left font-medium">Joined</th>
-                <th className="pb-2 text-left font-medium">Applications</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...authUsers]
-                .sort((a, b) => (b.created_at ? new Date(b.created_at).getTime() : 0) - (a.created_at ? new Date(a.created_at).getTime() : 0))
-                .map(u => {
-                  const appCount = userApplicationCounts.get(u.id) ?? 0
-                  return (
-                    <tr key={u.id} className="group">
-                      <td className="rounded-l-xl border-y border-l border-white/8 bg-white/3 px-4 py-3 group-hover:bg-white/5">
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs font-semibold text-white/40">
-                            {(u.email?.[0] ?? "?").toUpperCase()}
-                          </div>
-                          <span className="font-medium text-white">{u.email ?? "—"}</span>
-                        </div>
-                      </td>
-                      <td className="border-y border-white/8 bg-white/3 px-4 py-3 text-xs text-white/40 group-hover:bg-white/5">
-                        {formatDate(u.created_at)}
-                      </td>
-                      <td className="rounded-r-xl border-y border-r border-white/8 bg-white/3 px-4 py-3 group-hover:bg-white/5">
-                        {appCount > 0 ? (
-                          <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-0.5 text-xs text-cyan-300">{appCount}</span>
-                        ) : (
-                          <span className="text-xs text-white/25">—</span>
-                        )}
-                      </td>
+            {affiliateLeaderboard.length === 0 ? (
+              <p className="text-xs text-white/30">No affiliate conversions yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-white/30 text-left border-b border-white/8">
+                      <th className="pb-2 font-medium">Affiliate</th>
+                      <th className="pb-2 font-medium">Conversions</th>
+                      <th className="pb-2 font-medium">Total earned</th>
+                      <th className="pb-2 font-medium">Paid out</th>
+                      <th className="pb-2 font-medium">Owed</th>
                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {affiliateLeaderboard.map(({ ref, count, commission, paid }) => (
+                      <tr key={ref}>
+                        <td className="py-2 text-white font-medium">{ref}</td>
+                        <td className="py-2 text-white/60">{count}</td>
+                        <td className="py-2 text-violet-300 font-semibold">£{commission.toFixed(2)}</td>
+                        <td className="py-2 text-emerald-300">£{paid.toFixed(2)}</td>
+                        <td className="py-2 text-amber-300 font-semibold">£{(commission - paid).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Plan breakdown + referral clicks */}
+          <div className="grid gap-6 xl:grid-cols-2">
+            <div className={card}>
+              <h2 className="mb-4 text-sm font-semibold text-white">Plan Breakdown</h2>
+              <div className="space-y-3">
+                {[
+                  { label: "Free", count: planCounts.free, color: "bg-white/20", textColor: "text-white/60" },
+                  { label: "Pro", count: planCounts.pro, color: "bg-cyan-500", textColor: "text-cyan-300" },
+                  { label: "Premium", count: planCounts.premium, color: "bg-amber-500", textColor: "text-amber-300" },
+                ].map(({ label, count, color, textColor }) => {
+                  const pct = profiles.length === 0 ? 0 : Math.round((count / profiles.length) * 100)
+                  return (
+                    <div key={label}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-xs font-medium ${textColor}`}>{label}</span>
+                        <span className="text-xs text-white/40">{count} users · {pct}%</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
+                        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
                   )
                 })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                <div className="mt-4 pt-3 border-t border-white/8 flex items-center justify-between">
+                  <span className="text-xs text-white/40">Open to agencies</span>
+                  <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-300">{openToAgenciesCount} users</span>
+                </div>
+              </div>
+            </div>
 
-      {/* Latest applications table */}
-      <div className={card}>
-        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-white">Latest Applications</h2>
-            <p className="text-xs text-white/35">Most recent applications submitted on the platform</p>
+            <div className={card}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-white">Referral Clicks</h2>
+                <span className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs text-white/35">{totalReferralClicks} total</span>
+              </div>
+              {topReferrers.length === 0 ? (
+                <p className="text-xs text-white/30">No referral clicks yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {topReferrers.map(({ ref, count }) => (
+                    <div key={ref} className={subCard + " flex items-center justify-between gap-3"}>
+                      <div>
+                        <p className="text-sm font-medium text-white">{ref}</p>
+                        <p className="text-xs text-white/35">affiliate link</p>
+                      </div>
+                      <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-0.5 text-xs text-amber-300">{count} click{count !== 1 ? "s" : ""}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {hasFilters && (
-              <>
-                {companyFilter && <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50">Company: {companyFilter}</span>}
-                {roleFilter && <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50">Role: {roleFilter}</span>}
-                {userFilter && <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50">User: {emailByUserId.get(userFilter) ?? userFilter}</span>}
-                <Link href={buildAdminHref({ range: selectedRange })} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50 hover:text-white transition">
-                  Clear filters ×
-                </Link>
-              </>
-            )}
-            <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/35">{filteredApplications.length} records</span>
-          </div>
-        </div>
+        </AdminTabPanel>
 
-        {filteredApplications.length === 0 ? (
-          <p className="rounded-xl border border-white/8 py-6 text-center text-xs text-white/30">No applications found.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] border-separate border-spacing-y-2 text-sm">
-              <thead>
-                <tr className="text-xs uppercase tracking-wide text-white/30">
-                  <th className="pb-2 text-left font-medium">Company</th>
-                  <th className="pb-2 text-left font-medium">Role</th>
-                  <th className="pb-2 text-left font-medium">User</th>
-                  <th className="pb-2 text-left font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredApplications.map(item => (
-                  <tr key={item.id} className="group">
-                    <td className="rounded-l-xl border-y border-l border-white/8 bg-white/3 px-4 py-3 font-medium text-white group-hover:bg-white/5">{item.company || "—"}</td>
-                    <td className="border-y border-white/8 bg-white/3 px-4 py-3 text-white/70 group-hover:bg-white/5">{item.normalizedRole || "—"}</td>
-                    <td className="border-y border-white/8 bg-white/3 px-4 py-3 text-xs text-white/40 group-hover:bg-white/5">{emailByUserId.get(item.user_id) ?? "—"}</td>
-                    <td className="rounded-r-xl border-y border-r border-white/8 bg-white/3 px-4 py-3 text-xs text-white/35 group-hover:bg-white/5">{formatDate(item.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      </AdminTabs>
     </div>
   )
 }
