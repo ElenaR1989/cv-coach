@@ -244,6 +244,11 @@ export default function HomePage() {
                 hello@hire-flow.app
               </a>
               <div className="flex gap-4">
+                <Link href="/about" className="transition hover:text-white">About</Link>
+                <Link href="/contact" className="transition hover:text-white">Contact</Link>
+                <Link href="/employers" className="transition hover:text-white">Employers</Link>
+              </div>
+              <div className="flex gap-4">
                 <Link href="/privacy" className="transition hover:text-white">Privacy Policy</Link>
                 <Link href="/terms" className="transition hover:text-white">Terms</Link>
               </div>
