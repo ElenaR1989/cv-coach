@@ -99,7 +99,7 @@ export default function EmployerSignupPage() {
                 <p className="font-semibold text-white/60">What happens next:</p>
                 <p>1. Create your account — just email and password</p>
                 <p>2. Add your company details</p>
-                <p>3. Post your first job — we review it before it goes live</p>
+                <p>3. Post your first job — reviewed and approved within 24 hours</p>
               </div>
             </>
           ) : (
