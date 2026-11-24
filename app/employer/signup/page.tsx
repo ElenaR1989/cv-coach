@@ -73,7 +73,12 @@ export default function EmployerSignupPage() {
           {step === "account" ? (
             <>
               <h1 className="text-2xl font-bold mb-1">Post jobs on HireFlow</h1>
-              <p className="text-sm text-white/40 mb-6">Reach pre-matched candidates actively looking for work.</p>
+              <p className="text-sm text-white/40 mb-4">Reach candidates actively looking for work. Free during our launch phase.</p>
+              <div className="flex flex-wrap gap-2 mb-6">
+                <span className="rounded-full bg-green-500/10 border border-green-500/20 px-3 py-1 text-xs text-green-400 font-medium">✓ Free during launch</span>
+                <span className="rounded-full bg-white/8 border border-white/10 px-3 py-1 text-xs text-white/50 font-medium">✓ Reviewed before publishing</span>
+                <span className="rounded-full bg-white/8 border border-white/10 px-3 py-1 text-xs text-white/50 font-medium">✓ No credit card needed</span>
+              </div>
               <div className="space-y-4">
                 <input type="email" placeholder="Work email address" value={email} onChange={e => setEmail(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-cyan-400/50 transition" />
@@ -90,7 +95,12 @@ export default function EmployerSignupPage() {
               <p className="mt-4 text-center text-sm text-white/40">
                 Already have an account? <Link href="/employer/login" className="text-cyan-400 hover:underline">Sign in</Link>
               </p>
-              <p className="mt-6 text-center text-xs text-white/25">Free to post jobs during our launch period.</p>
+              <div className="mt-6 rounded-xl bg-white/4 border border-white/8 px-4 py-3 text-xs text-white/40 space-y-1">
+                <p className="font-semibold text-white/60">What happens next:</p>
+                <p>1. Create your account — just email and password</p>
+                <p>2. Add your company details</p>
+                <p>3. Post your first job — we review it before it goes live</p>
+              </div>
             </>
           ) : (
             <>
